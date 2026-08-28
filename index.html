@@ -1,4 +1,9 @@
 <title>Верстак ARCHIWOOD</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="description" content="Живая карта проектов ARCHIWOOD: подбор изделий, что решено, что открыто, что горит.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,14 +57,17 @@
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-  .shell { max-width: 640px; margin: 0 auto; padding: 0 16px 90px; }
+  .shell {
+    max-width: 640px; margin: 0 auto;
+    padding: 0 16px calc(90px + env(safe-area-inset-bottom));
+  }
 
   header.top {
     position: sticky; top: 0; z-index: 10;
     background: color-mix(in srgb, var(--bg) 92%, transparent);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
-    padding: 14px 16px 12px;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
   }
   header.top .row { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; }
   .brand { display: flex; align-items: baseline; gap: 7px; margin-right: auto; cursor: pointer; }
@@ -168,7 +176,7 @@
 
   /* ---- комментарий: кнопка и лист ---- */
   .fab {
-    position: fixed; right: 20px; bottom: 22px; z-index: 20;
+    position: fixed; right: 20px; bottom: calc(22px + env(safe-area-inset-bottom)); z-index: 20;
     width: 56px; height: 56px; border-radius: 50%; border: none;
     background: var(--accent); color: var(--accent-ink); font-size: 26px;
     box-shadow: 0 6px 18px rgba(0,0,0,.18); cursor: pointer;
@@ -183,7 +191,7 @@
   .sheet-backdrop.hidden { display: none; }
   .sheet {
     width: 100%; max-width: 640px; background: var(--surface); border-radius: 20px 20px 0 0;
-    padding: 18px 18px 24px; box-shadow: 0 -8px 30px rgba(0,0,0,.2);
+    padding: 18px 18px calc(24px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 30px rgba(0,0,0,.2);
   }
   .sheet h3 { font-size: 17px; margin-bottom: 12px; }
   .sheet textarea {
