@@ -557,15 +557,47 @@
   backdrop.classList.remove("hidden");
   var input = document.getElementById("gatePass");
   var err = document.getElementById("gateErr");
+  // Вход прощает то, на чём люди спотыкаются каждый день: лишний пробел из буфера обмена,
+  // Caps Lock и забытую русскую раскладку. Это не ослабляет защиту — пароли всё равно
+  // лежат прямо в тексте страницы, вход держит случайных людей, а не злоумышленников.
+  // 07.09.2026: Мансур не смог войти собственным паролем именно из-за раскладки.
+  var RASKLADKA = {
+    "ё": "`", "й": "q", "ц": "w", "у": "e", "к": "r", "е": "t", "н": "y", "г": "u",
+    "ш": "i", "щ": "o", "з": "p", "х": "[", "ъ": "]", "ф": "a", "ы": "s", "в": "d",
+    "а": "f", "п": "g", "р": "h", "о": "j", "л": "k", "д": "l", "ж": ";", "э": "'",
+    "я": "z", "ч": "x", "с": "c", "м": "v", "и": "b", "т": "n", "ь": "m", "б": ",",
+    "ю": ".",
+  };
+  function iz_russkoy_raskladki(s) {
+    return s.split("").map(function (z) {
+      var m = RASKLADKA[z.toLowerCase()];
+      return m === undefined ? z : m;
+    }).join("");
+  }
+  function nayti_rol(vvod) {
+    var chistoe = (vvod || "").trim();
+    if (!chistoe) return null;
+    var varianty = [chistoe, iz_russkoy_raskladki(chistoe)];
+    for (var i = 0; i < varianty.length; i++) {
+      for (var parol in ROLES) {
+        if (varianty[i].toLowerCase() === parol.toLowerCase()) return ROLES[parol];
+      }
+    }
+    return null;
+  }
   function proverit() {
-    var rol = ROLES[input.value];
+    var vvod = input.value;
+    var rol = nayti_rol(vvod);
     if (rol) {
       localStorage.setItem(GATE_KEY, "1");
       localStorage.setItem("verstak_role_name", rol.name);
       localStorage.setItem("verstak_role_dir", rol.dir);
       backdrop.classList.add("hidden");
     } else {
-      err.textContent = "Неверный пароль";
+      // Подсказываем, а не просто отфутболиваем: чаще всего дело в раскладке.
+      err.textContent = /[а-яё]/i.test(vvod)
+        ? "Неверный пароль. Похоже, включена русская раскладка — переключите на английскую."
+        : "Неверный пароль";
       input.value = "";
       input.focus();
     }
