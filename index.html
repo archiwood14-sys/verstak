@@ -423,7 +423,51 @@
   }
   .sheet textarea:focus { border-color: var(--accent); }
   .sheet .row2 { display: flex; gap: 10px; }
-  .sheet.oblig-modal { max-width: 620px; max-height: 85vh; overflow-y: auto; position: relative; padding-top: 44px; }
+  /* Окно записи — два окошка сразу: слева то, что надо проверить, справа то, куда
+     Юлия Евгеньевна пишет корректировку. Требование от 07.09.2026: она должна видеть
+     факт и одновременно писать про него, а не переключаться туда-сюда.
+     Айпад считаем компьютером — два столбца включаются уже с 760 точек (айпад стоя — 768).
+     На телефоне столбцы не влезут, поэтому там они друг над другом, и каждое окошко
+     прокручивается само: сверху сведения, снизу всегда доступная форма. */
+  .sheet.oblig-modal {
+    max-width: 620px; max-height: 88vh; position: relative; padding: 44px 0 0;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-panes { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
+  .modal-info { overflow-y: auto; padding: 0 18px 14px; flex: 1 1 auto; min-height: 0; }
+  .modal-korr {
+    flex: 0 0 auto; border-top: 2px solid var(--line); background: var(--surface-2);
+    padding: 12px 18px 16px; overflow-y: auto; max-height: 46vh;
+  }
+  @media (min-width: 760px) {
+    .sheet.oblig-modal { max-width: 1040px; }
+    .modal-panes { flex-direction: row; }
+    .modal-info { padding: 0 20px 20px; }
+    .modal-korr {
+      width: 350px; flex: 0 0 350px; max-height: none; border-top: none;
+      border-left: 2px solid var(--line);
+    }
+  }
+  .korr-head { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .korr-hint { font-size: 11.5px; color: var(--muted); line-height: 1.4; margin-bottom: 10px; }
+  .korr-text {
+    width: 100%; min-height: 92px; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 10px; background: var(--surface); color: var(--ink); font-family: inherit;
+    font-size: 14px; line-height: 1.45; resize: vertical; margin-bottom: 8px;
+  }
+  .korr-text:focus { border-color: var(--accent); outline: none; }
+  .korr-row { display: flex; gap: 8px; }
+  .korr-row .btn { flex: 1; font-size: 13px; padding: 9px 8px; }
+  .korr-rec.active { background: var(--crit); color: #fff; }
+  .korr-status { font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; line-height: 1.4; }
+  .korr-bylo { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .korr-bylo-lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .korr-zapis {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 8px 10px; margin-bottom: 6px; font-size: 12.5px; line-height: 1.4;
+  }
+  .korr-zapis .kogda { font-family: "PT Mono", monospace; font-size: 10.5px; color: var(--muted); }
+  .korr-zapis .sostoyanie { font-weight: 700; color: var(--accent); }
   .modal-close {
     position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%;
     border: none; background: var(--surface-2); color: var(--muted); font-size: 15px; cursor: pointer;
@@ -513,7 +557,10 @@
 <div class="sheet-backdrop hidden" id="obligModalBackdrop">
   <div class="sheet oblig-modal">
     <button class="modal-close" id="obligModalClose">✕</button>
-    <div id="obligModalBody"></div>
+    <div class="modal-panes">
+      <div class="modal-info" id="obligModalBody"></div>
+      <div class="modal-korr" id="korrPane"></div>
+    </div>
   </div>
 </div>
 
@@ -1204,10 +1251,124 @@ function openRecordModal(recId, blok) {
   if (srokBtn) srokBtn.addEventListener("click", () => saveSrok(recId, srokInput.value));
 
   renderDraftArea(recId, blok, r, codes[0] || "", relatedFiles);
+  renderKorrPane({
+    recId, blok, objekt: r["Объект"] || "", kod: codes[0] || "",
+    chtoBylo: (r[textField] || "").slice(0, 500),
+  });
+}
+
+/* ---------------- корректировка к конкретной записи ---------------- */
+// Юлия Евгеньевна читает запись слева, проверяет её по документам, которые лежат там же,
+// и говорит справа, как на самом деле — текстом или голосом. Требование от 07.09.2026.
+// Её слово не вносится в реестр само: оно уходит на вкладку «Корректировки», а разбор на
+// Маке сверяет сказанное с документами. Вносится только то, что сошлось.
+let korrRecorder = null, korrChunks = [], korrBlob = null, korrCtx = null;
+
+function korrStatus(text) {
+  const el = document.querySelector("#korrPane .korr-status");
+  if (el) el.textContent = text || "";
+}
+
+function renderKorrPane(ctx) {
+  korrCtx = ctx;
+  korrBlob = null;
+  const pane = document.getElementById("korrPane");
+  if (!pane) return;
+  pane.innerHTML = `
+    <div class="korr-head">Корректировка</div>
+    <div class="korr-hint">Проверьте запись слева по документам и скажите, как на самом деле.
+      Это не правит реестр сразу — сказанное сверят с документами, и внесут только то, что сойдётся.</div>
+    <textarea class="korr-text" placeholder="Например: срок сдвинулся на конец сентября, заказчик подтвердил на встрече 3 сентября"></textarea>
+    <div class="korr-row">
+      <button class="btn ghost korr-rec">🎤 Голосом</button>
+      <button class="btn primary korr-send">Отправить</button>
+    </div>
+    <div class="korr-status"></div>
+    <div class="korr-bylo hidden"><div class="korr-bylo-lbl">Уже сказано по этой записи</div><div class="korr-spisok"></div></div>
+  `;
+  pane.querySelector(".korr-rec").addEventListener("click", perekluchitZapisKorr);
+  pane.querySelector(".korr-send").addEventListener("click", otpravitKorrektirovku);
+  pokazatProshlyeKorrektirovki(ctx.recId);
+}
+
+async function perekluchitZapisKorr() {
+  const btn = document.querySelector("#korrPane .korr-rec");
+  if (!korrRecorder || korrRecorder.state === "inactive") {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      korrStatus("Этот браузер не даёт доступ к микрофону."); return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      korrChunks = [];
+      korrRecorder = new MediaRecorder(stream);
+      korrRecorder.ondataavailable = e => korrChunks.push(e.data);
+      korrRecorder.onstop = () => {
+        korrBlob = new Blob(korrChunks, { type: "audio/webm" });
+        stream.getTracks().forEach(t => t.stop());
+        korrStatus("Голос записан — можно отправлять.");
+      };
+      korrRecorder.start();
+      btn.classList.add("active"); btn.textContent = "⏹ Стоп";
+      korrStatus("Идёт запись…");
+    } catch (e) {
+      korrStatus("Не удалось включить микрофон: " + e.message);
+    }
+  } else {
+    korrRecorder.stop();
+    btn.classList.remove("active"); btn.textContent = "🎤 Голосом";
+  }
+}
+
+async function otpravitKorrektirovku() {
+  const pane = document.getElementById("korrPane");
+  const tekst = (pane.querySelector(".korr-text").value || "").trim();
+  if (!tekst && !korrBlob) { korrStatus("Напишите или наговорите корректировку."); return; }
+  if (!INBOX_URL) { korrStatus("Приём корректировок пока не настроен."); return; }
+  korrStatus("Отправляю…");
+  try {
+    const telo = {
+      type: "korrektirovka", text: tekst,
+      kto: localStorage.getItem("verstak_role_name") || "",
+      objekt: korrCtx.objekt, blok: korrCtx.blok, recordId: korrCtx.recId,
+      kod: korrCtx.kod, chtoBylo: korrCtx.chtoBylo,
+    };
+    if (korrBlob) telo.audioBase64 = await blobToBase64(korrBlob);
+    const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify(telo) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || "мостик отказал");
+    pane.querySelector(".korr-text").value = "";
+    korrBlob = null;
+    korrStatus(`Принято (${d.id}). Разберём и сверим с документами — результат появится здесь же.`);
+    pokazatProshlyeKorrektirovki(korrCtx.recId);
+  } catch (e) {
+    korrStatus("Не получилось отправить: " + e.message);
+  }
+}
+
+// История по этой записи: что уже говорили и чем это кончилось. Чтобы человек видел
+// судьбу своих слов, а не отправлял в пустоту.
+async function pokazatProshlyeKorrektirovki(recId) {
+  const blok = document.querySelector("#korrPane .korr-bylo");
+  const spisok = document.querySelector("#korrPane .korr-spisok");
+  if (!blok || !spisok) return;
+  try {
+    const rows = (await fetchTab(REESTR_ID, "Корректировки")).filter(r => r["Номер записи"] === recId);
+    if (!rows.length) { blok.classList.add("hidden"); return; }
+    spisok.innerHTML = rows.reverse().map(r => `<div class="korr-zapis">
+      <div class="kogda">${escapeHtml(r["Дата и время"] || "")}${r["Кто отправил"] ? " · " + escapeHtml(r["Кто отправил"]) : ""}</div>
+      <div>${escapeHtml(r["Текст корректировки"] || (r["Тип (текст/голос)"] === "голос" ? "(голосовое, ещё не расшифровано)" : ""))}</div>
+      <div class="sostoyanie">${escapeHtml(r["Статус"] || "")}</div>
+      ${r["Что показала проверка"] ? `<div>${escapeHtml(r["Что показала проверка"])}</div>` : ""}
+    </div>`).join("");
+    blok.classList.remove("hidden");
+  } catch (e) {
+    blok.classList.add("hidden");   // нет сети (например, внутри превью) — просто не показываем
+  }
 }
 
 function closeObligModal() {
   document.getElementById("obligModalBackdrop").classList.add("hidden");
+  if (korrRecorder && korrRecorder.state === "recording") korrRecorder.stop();
 }
 document.getElementById("obligModalClose").addEventListener("click", closeObligModal);
 document.getElementById("obligModalBackdrop").addEventListener("click", (e) => {
