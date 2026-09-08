@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ильинка — пробный разбор</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=PT+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#fbfaf7; --surface:#fff; --surface-2:#f1eee6; --ink:#262420; --muted:#8a8073;
+    --line:#eae4d8; --accent:#c18048; --accent-ink:#fff; --ok:#4f9a6e; --warn:#b98424;
+    --crit:#c9503f; --brand-bg:#faf0e6; --shadow:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.05);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"Manrope",-apple-system,sans-serif; }
+  .shell { max-width: 1000px; margin: 0 auto; padding: 0 16px 80px; }
+  header.top { background:var(--brand-bg); border-bottom:1px solid var(--line); padding:16px 0; margin-bottom:22px; }
+  header.top .row { max-width:1000px; margin:0 auto; padding:0 16px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .pod { color:var(--muted); font-size:13.5px; line-height:1.5; }
+  .mono { font-family:"PT Mono",monospace; }
+
+  .zamechanie { background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent);
+    border-radius:12px; padding:14px 16px; margin-bottom:22px; font-size:14px; line-height:1.55; box-shadow:var(--shadow); }
+
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:30px 0 12px; }
+
+  table { width:100%; border-collapse:collapse; font-size:14px; background:var(--surface);
+    border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+  th { text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+    padding:10px 12px; border-bottom:1px solid var(--line); }
+  td { padding:10px 12px; border-bottom:1px solid var(--line); }
+  tr:last-child td { border-bottom:none; }
+
+  .karta { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 16px;
+    margin-bottom:12px; box-shadow:var(--shadow); }
+  .karta.vopros { border-left:4px solid var(--warn); }
+  .karta.net { border-left:4px solid var(--crit); }
+  .karta.da { border-left:4px solid var(--ok); }
+  .verh { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .kod { font-family:"PT Mono",monospace; font-size:12.5px; background:var(--surface-2); border-radius:20px; padding:3px 10px; }
+  .metka { font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; }
+  .m-da { background:#e6f2ea; color:var(--ok); }
+  .m-vopros { background:#f7eeda; color:var(--warn); }
+  .m-net { background:#f7e4e0; color:var(--crit); }
+  .chto { font-size:15.5px; font-weight:700; line-height:1.35; }
+  .gde { font-size:13px; color:var(--muted); margin-top:4px; }
+  .pochemu { font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.45; }
+
+  .listy { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .list-knopka { background:var(--surface-2); border:none; border-radius:9px; padding:7px 12px;
+    font-family:inherit; font-size:12.5px; color:var(--ink); cursor:pointer; }
+  .list-knopka:hover { background:var(--accent); color:var(--accent-ink); }
+
+  .otvet { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .knopka { border:none; border-radius:10px; padding:9px 14px; font-family:inherit; font-size:13.5px;
+    font-weight:700; cursor:pointer; flex:1; min-width:120px; }
+  .k-da { background:var(--ok); color:#fff; }
+  .k-net { background:var(--surface-2); color:var(--ink); }
+  .k-da:disabled, .k-net:disabled { opacity:.5; cursor:default; }
+  .pravka { width:100%; margin-top:8px; padding:10px 12px; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface-2); font-family:inherit; font-size:14px; }
+  .sostoyanie { font-size:12.5px; color:var(--muted); margin-top:8px; min-height:16px; }
+
+  .prosmotr { position:fixed; inset:0; background:rgba(38,36,32,.9); z-index:80; display:flex;
+    flex-direction:column; padding:12px; }
+  .prosmotr.skryt { display:none; }
+  .prosmotr img { flex:1; min-height:0; object-fit:contain; width:100%; }
+  .prosmotr-verh { display:flex; justify-content:space-between; align-items:center; color:#fff; padding:4px 4px 10px; font-size:14px; }
+  .prosmotr-verh button { background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px;
+    padding:8px 14px; font-family:inherit; font-size:14px; cursor:pointer; }
+  .podskazka { color:var(--muted); font-size:12.5px; margin-top:6px; }
+</style>
+</head>
+<body>
+
+<header class="top"><div class="row">
+  <h1>Ильинка — пробный разбор</h1>
+  <div class="pod" id="shapka">…</div>
+</div></header>
+
+<div class="shell">
+
+  <div class="zamechanie">
+    <b>Это проверка, а не готовые данные.</b> В реестр ничего не занесено. Ниже — что я понял из
+    ваших документов. Рядом с каждым выводом кнопка «показать лист»: открывается сама страница,
+    откуда это взято. Скажите по каждому пункту «верно» или «не так» — и я занесу только
+    подтверждённое.
+  </div>
+
+  <h2>Помещения</h2>
+  <div id="pomeshcheniya"></div>
+
+  <h2>Наши изделия — что где стоит</h2>
+  <div class="pod" style="margin-bottom:12px">В рабочей документации наши изделия названы
+    ИНД-1…ИНД-12, в списке Юлии те же вещи — ИИ1…ИИ18. Сопоставил по номеру и названию.</div>
+  <div id="izdeliya"></div>
+
+  <h2>Что не сходится — нужно ваше решение</h2>
+  <div id="voprosy"></div>
+
+</div>
+
+<div class="prosmotr skryt" id="prosmotr">
+  <div class="prosmotr-verh">
+    <span id="prosmotrPodpis"></span>
+    <button id="prosmotrZakryt">Закрыть ✕</button>
+  </div>
+  <img id="prosmotrKartinka" alt="">
+</div>
+
+<script>
+"use strict";
+const MOSTIK = "https://script.google.com/macros/s/AKfycbzOiAJDQYpEbfrSioBqxFj2McrOhiAGRgLDzWTAuSEuHxvQRbDWt3YVfKddD5S4jkZueA/exec";
+let D = null;
+
+function ek(s){ return String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+function pokazatList(fajl, podpis) {
+  document.getElementById("prosmotrKartinka").src = "listy/" + fajl;
+  document.getElementById("prosmotrPodpis").textContent = podpis;
+  document.getElementById("prosmotr").classList.remove("skryt");
+}
+document.getElementById("prosmotrZakryt").addEventListener("click", () =>
+  document.getElementById("prosmotr").classList.add("skryt"));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.getElementById("prosmotr").classList.add("skryt");
+});
+
+function knopkiListov(listy) {
+  return `<div class="listy">${listy.map(l =>
+    `<button class="list-knopka" data-fajl="${l.fajl}" data-podpis="${ek(l.podpis)}">📄 ${ek(l.podpis)}</button>`
+  ).join("")}</div>`;
+}
+
+function blokOtveta(id, chtoProveryali, chtoPonyal, listPodpis) {
+  return `<div class="otvet" data-id="${ek(id)}"
+      data-chto="${ek(chtoProveryali)}" data-ponyal="${ek(chtoPonyal)}" data-list="${ek(listPodpis)}">
+      <button class="knopka k-da">Верно</button>
+      <button class="knopka k-net">Не так</button>
+    </div>
+    <textarea class="pravka" rows="2" placeholder="Если не так — напишите, как на самом деле" style="display:none"></textarea>
+    <div class="sostoyanie"></div>`;
+}
+
+async function otpravit(el, verdikt) {
+  const blok = el.closest(".karta") || el.closest(".zamechanie");
+  const otvet = blok.querySelector(".otvet");
+  const pravka = blok.querySelector(".pravka");
+  const sost = blok.querySelector(".sostoyanie");
+  if (verdikt === "не так" && pravka.style.display === "none") {
+    pravka.style.display = "block"; pravka.focus();
+    sost.textContent = "Напишите, как правильно, и нажмите «Не так» ещё раз.";
+    return;
+  }
+  otvet.querySelectorAll("button").forEach(b => b.disabled = true);
+  sost.textContent = "Отправляю…";
+  try {
+    const res = await fetch(MOSTIK, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Разбор_Ильинка", prefiksID: "ИЛЬ",
+      klyuchPovtora: { "Что проверяли": otvet.dataset.chto },
+      znacheniya: {
+        "Кто отправил": "Мансур",
+        "Что проверяли": otvet.dataset.chto,
+        "Что я понял": otvet.dataset.ponyal,
+        "Вердикт": verdikt,
+        "Как на самом деле": pravka.value.trim(),
+        "Лист источника": otvet.dataset.list,
+      },
+    }) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || "мостик отказал");
+    blok.classList.remove("vopros", "net", "da");
+    blok.classList.add(verdikt === "верно" ? "da" : "net");
+    sost.textContent = verdikt === "верно" ? "✓ Принято: верно." : "✓ Принято: поправка записана.";
+    pravka.style.display = "none";
+  } catch (e) {
+    otvet.querySelectorAll("button").forEach(b => b.disabled = false);
+    sost.textContent = "Не получилось отправить: " + e.message;
+  }
+}
+
+function narisovat() {
+  const o = D.objekt;
+  document.getElementById("shapka").innerHTML =
+    `${ek(o.adres)} · документация от ${ek(o.data_dokumentacii)} · ${ek(o.ploshchad_vsego)}<br>` +
+    D.objekt.uchastniki.map(ek).join(" · ");
+
+  // помещения
+  const pom = D.pomeshcheniya;
+  document.getElementById("pomeshcheniya").innerHTML = `
+    <div class="karta">
+      <table>
+        <tr><th>№</th><th>Помещение</th><th>Площадь</th></tr>
+        ${pom.map(p => `<tr><td class="mono">${p.nomer}</td><td>${ek(p.imya)}</td><td class="mono">${ek(p.ploshchad)} м²</td></tr>`).join("")}
+      </table>
+      <div class="podskazka">Взято с листа 10 «План маркировки мебели и оборудования».</div>
+      ${knopkiListov([{fajl:"rd-10.jpg", podpis:"лист 10 — план маркировки"}])}
+      ${blokOtveta("pom", "Список помещений и площади",
+        pom.map(p => p.nomer + " " + p.imya + " " + p.ploshchad).join("; "), "РД лист 10")}
+    </div>`;
+
+  // изделия
+  const est = D.sopostavlenie.filter(z => z.uverennost === "уверенно");
+  document.getElementById("izdeliya").innerHTML = est.map(z => {
+    const p = pom.find(x => x.nomer === z.pom) || {};
+    return `<div class="karta">
+      <div class="verh">
+        <span class="kod">${ek(z.kod)}</span><span class="kod">${ek(z.ii || "")}</span>
+        <span class="metka m-da">сходится</span>
+      </div>
+      <div class="chto">${ek(z.nazvanie)}</div>
+      <div class="gde">Помещение ${z.pom} — ${ek(p.imya || "?")}, ${ek(p.ploshchad || "?")} м²
+        · у Юлии: «${ek(z.ii_chto || "")}»${z.ii_kolichestvo ? " · " + ek(z.ii_kolichestvo) : ""}</div>
+      <div class="pochemu">${ek(z.pochemu)}</div>
+      ${knopkiListov([
+        {fajl:"rd-11.jpg", podpis:"лист 11 — ведомость мебели"},
+        {fajl:"rd-10.jpg", podpis:"лист 10 — план маркировки"},
+        {fajl:"si-0" + z.ii_list + ".jpg", podpis:"список Юлии, стр. " + z.ii_list},
+      ])}
+      ${blokOtveta(z.kod, z.kod + " ↔ " + z.ii,
+        z.nazvanie + " · помещение " + z.pom + " (" + (p.imya||"?") + ")", "РД лист 11")}
+    </div>`;
+  }).join("");
+
+  // спорное
+  const spornoe = D.sopostavlenie.filter(z => z.uverennost !== "уверенно");
+  const chasti = [];
+  spornoe.forEach(z => {
+    const p = pom.find(x => x.nomer === z.pom) || {};
+    const netPary = z.uverennost === "нет пары";
+    chasti.push(`<div class="karta vopros">
+      <div class="verh"><span class="kod">${ek(z.kod)}</span>
+        <span class="metka m-vopros">${netPary ? "нет в списке Юлии" : "под вопросом"}</span></div>
+      <div class="chto">${ek(z.nazvanie)}</div>
+      <div class="gde">Помещение ${z.pom} — ${ek(p.imya || "?")}${z.ii ? " · у Юлии «" + ek(z.ii_chto) + "» (" + ek(z.ii) + ")" : ""}</div>
+      <div class="pochemu">${ek(z.pochemu)}${netPary ? ". Это наше изделие или его делает кто-то другой?" : ""}</div>
+      ${knopkiListov([{fajl:"rd-11.jpg", podpis:"лист 11 — ведомость мебели"}])}
+      ${blokOtveta(z.kod, z.kod + " — " + z.nazvanie,
+        netPary ? "в списке Юлии пары нет" : "сопоставил с " + z.ii, "РД лист 11")}
+    </div>`);
+  });
+  D.tolko_u_yulii.forEach(z => {
+    chasti.push(`<div class="karta vopros">
+      <div class="verh"><span class="kod">${ek(z.kod)}</span>
+        <span class="metka m-vopros">нет в документации</span></div>
+      <div class="chto">${ek(z.chto)}</div>
+      <div class="gde">Есть в списке Юлии${z.kolichestvo ? " · " + ek(z.kolichestvo) : ""},
+        но в рабочей документации такого изделия нет — значит, помещение для него неизвестно.</div>
+      ${knopkiListov([{fajl:"si-0" + z.list + ".jpg", podpis:"список Юлии, стр. " + z.list}])}
+      ${blokOtveta(z.kod, z.kod + " — " + z.chto, "в рабочей документации не нашёл", "список стр. " + z.list)}
+    </div>`);
+  });
+  document.getElementById("voprosy").innerHTML = chasti.join("");
+
+  document.querySelectorAll(".list-knopka").forEach(b =>
+    b.addEventListener("click", () => pokazatList(b.dataset.fajl, b.dataset.podpis)));
+  document.querySelectorAll(".k-da").forEach(b => b.addEventListener("click", () => otpravit(b, "верно")));
+  document.querySelectorAll(".k-net").forEach(b => b.addEventListener("click", () => otpravit(b, "не так")));
+}
+
+fetch("razbor.json").then(r => r.json()).then(d => { D = d; narisovat(); })
+  .catch(e => { document.getElementById("pomeshcheniya").innerHTML =
+    "<div class='karta'>Не удалось прочитать разбор: " + ek(e.message) + "</div>"; });
+</script>
+</body>
+</html>
