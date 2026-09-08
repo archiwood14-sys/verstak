@@ -1669,10 +1669,16 @@ async function otpravitKorrektirovku() {
   korrStatus("Отправляю…");
   try {
     const telo = {
-      type: "korrektirovka", text: tekst,
-      kto: localStorage.getItem("verstak_role_name") || "",
-      objekt: korrCtx.objekt, blok: korrCtx.blok, recordId: korrCtx.recId,
-      kod: korrCtx.kod, chtoBylo: korrCtx.chtoBylo,
+      type: "stroka", list: "Корректировки", prefiksID: "КОР",
+      klyuchPovtora: { "Номер записи": korrCtx.recId, "Текст корректировки": tekst },
+      kolonkaAudio: "Ссылка на аудио на Диске", imyaAudio: "korr_" + korrCtx.recId,
+      znacheniya: {
+        "Кто отправил": localStorage.getItem("verstak_role_name") || "",
+        "Объект": korrCtx.objekt, "Блок": korrCtx.blok, "Номер записи": korrCtx.recId,
+        "Код изделия": korrCtx.kod, "Что было в записи": korrCtx.chtoBylo,
+        "Тип (текст/голос)": korrBlob ? "голос" : "текст",
+        "Текст корректировки": tekst, "Статус": "новая",
+      },
     };
     if (korrBlob) telo.audioBase64 = await blobToBase64(korrBlob);
     const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify(telo) });
@@ -1795,8 +1801,14 @@ async function requestDraft() {
   el.innerHTML = `<div class="draft-wait">Отправляю просьбу…</div>`;
   try {
     const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
-      type: "draft_request", objekt: ctx.objekt, blok: ctx.blok, recordId: ctx.recId,
-      kod: ctx.kod, tekstZapisi: ctx.tekst, kto: ctx.kto, komu: ctx.komu, fajly: ctx.fajly,
+      type: "stroka", list: "Исходящие_ответы", prefiksID: "ЧЕРН",
+      klyuchPovtora: { "Номер записи": ctx.recId },
+      znacheniya: {
+        "Объект": ctx.objekt, "Блок-источник": ctx.blok, "Номер записи": ctx.recId,
+        "Код изделия": ctx.kod, "Текст записи": ctx.tekst, "Кто": ctx.kto,
+        "Кому": ctx.komu, "Файлы (имя — ссылка)": ctx.fajly,
+        "Статус (новое/готово/ошибка)": "новое",
+      },
     }) });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || "мостик отказал");
@@ -1832,7 +1844,15 @@ async function openDraftChannel(id, kanal) {
     window.location.href = "mailto:?body=" + encodeURIComponent(text);
   }
   if (INBOX_URL) {
-    try { await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({ type: "draft_opened", id, kanal }) }); }
+    try {
+      await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+        type: "yacheyka", list: "Исходящие_ответы", klyuchevoePole: "ID",
+        klyuchevoeZnachenie: id, kolonka: "Канал открытия", znachenie: kanal }) });
+      await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+        type: "yacheyka", list: "Исходящие_ответы", klyuchevoePole: "ID",
+        klyuchevoeZnachenie: id, kolonka: "Дата открытия",
+        znachenie: new Date().toISOString().slice(0, 16).replace("T", " ") }) });
+    }
     catch (e) { /* открытие уже произошло, лог — не критично */ }
   }
 }
@@ -2270,7 +2290,8 @@ async function saveSrok(recId, srokValue) {
   if (statusEl) statusEl.textContent = "Сохраняю…";
   try {
     await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
-      type: "srok", recordId: recId, blok: "Б9_Обязательства", srok: srokValue,
+      type: "yacheyka", list: "Б9_Обязательства", klyuchevoePole: "Номер записи",
+      klyuchevoeZnachenie: recId, kolonka: "Срок", znachenie: srokValue,
     }) });
     if (statusEl) statusEl.textContent = "Сохранено: " + srokValue;
   } catch (e) {
@@ -2292,9 +2313,18 @@ async function sendComment() {
     let payload;
     if (recordedBlob) {
       const b64 = await blobToBase64(recordedBlob);
-      payload = { type: "voice", audioBase64: b64, text: text, objekt: STATE.activeObj || "" };
+      payload = { type: "stroka", list: "Входящие", prefiksID: "ВХ",
+        audioBase64: b64, kolonkaAudio: "Ссылка на аудио на Диске", imyaAudio: "golos",
+        znacheniya: { "Тип (текст/голос)": "голос", "Текст (или транскрипт)": text,
+          "Объект (если указан)": STATE.activeObj || "",
+          "Кто отправил (если известно)": localStorage.getItem("verstak_role_name") || "",
+          "Статус обработки (новое/обработано/ошибка)": "новое" } };
     } else {
-      payload = { type: "text", text: text, objekt: STATE.activeObj || "" };
+      payload = { type: "stroka", list: "Входящие", prefiksID: "ВХ",
+        znacheniya: { "Тип (текст/голос)": "текст", "Текст (или транскрипт)": text,
+          "Объект (если указан)": STATE.activeObj || "",
+          "Кто отправил (если известно)": localStorage.getItem("verstak_role_name") || "",
+          "Статус обработки (новое/обработано/ошибка)": "новое" } };
     }
     await fetch(INBOX_URL, { method: "POST", body: JSON.stringify(payload) });
     status.textContent = "Отправлено. Разберётся в течение часа.";
