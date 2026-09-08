@@ -301,17 +301,11 @@
   }
   .sidebar.open { transform: none; }
   @media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
+  /* На компьютере меню тоже прячется. Раньше оно висело открытым всегда и занимало
+     место без нужды (замечание Мансура, 08.09.2026) — теперь везде одинаково:
+     нужно меню — нажал ☰, не нужно — его нет. */
   @media (min-width: 1000px) {
-    .layout-row { display: flex; justify-content: center; align-items: flex-start; gap: 26px; padding: 0 16px; }
-    .sidebar {
-      position: sticky; top: 84px; bottom: auto; z-index: auto; transform: none;
-      width: 220px; flex-shrink: 0;
-      background: var(--surface); border: 1px solid var(--line); border-right: 1px solid var(--line);
-      border-radius: 14px; padding: 12px;
-    }
-    .menu-btn { display: none; }
-    .sidebar-backdrop { display: none !important; }
-    .shell { padding-left: 0; padding-right: 0; }
+    .sidebar { width: 300px; padding-top: 76px; }
   }
   .sidebar-link {
     display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px 10px;
@@ -456,6 +450,8 @@
   .otvet-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 700; margin-bottom: 5px; }
   .otvet-hint { font-size: 11.5px; color: var(--muted); margin-top: 7px; line-height: 1.4; }
   .oblig-card.otvechen { border-left: 4px solid var(--accent); }
+
+  .skryto-podpis { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: 18px; padding-top: 10px; border-top: 1px dashed var(--line); }
 
   .korr-head { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
   .korr-hint { font-size: 11.5px; color: var(--muted); line-height: 1.4; margin-bottom: 10px; }
@@ -679,16 +675,56 @@ const BLOCKS = [
   {tab: "Б16_Расхождения", label: "Расхождения", emoji: "🔴", textCol: "О чём спор", openByDefault: true},
 ];
 
-let STATE = { objects: [], items: [], soglas: {}, blocks: {}, itemsByCode: new Map(), codeIndexSet: new Set(), activeObj: null, navStack: [] };
+let STATE = {
+  navOpisaniya: [], tekushchiy: null, skorrektirovano: new Set(), objects: [], items: [], soglas: {}, blocks: {}, itemsByCode: new Map(), codeIndexSet: new Set(), activeObj: null, navStack: [] };
 
 // Настоящая история переходов — просьба 02.09.2026: "кнопка назад должна вести строго назад,
 // и если несколько раз нажать — переходить пока не пройдёт по всем нашим действиям".
 // Каждый переход — маленькая функция-замыкание, которая умеет заново себя отрисовать.
 function nav(thunk) {
   STATE.navStack.push(thunk);
-  thunk();
+  thunk();                                     // экран сам говорит, что он такое
+  STATE.navOpisaniya.push(STATE.tekushchiy || { v: "home" });
+  sohranit_mesto();
   updateBackBtn();
 }
+/* ---------------- где человек сейчас находится ---------------- */
+// Обновление страницы больше не выкидывает на главную: приложение запоминает, куда
+// человек дошёл, и возвращает туда же (замечание Мансура, 08.09.2026). Храним не сами
+// функции, а описание экрана — его можно записать и потом разобрать обратно.
+const MESTO_KLYUCH = "verstak_mesto";
+
+function sohranit_mesto() {
+  try { sessionStorage.setItem(MESTO_KLYUCH, JSON.stringify(STATE.navOpisaniya)); }
+  catch (e) { /* приватное окно или запрет на хранение — просто не запомним место */ }
+}
+
+function po_opisaniyu(op) {
+  if (!op || !op.v) return null;
+  if (op.v === "home") return () => renderHome();
+  if (op.v === "dash") return () => { STATE.activeObj = op.obj; renderDashboard(); };
+  if (op.v === "item") return () => renderItem(op.code);
+  if (op.v === "oblig") return () => renderObligations(op.obj);
+  if (op.v === "fin") return () => renderObjectFinance(op.obj);
+  if (op.v === "napr") return () => renderObligDirection(op.kod);
+  if (op.v === "spisok") return () => pokazatSpisok(op.vid);
+  return null;
+}
+
+function vernutsya_gde_byl() {
+  let spisok;
+  try { spisok = JSON.parse(sessionStorage.getItem(MESTO_KLYUCH) || "null"); }
+  catch (e) { return false; }
+  if (!Array.isArray(spisok) || !spisok.length) return false;
+  const thunki = spisok.map(po_opisaniyu);
+  if (thunki.some(t => !t)) return false;
+  STATE.navStack = thunki;
+  STATE.navOpisaniya = spisok;
+  try { thunki[thunki.length - 1](); } catch (e) { return false; }
+  updateBackBtn();
+  return true;
+}
+
 function goBack() {
   // Открытое окно закрываем первым: раньше «назад» перерисовывала страницу под окном,
   // а само окно оставалось висеть поверх (замечание Мансура, 03.09.2026).
@@ -698,7 +734,9 @@ function goBack() {
   if (sheet && !sheet.classList.contains("hidden")) { closeSheet(); return; }
   if (STATE.navStack.length <= 1) return;
   STATE.navStack.pop();
+  STATE.navOpisaniya.pop();
   STATE.navStack[STATE.navStack.length - 1]();
+  sohranit_mesto();
   updateBackBtn();
 }
 function updateBackBtn() {
@@ -802,6 +840,11 @@ function buildIndices(raw) {
   STATE.codeIndexSet = new Set(codeIndex.keys());
 
   STATE.blocks = raw.blockData;
+  // Номера записей, по которым человек уже сказал своё — их карточки из рабочих списков
+  // убираем. Список подтягивается живьём; если сети нет (например, внутри превью),
+  // остаётся пустым, и тогда просто ничего не скрывается.
+  if (!STATE.skorrektirovano) STATE.skorrektirovano = new Set();
+  zagruzit_skorrektirovannye();
 
   // Сегменты объектов строим по коротким именам, которыми реально помечены записи
   // (поле "Объект" в Б4/Б7-Б16) — а не по полю "Название" в Б1, оно бывает длиннее
@@ -866,14 +909,13 @@ function sobratVnimanie(objName) {
   const out = [];
 
   (STATE.blocks["Б16_Расхождения"] || []).forEach(r => {
-    if (r["Объект"] !== objName) return;
-    if ((r["Разрешено ли"] || "").trim().toLowerCase() === "да") return;
+    if (r["Объект"] !== objName || !razbirat(r)) return;
     out.push({ r, blok: "Б16_Расхождения", zagolovok: r["О чём спор"] || "",
                metka: "расхождение источников", cls: "" });
   });
 
   (STATE.blocks["Б8_Открытые_вопросы"] || []).forEach(r => {
-    if (r["Объект"] !== objName) return;
+    if (r["Объект"] !== objName || !razbirat(r)) return;
     const k = r["Критичность"] || "";
     const krasnyy = k.indexOf("🔴") >= 0;
     const oranzhevyy = k.indexOf("🟠") >= 0;
@@ -884,7 +926,7 @@ function sobratVnimanie(objName) {
   });
 
   (STATE.blocks["Б9_Обязательства"] || []).forEach(r => {
-    if (r["Объект"] !== objName) return;
+    if (r["Объект"] !== objName || !razbirat(r)) return;
     const u = urgencyKey(r)[0];
     if (u !== 0 && u !== 4) return;
     out.push({ r, blok: "Б9_Обязательства", zagolovok: r["Что"] || "",
@@ -897,6 +939,7 @@ function sobratVnimanie(objName) {
 
 /* ---------------- рендер: дашборд ---------------- */
 function renderDashboard() {
+  STATE.tekushchiy = { v: "dash", obj: STATE.activeObj };
   const app = document.getElementById("app");
 
   const segs = STATE.objectNames.map(name => {
@@ -1107,6 +1150,39 @@ function rasshifrovatIstochnik(s) {
 // нашла в переписке похожий ответ», а не «закрыто»: закрывает только человек.
 const POMETKA_OTVECHENO = "🟨 похоже, уже отвечено:";
 
+/* ---------------- что человеку показывать, а что убрать с глаз ---------------- */
+// Просьба Мансура, 08.09.2026: «когда Юлия отправила корректировку — карточка должна
+// пропасть, чтобы не путаться, в каких уже была. И выполненное не нужно акцентировать:
+// понадобится — она обратится за поиском».
+//
+// Ничего не удаляется и не теряется: записи остаются в реестре и видны на странице
+// своего изделия. Прячем их только из рабочих списков, где человек разбирает дела.
+
+function vypolneno(r) {
+  const s = ((r["Статус (выполнено/просрочено/отменено/срок не назван)"] || "") + " " +
+             (r["Разрешено ли"] || "")).toLowerCase();
+  return s.includes("выполнено") || s.includes("отменено") ||
+         (r["Разрешено ли"] || "").trim().toLowerCase() === "да";
+}
+
+function uzheSkazala(r) {
+  const nomer = r["Номер записи"] || "";
+  return !!nomer && STATE.skorrektirovano.has(nomer);
+}
+
+// Один общий фильтр для всех рабочих списков — чтобы правило было в одном месте,
+// а не расползлось по десяти экранам.
+function razbirat(r) {
+  return !vypolneno(r) && !uzheSkazala(r);
+}
+
+function skrytoPodpis(bylo, stalo) {
+  const n = bylo - stalo;
+  if (n <= 0) return "";
+  return `<div class="skryto-podpis">Скрыто ${n} — выполненные и те, по которым уже
+    отправлена корректировка. Они никуда не делись: их видно на странице своего изделия.</div>`;
+}
+
 function pohozheOtvecheno(r) {
   return (r["Как закрыт (ссылка на Б7)"] || "").startsWith(POMETKA_OTVECHENO)
     || (r["Чем подтверждено выполнение"] || "").startsWith(POMETKA_OTVECHENO);
@@ -1115,6 +1191,21 @@ function pohozheOtvecheno(r) {
 function najdennyjOtvet(r) {
   const s = (r["Как закрыт (ссылка на Б7)"] || "") || (r["Чем подтверждено выполнение"] || "");
   return s.startsWith(POMETKA_OTVECHENO) ? s.slice(POMETKA_OTVECHENO.length).trim() : "";
+}
+
+async function zagruzit_skorrektirovannye() {
+  try {
+    const rows = await fetchTab(REESTR_ID, "Корректировки");
+    STATE.skorrektirovano = new Set(rows.map(r => (r["Номер записи"] || "").trim()).filter(Boolean));
+    if (STATE.skorrektirovano.size) pererisovat();
+  } catch (e) { /* нет сети — ничего не скрываем, это безопаснее */ }
+}
+
+// Перерисовать то, на что человек сейчас смотрит: после отправки корректировки карточка
+// должна исчезнуть сразу, а не после перезагрузки страницы.
+function pererisovat() {
+  const posledniy = STATE.navStack[STATE.navStack.length - 1];
+  if (typeof posledniy === "function") posledniy();
 }
 
 function findRecord(blok, recId) {
@@ -1371,6 +1462,10 @@ async function otpravitKorrektirovku() {
     korrBlob = null;
     korrStatus(`Принято (${d.id}). Разберём и сверим с документами — результат появится здесь же.`);
     pokazatProshlyeKorrektirovki(korrCtx.recId);
+    // Карточка должна пропасть из списка сразу — чтобы не путаться, по каким уже
+    // высказалась (просьба Мансура, 08.09.2026). Запись при этом остаётся в реестре.
+    STATE.skorrektirovano.add(korrCtx.recId);
+    setTimeout(() => { closeObligModal(); pererisovat(); }, 1400);
   } catch (e) {
     korrStatus("Не получилось отправить: " + e.message);
   }
@@ -1539,8 +1634,10 @@ function renderDraftArea(recId, blok, r, kod, relatedFiles) {
 }
 
 function renderObligations(objFilter) {
+  STATE.tekushchiy = { v: "oblig", obj: objFilter || "" };
   const app = document.getElementById("app");
-  const vse = (STATE.blocks["Б9_Обязательства"] || []).filter(r => !objFilter || r["Объект"] === objFilter);
+  const vseSyroe = (STATE.blocks["Б9_Обязательства"] || []).filter(r => !objFilter || r["Объект"] === objFilter);
+  const vse = vseSyroe.filter(razbirat);
   const showObj = !objFilter;
 
   const gruppy = NAPRAVLENIYA_PORYADOK.map(([kod, label]) => {
@@ -1566,7 +1663,8 @@ function renderObligations(objFilter) {
     <div class="item-detail-wrap">
     <div class="item-head"><h1>${objFilter ? escapeHtml(objFilter) + " — " : ""}Мои обязательства</h1></div>
     ${objLinks}
-    ${gruppy || '<div class="empty-hint">Обязательств пока нет в реестре.</div>'}
+    ${gruppy || '<div class="empty-hint">Разбирать нечего — всё либо выполнено, либо уже прокомментировано.</div>'}
+    ${skrytoPodpis(vseSyroe.length, vse.length)}
     </div>
   `;
   wireCards(app);
@@ -1574,10 +1672,11 @@ function renderObligations(objFilter) {
 
 /* ---------------- главная страница: без объекта ---------------- */
 function renderHome() {
+  STATE.tekushchiy = { v: "home" };
   STATE.activeObj = null;
   const app = document.getElementById("app");
-  const vse = STATE.blocks["Б9_Обязательства"] || [];
-  const vseVoprosy = STATE.blocks["Б8_Открытые_вопросы"] || [];
+  const vse = (STATE.blocks["Б9_Обязательства"] || []).filter(razbirat);
+  const vseVoprosy = (STATE.blocks["Б8_Открытые_вопросы"] || []).filter(razbirat);
   // Часть вопросов машина уже сверила с перепиской и нашла ответ. Она их НЕ закрывает —
   // только откладывает в отдельную кучку «подтвердить», чтобы человек не перерывал заново
   // то, на что ответ уже лежит в переписке (просьба Мансура, 07.09.2026).
@@ -1618,8 +1717,7 @@ function renderHome() {
   const roleName = localStorage.getItem("verstak_role_name") || "";
   const roleDir = localStorage.getItem("verstak_role_dir") || "";
   const roleDirLabel = roleDir ? (NAPRAVLENIYA_PORYADOK.find(([k]) => k === roleDir) || [roleDir, roleDir])[1] : "";
-  const roleBanner = roleName ? `<div class="home-greeting">Рабочий стол — ${escapeHtml(roleName)}</div>`
-    : `<div class="home-greeting">Рабочий стол</div>`;
+  const roleBanner = `<div class="home-greeting">Рабочий стол Юлии</div>`;
   const roleShortcut = roleDir ? `<button class="btn ghost" id="roleShortcutBtn" style="margin:2px 0 18px">→ Моё направление: ${escapeHtml(roleDirLabel)}</button>` : "";
 
   app.innerHTML = `
@@ -1640,23 +1738,37 @@ function renderHome() {
   app.querySelectorAll(".home-obj-btn").forEach(el => el.addEventListener("click", () => nav(() => {
     STATE.activeObj = el.dataset.obj; renderDashboard();
   })));
-  app.querySelector('[data-view="all"]').addEventListener("click", () => nav(() => renderRecordList(
-    vse.slice().sort((a, b) => { const ka = urgencyKey(a), kb = urgencyKey(b); return ka[0] !== kb[0] ? ka[0] - kb[0] : ka[1].localeCompare(kb[1]); }),
-    "Б9_Обязательства", "Все обязательства")));
-  app.querySelector('[data-view="overdue"]').addEventListener("click", () => nav(() => renderRecordList(
-    vse.filter(r => urgencyKey(r)[0] === 0), "Б9_Обязательства", "Просроченные обязательства")));
-  app.querySelector('[data-view="confirm"]').addEventListener("click", () => nav(() => renderRecordList(
-    naPodtverzhdenie, "Б8_Открытые_вопросы",
-    "Похоже, уже отвечено — подтвердите или поправьте")));
-  app.querySelector('[data-view="questions"]').addEventListener("click", () => nav(() => renderRecordList(
-    voprosy.slice().sort((a, b) => (b["Критичность"] || "").localeCompare(a["Критичность"] || "")),
-    "Б8_Открытые_вопросы", "Открытые вопросы — все объекты")));
-  app.querySelector('[data-view="decisions"]').addEventListener("click", () => nav(() => renderRecordList(
-    (STATE.blocks["Б7_Решения"] || []).slice().reverse(), "Б7_Решения", "Решения — все объекты")));
+  app.querySelectorAll(".stat-tile").forEach(el => el.addEventListener("click", () =>
+    nav(() => pokazatSpisok(el.dataset.view))));
+}
+
+// Пять списков с плиток главной, собранные в одном месте: так их можно и открыть по
+// нажатию, и восстановить после обновления страницы, не расходясь в двух местах.
+function spisokPoVidu(vid) {
+  const vse = (STATE.blocks["Б9_Обязательства"] || []).filter(razbirat);
+  const vseVoprosy = (STATE.blocks["Б8_Открытые_вопросы"] || []).filter(razbirat);
+  const srochnost = (a, b) => {
+    const ka = urgencyKey(a), kb = urgencyKey(b);
+    return ka[0] !== kb[0] ? ka[0] - kb[0] : ka[1].localeCompare(kb[1]);
+  };
+  if (vid === "all") return [vse.slice().sort(srochnost), "Б9_Обязательства", "Все обязательства"];
+  if (vid === "overdue") return [vse.filter(r => urgencyKey(r)[0] === 0), "Б9_Обязательства", "Просроченные обязательства"];
+  if (vid === "confirm") return [vseVoprosy.filter(pohozheOtvecheno).concat(vse.filter(pohozheOtvecheno)),
+    "Б8_Открытые_вопросы", "Похоже, уже отвечено — подтвердите или поправьте"];
+  if (vid === "questions") return [vseVoprosy.filter(r => !pohozheOtvecheno(r))
+    .sort((a, b) => (b["Критичность"] || "").localeCompare(a["Критичность"] || "")),
+    "Б8_Открытые_вопросы", "Открытые вопросы — все объекты"];
+  return [(STATE.blocks["Б7_Решения"] || []).slice().reverse(), "Б7_Решения", "Решения — все объекты"];
+}
+
+function pokazatSpisok(vid) {
+  const [rows, blok, zagolovok] = spisokPoVidu(vid);
+  renderRecordList(rows, blok, zagolovok, { v: "spisok", vid });
 }
 
 /* ---------------- обязательства одного направления, все объекты (после клика по карточке) --- */
 function renderObligDirection(kod) {
+  STATE.tekushchiy = { v: "napr", kod };
   const label = (NAPRAVLENIYA_PORYADOK.find(([k]) => k === kod) || [kod, kod])[1];
   const rows = (STATE.blocks["Б9_Обязательства"] || []).filter(r => (r["Направление"] || "неясно") === kod)
     .sort((a, b) => { const ka = urgencyKey(a), kb = urgencyKey(b); return ka[0] !== kb[0] ? ka[0] - kb[0] : ka[1].localeCompare(kb[1]); });
@@ -1664,7 +1776,8 @@ function renderObligDirection(kod) {
 }
 
 /* ---------------- общий список карточек одного блока (для любого из переходов выше) ------- */
-function renderRecordList(rows, blok, title) {
+function renderRecordList(rows, blok, title, opisanie) {
+  if (opisanie) STATE.tekushchiy = opisanie;
   const app = document.getElementById("app");
   app.innerHTML = `
     <div class="item-detail-wrap home-wrap">
@@ -1677,6 +1790,7 @@ function renderRecordList(rows, blok, title) {
 
 /* ---------------- рендер: финансы и документы объекта ---------------- */
 function renderObjectFinance(objName) {
+  STATE.tekushchiy = { v: "fin", obj: objName };
   const app = document.getElementById("app");
   const obj = STATE.objects.find(o => o["Название"] === objName
     || (o["Название"] || "").includes(objName) || objName.includes(o["Название"] || "")) || {};
@@ -1727,6 +1841,7 @@ function renderObjectFinance(objName) {
 }
 
 function renderItem(code) {
+  STATE.tekushchiy = { v: "item", code };
   const app = document.getElementById("app");
   const it = STATE.items.find(x => normCode(x["Код"]) === normCode(code));
   const rec = STATE.itemsByCode.get(normCode(code)) || {};
@@ -2003,7 +2118,8 @@ function fillSidebar() {
     await loadAll();
     setFreshness();
     fillSidebar();
-    nav(() => renderHome());
+    // Обновление страницы возвращает туда же, где человек был, а не на главную.
+    if (!vernutsya_gde_byl()) nav(() => renderHome());
   } catch (e) {
     document.getElementById("app").innerHTML =
       `<div class="empty-hint">Не удалось прочитать реестр: ${escapeHtml(String(e && e.message || e))}</div>`;
