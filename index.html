@@ -451,6 +451,22 @@
   .otvet-hint { font-size: 11.5px; color: var(--muted); margin-top: 7px; line-height: 1.4; }
   .oblig-card.otvechen { border-left: 4px solid var(--accent); }
 
+  /* Поиск по досье изделия — всё, что о нём известно, ищется прямо в браузере. */
+  .dosye-blok { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 15px; margin: 14px 0; box-shadow: var(--shadow); }
+  .dosye-lbl { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+  .dosye-pole {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--surface-2); color: var(--ink); font-family: inherit; font-size: 14.5px;
+  }
+  .dosye-pole:focus { border-color: var(--accent); outline: none; }
+  .dosye-hint { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 10px; }
+  .dosye-nahodka { border-top: 1px dashed var(--line); padding: 11px 0 3px; }
+  .dosye-shapka { font-family: "PT Mono", monospace; font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .dosye-tekst { font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
+  .dosye-opis { color: var(--muted); font-size: 12.5px; margin-top: 5px; }
+  .dosye-citata { font-size: 13px; font-style: italic; color: var(--muted); margin-top: 5px; }
+  .dosye-nahodka mark { background: var(--brand-bg); color: var(--ink); font-weight: 700; padding: 0 2px; border-radius: 3px; }
+
   .skryto-podpis { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: 18px; padding-top: 10px; border-top: 1px dashed var(--line); }
 
   .korr-head { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
@@ -1208,6 +1224,87 @@ function pererisovat() {
   if (typeof posledniy === "function") posledniy();
 }
 
+/* ---------------- досье изделия: спросить и найти мгновенно ---------------- */
+// У Юлии Евгеньевны возник вопрос: «какая ручка у ИП12.1, какого цвета, из чего». Ответ
+// в наших данных есть, но размазан по сотне сообщений за год. Поэтому на каждое изделие
+// собран отдельный файл (reestr/sozdat_dosye.py): вся переписка про него, все чертежи с
+// ссылками, все записи реестра. Файл подгружается по требованию и ищется прямо в
+// браузере — без сети и без модели, мгновенно, как и просил Мансур (08.09.2026).
+const dosyeKesh = {};
+
+async function zagruzit_dosye(kod) {
+  if (dosyeKesh[kod]) return dosyeKesh[kod];
+  const res = await fetch("dosye/" + encodeURIComponent(kod) + ".json");
+  if (!res.ok) throw new Error("досье не найдено");
+  dosyeKesh[kod] = await res.json();
+  return dosyeKesh[kod];
+}
+
+function podsvetit(text, slova) {
+  let t = escapeHtml(text);
+  slova.forEach(s => {
+    if (s.length < 3) return;
+    t = t.replace(new RegExp("(" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi"),
+      '<mark>$1</mark>');
+  });
+  return t;
+}
+
+function iskat_v_dosye(d, zapros) {
+  const slova = zapros.toLowerCase().split(/\s+/).filter(s => s.length >= 3);
+  if (!slova.length) return [];
+  const podhodit = t => { const n = (t || "").toLowerCase(); return slova.every(s => n.includes(s)); };
+  const out = [];
+  (d.perepiska || []).forEach(z => {
+    const vse = (z.tekst || "") + " " + (z.opisanie || "") + " " + (z.fajl || "");
+    if (podhodit(vse)) out.push({ vid: "переписка", ...z });
+  });
+  (d.fajly || []).forEach(f => {
+    if (podhodit((f.imya || "") + " " + (f.opisanie || ""))) out.push({ vid: "файл", ...f });
+  });
+  (d.zapisi || []).forEach(r => {
+    if (podhodit((r.chto || "") + " " + (r.citata || ""))) out.push({ vid: "реестр", ...r });
+  });
+  return out;
+}
+
+function pokazat_nahodki(kod, zapros) {
+  const el = document.getElementById("dosyeRezultat");
+  if (!el) return;
+  const d = dosyeKesh[kod];
+  if (!d) { el.innerHTML = `<div class="dosye-hint">Досье ещё грузится…</div>`; return; }
+  if (!zapros.trim()) {
+    el.innerHTML = `<div class="dosye-hint">Про это изделие собрано:
+      ${(d.perepiska || []).length} упоминаний в переписке, ${(d.fajly || []).length} файлов,
+      ${(d.zapisi || []).length} записей реестра. Напишите слово — найду мгновенно.</div>`;
+    return;
+  }
+  const slova = zapros.toLowerCase().split(/\s+/).filter(s => s.length >= 3);
+  const nahodki = iskat_v_dosye(d, zapros);
+  if (!nahodki.length) {
+    el.innerHTML = `<div class="dosye-hint">По слову «${escapeHtml(zapros)}» ничего не нашлось.
+      Это не значит, что этого нет — возможно, называли иначе.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="dosye-hint">Нашлось ${nahodki.length}. Всё дословно, как было сказано.</div>` +
+    nahodki.slice(0, 60).map(n => {
+      if (n.vid === "файл") {
+        return `<div class="dosye-nahodka"><div class="dosye-shapka">файл</div>
+          <a class="file-link" href="${n.ssylka}" target="_blank" rel="noopener">📎 ${escapeHtml(n.imya || "")}</a>
+          <div class="dosye-tekst">${podsvetit((n.opisanie || "").slice(0, 700), slova)}</div></div>`;
+      }
+      if (n.vid === "реестр") {
+        return `<div class="dosye-nahodka"><div class="dosye-shapka">${escapeHtml(n.blok || "")} · ${escapeHtml(n.nomer || "")}${n.kogda ? " · " + escapeHtml(n.kogda) : ""}</div>
+          <div class="dosye-tekst">${podsvetit(n.chto || "", slova)}</div>
+          ${n.citata ? `<div class="dosye-citata">«${podsvetit(n.citata, slova)}»</div>` : ""}</div>`;
+      }
+      return `<div class="dosye-nahodka"><div class="dosye-shapka">${escapeHtml(n.kogda || "")} · ${escapeHtml(n.kto || "")} · ${escapeHtml(n.id || "")}</div>
+        ${n.tekst ? `<div class="dosye-tekst">${podsvetit(n.tekst.slice(0, 900), slova)}</div>` : ""}
+        ${n.fajl ? `<a class="file-link" href="${n.ssylka || "#"}" target="_blank" rel="noopener">📎 ${escapeHtml(n.fajl)}</a>` : ""}
+        ${n.opisanie ? `<div class="dosye-tekst dosye-opis">${podsvetit(n.opisanie.slice(0, 700), slova)}</div>` : ""}</div>`;
+    }).join("");
+}
+
 function findRecord(blok, recId) {
   return (STATE.blocks[blok] || []).find(r => r["Номер записи"] === recId);
 }
@@ -1937,12 +2034,30 @@ function renderItem(code) {
     </div>
     ${gde ? `<div class="item-desc">Стоит в помещении «${escapeHtml(gde)}»${it && it["Объект"] ? " · " + escapeHtml(it["Объект"]) : ""}</div>` : ""}
     ${pills ? `<div class="pillrow">${pills}</div>` : ""}
+    <div class="dosye-blok">
+      <div class="dosye-lbl">Спросить про это изделие</div>
+      <input class="dosye-pole" id="dosyePole" type="text" autocomplete="off"
+        placeholder="например: ручка · цвет · петли · размер · подсветка">
+      <div id="dosyeRezultat"><div class="dosye-hint">Собираю всё, что известно про изделие…</div></div>
+    </div>
     ${params}
     ${filesBox}
     ${sections ? `<div class="legend"><span><span class="conf g" style="display:inline-block"></span>подтверждено</span><span><span class="conf y" style="display:inline-block"></span>предложено, не проверено</span><span><span class="conf r" style="display:inline-block"></span>спорно</span></div>` : ""}
     ${sections || '<div class="empty-hint">Записей по этому коду в блоках смысла пока нет.</div>'}
     </div>
   `;
+
+  // Досье подгружаем сразу, а ищем — пока человек печатает, без всякого ожидания.
+  const pole = document.getElementById("dosyePole");
+  const kodDlyaDosye = it ? it["Код"] : code;
+  zagruzit_dosye(kodDlyaDosye)
+    .then(() => pokazat_nahodki(kodDlyaDosye, pole ? pole.value : ""))
+    .catch(() => {
+      const el = document.getElementById("dosyeRezultat");
+      if (el) el.innerHTML = `<div class="dosye-hint">Досье этого изделия недоступно.
+        Внутри превью на claude.ai сеть закрыта — поиск работает на настоящем сайте.</div>`;
+    });
+  if (pole) pole.addEventListener("input", () => pokazat_nahodki(kodDlyaDosye, pole.value));
 }
 
 /* ---------------- свежесть ---------------- */
