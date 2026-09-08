@@ -467,6 +467,18 @@
   .dosye-citata { font-size: 13px; font-style: italic; color: var(--muted); margin-top: 5px; }
   .dosye-nahodka mark { background: var(--brand-bg); color: var(--ink); font-weight: 700; padding: 0 2px; border-radius: 3px; }
 
+  .otvet-karta { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 13px 15px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .otvet-verh { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 7px; }
+  .otvet-bylo { font-size: 12.5px; color: var(--muted); line-height: 1.4; margin-bottom: 7px; }
+  .otvet-nomer { font-family: "PT Mono", monospace; font-size: 11px; display: block; margin-top: 3px; }
+  .otvet-skazala { font-size: 14.5px; line-height: 1.5; font-weight: 600; }
+  .otvet-proverka { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+  .otvet-k-zapisi { margin-top: 10px; font-size: 12.5px; padding: 7px 12px; }
+  .card-status.s-da { background: var(--accent-soft, #e4ebe5); color: var(--ok); }
+  .card-status.s-net { background: var(--brick-soft, #f3e3dd); color: var(--crit); }
+  .card-status.s-ruka { background: var(--surface-2); color: var(--warn); }
+  .card-status.s-zhdet { background: var(--surface-2); color: var(--muted); }
+
   .skryto-podpis { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin-top: 18px; padding-top: 10px; border-top: 1px dashed var(--line); }
 
   .korr-head { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
@@ -556,6 +568,7 @@
 <div class="layout-row">
   <nav class="sidebar" id="sidebar">
     <button class="sidebar-link" id="sbHome">🏠 Главная</button>
+    <button class="sidebar-link" id="sbMoiOtvety">💬 Мои ответы</button>
     <button class="sidebar-link" id="sbSwitchRole" style="font-weight:400;font-size:12.5px;color:var(--muted)">🔑 Сменить вход</button>
     <details class="sidebar-group" open>
       <summary>📦 Объекты</summary>
@@ -724,6 +737,7 @@ function po_opisaniyu(op) {
   if (op.v === "fin") return () => renderObjectFinance(op.obj);
   if (op.v === "napr") return () => renderObligDirection(op.kod);
   if (op.v === "spisok") return () => pokazatSpisok(op.vid);
+  if (op.v === "otvety") return () => renderMoiOtvety();
   return null;
 }
 
@@ -1305,6 +1319,64 @@ function pokazat_nahodki(kod, zapros) {
     }).join("");
 }
 
+/* ---------------- мои ответы: что я уже сказала и что из этого вышло ---------------- */
+// Карточка после ответа пропадает — и стало непонятно, что уже сказано, особенно голосом:
+// человек не слышит, как его расшифровали. Просьба Мансура, 08.09.2026.
+const SOSTOYANIYA = {
+  "новая": ["принято, ещё не разбирали", "s-zhdet"],
+  "расшифрована": ["голос расшифрован, идёт сверка", "s-zhdet"],
+  "подтвердилась": ["сверили — подтвердилось", "s-da"],
+  "не подтвердилась": ["сверили — наши данные говорят иначе", "s-net"],
+  "нужен человек": ["данных не хватило, нужен человек", "s-ruka"],
+};
+
+async function renderMoiOtvety() {
+  STATE.tekushchiy = { v: "otvety" };
+  const app = document.getElementById("app");
+  const imya = localStorage.getItem("verstak_role_name") || "";
+  app.innerHTML = `<div class="item-detail-wrap home-wrap">
+    <div class="item-head"><h1>Мои ответы</h1></div>
+    <div class="dosye-hint">Загружаю…</div></div>`;
+  let rows;
+  try {
+    rows = await fetchTab(REESTR_ID, "Корректировки");
+  } catch (e) {
+    app.innerHTML = `<div class="item-detail-wrap home-wrap"><div class="item-head"><h1>Мои ответы</h1></div>
+      <div class="empty-hint">Не получилось прочитать: ${escapeHtml(e.message)}.
+      Внутри превью на claude.ai сеть закрыта — на настоящем сайте работает.</div></div>`;
+    return;
+  }
+  const moi = rows.filter(r => !imya || (r["Кто отправил"] || "") === imya).reverse();
+  const spisok = moi.map(r => {
+    const st = (r["Статус"] || "новая").trim();
+    const [slovami, klass] = SOSTOYANIYA[st] || [st, "s-zhdet"];
+    const golos = (r["Тип (текст/голос)"] || "") === "голос";
+    const skazano = (r["Текст корректировки"] || "").trim();
+    return `<div class="otvet-karta">
+      <div class="otvet-verh">
+        <span class="entry-date">${escapeHtml((r["Дата и время"] || "").slice(0, 16))}</span>
+        <span class="card-status ${klass}">${escapeHtml(slovami)}</span>
+        ${golos ? `<span class="pill" style="padding:2px 8px;font-size:10.5px">🎤 голосом</span>` : ""}
+      </div>
+      <div class="otvet-bylo">Запись: ${escapeHtml(r["Что было в записи"] || "")}
+        <span class="otvet-nomer">${escapeHtml(r["Номер записи"] || "")} · ${escapeHtml(r["Объект"] || "")}</span></div>
+      <div class="otvet-skazala">${skazano ? escapeHtml(skazano)
+        : (golos ? "<i>голос ещё не расшифрован — будет здесь после ближайшего разбора</i>" : "")}</div>
+      ${r["Что показала проверка"] ? `<div class="otvet-proverka">${escapeHtml(r["Что показала проверка"])}</div>` : ""}
+      ${r["Номер записи"] ? `<button class="btn ghost otvet-k-zapisi" data-rec="${escapeHtml(r["Номер записи"])}" data-blok="${escapeHtml(r["Блок"] || "")}">Открыть запись</button>` : ""}
+    </div>`;
+  }).join("");
+
+  app.innerHTML = `<div class="item-detail-wrap home-wrap">
+    <div class="item-head"><h1>Мои ответы</h1></div>
+    <div class="dosye-hint">Всё, что вы сказали — по порядку, свежее сверху.
+      Голосовые показываются расшифрованными: так видно, что именно услышала машина.</div>
+    ${spisok || '<div class="empty-hint">Пока ничего не отправлено.</div>'}
+    </div>`;
+  app.querySelectorAll(".otvet-k-zapisi").forEach(b => b.addEventListener("click", () =>
+    openRecordModal(b.dataset.rec, b.dataset.blok)));
+}
+
 function findRecord(blok, recId) {
   return (STATE.blocks[blok] || []).find(r => r["Номер записи"] === recId);
 }
@@ -1538,11 +1610,19 @@ async function perekluchitZapisKorr() {
   }
 }
 
+let korrOtpravka = false;      // одна отправка за раз
+
 async function otpravitKorrektirovku() {
   const pane = document.getElementById("korrPane");
+  const knopka = pane.querySelector(".korr-send");
   const tekst = (pane.querySelector(".korr-text").value || "").trim();
   if (!tekst && !korrBlob) { korrStatus("Напишите или наговорите корректировку."); return; }
   if (!INBOX_URL) { korrStatus("Приём корректировок пока не настроен."); return; }
+  // 08.09.2026: ответы уходили по два, а один раз по три — на планшете нажатие
+  // срабатывало дважды. Держим засов и гасим кнопку, пока идёт отправка.
+  if (korrOtpravka) return;
+  korrOtpravka = true;
+  if (knopka) { knopka.disabled = true; knopka.textContent = "Отправляю…"; }
   korrStatus("Отправляю…");
   try {
     const telo = {
@@ -1565,6 +1645,9 @@ async function otpravitKorrektirovku() {
     setTimeout(() => { closeObligModal(); pererisovat(); }, 1400);
   } catch (e) {
     korrStatus("Не получилось отправить: " + e.message);
+    if (knopka) { knopka.disabled = false; knopka.textContent = "Отправить"; }
+  } finally {
+    korrOtpravka = false;
   }
 }
 
@@ -2211,6 +2294,7 @@ document.addEventListener("keydown", (e) => {
 });
 
 document.getElementById("sbHome").addEventListener("click", () => nav(() => renderHome()));
+document.getElementById("sbMoiOtvety").addEventListener("click", () => nav(() => renderMoiOtvety()));
 document.getElementById("sbSwitchRole").addEventListener("click", () => {
   localStorage.removeItem("verstak_gate_ok");
   localStorage.removeItem("verstak_role_name");
