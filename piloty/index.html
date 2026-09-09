@@ -49,6 +49,33 @@
   .prezhnie{margin-top:6px}
   .prezhnie summary{cursor:pointer;color:var(--tusklo);font-size:14px;padding:6px 0}
 
+  /* виды изделия: полоса миниатюр, листается пальцем на телефоне */
+  .vidy{margin-top:12px;padding-top:12px;border-top:1px solid var(--liniya)}
+  .vidy-shapka{font-size:13px;color:var(--tusklo);margin-bottom:8px}
+  .lenta-vidov{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+               padding-bottom:4px}
+  .vid{flex:0 0 auto;width:118px;border:1px solid var(--liniya);border-radius:9px;
+       overflow:hidden;background:#faf8f5;cursor:pointer;padding:0;display:block}
+  .vid img{width:100%;height:82px;object-fit:cover;display:block}
+  .vid .podpis-vida{font-size:11px;color:var(--tusklo);padding:4px 6px;text-align:left;
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vid.spornyy{border-color:#e2c9a0}
+
+  /* окно просмотра */
+  .smotrelka{position:fixed;inset:0;background:rgba(20,18,15,.93);z-index:50;
+             display:none;flex-direction:column;padding:14px}
+  .smotrelka.vidno{display:flex}
+  .smotrelka img{flex:1;min-height:0;width:100%;object-fit:contain}
+  .smotrelka-verh{display:flex;gap:10px;align-items:center;color:#fff;
+                  font-size:14px;padding-bottom:10px}
+  .smotrelka-niz{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+                 color:#e8e2d8;font-size:14px;padding-top:12px}
+  .smotrelka button, .smotrelka a{background:rgba(255,255,255,.12);color:#fff;border:0;
+    border-radius:9px;padding:9px 15px;font-size:15px;cursor:pointer;text-decoration:none}
+  .smotrelka .skachat{background:var(--akcent)}
+  .smotrelka .zakryt{margin-left:auto}
+  .predupr{color:#f0c98a;font-size:13px;width:100%}
+
   .snoska{margin-top:32px;padding:16px;background:#fff;border:1px solid var(--liniya);
           border-radius:12px;color:var(--tusklo);font-size:14px}
   .podpis{margin-top:22px;text-align:center;color:var(--tusklo);font-size:13px}
@@ -63,6 +90,22 @@
 </style>
 </head>
 <body>
+
+<div class="smotrelka" id="smotrelka">
+  <div class="smotrelka-verh">
+    <span id="sm-zagolovok"></span>
+    <button class="zakryt" onclick="zakryt()">Закрыть ✕</button>
+  </div>
+  <img id="sm-kartinka" src="" alt="">
+  <div class="smotrelka-niz">
+    <button onclick="listat(-1)">← Назад</button>
+    <span id="sm-schet"></span>
+    <button onclick="listat(1)">Вперёд →</button>
+    <a class="skachat" id="sm-skachat" href="" download>Скачать картинку</a>
+    <span class="predupr" id="sm-predupr"></span>
+    <span style="width:100%;color:#c9c2b6;font-size:13px" id="sm-opisanie"></span>
+  </div>
+</div>
 
 <div class="shapka">
   <img src="logo.png" alt="ARCHIWOOD">
@@ -109,9 +152,78 @@ function pilotHtml(p, deystvuyushchaya){
          '<span class="imya-fajla">' + ekran(p.fajl) + '</span></div>';
 }
 
-fetch("piloty.json?" + Date.now())
-  .then(function(r){ return r.json(); })
-  .then(function(d){
+/* ---------- виды изделия ---------- */
+var VIDY = {};        /* код изделия -> список страниц альбома */
+var PAPKA = "../ilinka/vizual/";
+var SEYCHAS = { spisok: [], nomer: 0 };
+
+function vidyHtml(kod){
+  var spisok = VIDY[kod] || [];
+  if(!spisok.length) return "";
+  var plitki = spisok.map(function(v, i){
+    return '<button class="vid' + (v.spornoe ? ' spornyy' : '') + '" ' +
+           'onclick="pokazat(\'' + ekran(kod) + '\',' + i + ')">' +
+           '<img loading="lazy" src="' + PAPKA + ekran(v.fajl) + '" alt="">' +
+           '<span class="podpis-vida">' + ekran(v.rakurs || v.pomeshchenie || "вид") + '</span>' +
+           '</button>';
+  }).join("");
+  return '<div class="vidy"><div class="vidy-shapka">Как выглядит — ' +
+         spisok.length + (spisok.length === 1 ? ' вид' : ' видов') +
+         ' (нажмите, чтобы открыть и скачать)</div>' +
+         '<div class="lenta-vidov">' + plitki + '</div></div>';
+}
+
+function pokazat(kod, nomer){
+  SEYCHAS.spisok = VIDY[kod] || [];
+  SEYCHAS.nomer = nomer;
+  SEYCHAS.kod = kod;
+  narisovatVid();
+  document.getElementById("smotrelka").classList.add("vidno");
+}
+
+function narisovatVid(){
+  var v = SEYCHAS.spisok[SEYCHAS.nomer];
+  if(!v) return;
+  var put = PAPKA + v.fajl;
+  document.getElementById("sm-kartinka").src = put;
+  var skachat = document.getElementById("sm-skachat");
+  skachat.href = put;
+  skachat.setAttribute("download", SEYCHAS.kod + "-" + v.fajl);
+  document.getElementById("sm-zagolovok").textContent =
+      SEYCHAS.kod + " · " + (v.pomeshchenie || "") + (v.rakurs ? " · " + v.rakurs : "");
+  document.getElementById("sm-schet").textContent =
+      (SEYCHAS.nomer + 1) + " из " + SEYCHAS.spisok.length;
+  document.getElementById("sm-opisanie").textContent = v.chto_vidno || "";
+  document.getElementById("sm-predupr").textContent = v.spornoe
+      ? "⚠ Привязка этой картинки к изделию под вопросом — проверяем." : "";
+}
+
+function listat(kuda){
+  var n = SEYCHAS.nomer + kuda;
+  if(n < 0 || n >= SEYCHAS.spisok.length) return;
+  SEYCHAS.nomer = n;
+  narisovatVid();
+}
+
+function zakryt(){ document.getElementById("smotrelka").classList.remove("vidno"); }
+
+document.addEventListener("keydown", function(e){
+  if(!document.getElementById("smotrelka").classList.contains("vidno")) return;
+  if(e.key === "Escape") zakryt();
+  if(e.key === "ArrowLeft") listat(-1);
+  if(e.key === "ArrowRight") listat(1);
+});
+
+/* Виды подгружаем отдельно и молча: если файла ещё нет, страница работает как раньше */
+fetch("../ilinka/vizualizacii.json?" + Date.now())
+  .then(function(r){ return r.ok ? r.json() : null; })
+  .then(function(d){ if(d && d.po_izdeliyam){ VIDY = d.po_izdeliyam; narisovat(); } })
+  .catch(function(){});
+
+var DANNYE = null;
+function narisovat(){
+  var d = DANNYE;
+  if(!d) return;
     var ob = d.obekty[0];
     if(!ob) return;
     document.getElementById("objekt").textContent = ob.nazvanie;
@@ -137,9 +249,14 @@ fetch("piloty.json?" + Date.now())
                     '</details>';
         }
       }
+      vnutri += vidyHtml(izd.kod);
       return '<div class="izdelie">' + vnutri + '</div>';
     }).join("");
-  })
+}
+
+fetch("piloty.json?" + Date.now())
+  .then(function(r){ return r.json(); })
+  .then(function(d){ DANNYE = d; narisovat(); })
   .catch(function(){
     document.getElementById("spisok").innerHTML =
       '<div class="izdelie">Не удалось загрузить список. Обновите страницу.</div>';

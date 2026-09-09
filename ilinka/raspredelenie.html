@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Распределение визуализаций — Ильинка</title>
+<style>
+  :root{--fon:#f6f5f3;--karta:#fff;--tekst:#1c1a17;--tusklo:#6b665e;--liniya:#e3ded6;
+        --akcent:#c08a4f;--horosho:#2f7d4f;--spor:#b8863b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fon);color:var(--tekst);
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       -webkit-text-size-adjust:100%}
+  .obertka{max-width:1100px;margin:0 auto;padding:22px 16px 90px}
+  h1{font-size:23px;margin:0 0 6px}
+  .vvod{background:var(--karta);border:1px solid var(--liniya);border-radius:13px;
+        padding:15px 17px;margin:16px 0;color:var(--tusklo);font-size:15px}
+  .vvod b{color:var(--tekst)}
+
+  .filtry{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
+  .filtr{padding:8px 14px;border:1px solid var(--liniya);border-radius:999px;
+         background:var(--karta);cursor:pointer;font-size:14px}
+  .filtr.vybran{background:var(--tekst);color:#fff;border-color:var(--tekst)}
+
+  .stranica{background:var(--karta);border:1px solid var(--liniya);border-radius:13px;
+            padding:14px;margin-bottom:12px;display:flex;gap:15px;flex-wrap:wrap}
+  .stranica.spornaya{border-left:3px solid var(--spor)}
+  .stranica.pravlena{border-left:3px solid var(--horosho)}
+  .kartinka{flex:0 0 230px}
+  .kartinka img{width:100%;border-radius:9px;display:block;cursor:zoom-in;
+                border:1px solid var(--liniya)}
+  .kartinka .nomer{font-size:13px;color:var(--tusklo);margin-top:5px}
+  .pravaya{flex:1;min-width:270px}
+  .opisanie{font-size:14px;color:var(--tusklo);margin-bottom:10px}
+  .predupr{color:var(--spor);font-size:13.5px;margin-bottom:9px}
+
+  .kody{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+  .kod{padding:6px 11px;border:1px solid var(--liniya);border-radius:8px;
+       background:#faf8f5;cursor:pointer;font-size:14px;user-select:none}
+  .kod.otmechen{background:var(--akcent);color:#fff;border-color:var(--akcent)}
+  .kod.byl-u-modeli{border-style:dashed}
+
+  .niz{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .sohranit{padding:9px 17px;border:0;border-radius:9px;background:var(--tekst);
+            color:#fff;font-size:15px;cursor:pointer}
+  .sohranit:disabled{opacity:.45;cursor:default}
+  .sost{font-size:14px;color:var(--tusklo)}
+  .sost.gotovo{color:var(--horosho)}
+
+  @media(max-width:620px){.kartinka{flex:0 0 100%}}
+</style>
+</head>
+<body>
+<div class="obertka">
+
+<h1>Распределение визуализаций — Ильинка</h1>
+
+<div class="vvod">
+Зрячая модель посмотрела все 72 страницы альбома и сказала, какие наши изделия видит на
+каждой. Местами она наверняка ошиблась — и <b>сама честно пометила 28 страниц как
+спорные</b>: там изделие по документации стоит в другой комнате, чем она увидела.
+<br><br>
+Здесь это можно поправить: нажимайте на коды изделий под картинкой, чтобы включить или
+выключить их, и жмите «Сохранить». <b>Слово человека сильнее машины навсегда</b> — после
+правки эту страницу альбома робот больше не переназначает сам.
+Пунктирная рамка на коде значит, что так считала модель.
+</div>
+
+<div class="filtry" id="filtry"></div>
+<div id="spisok"></div>
+
+</div>
+
+<script>
+const MOSTIK = "https://script.google.com/macros/s/AKfycbzOiAJDQYpEbfrSioBqxFj2McrOhiAGRgLDzWTAuSEuHxvQRbDWt3YVfKddD5S4jkZueA/exec";
+var D = null, KODY = [], FILTR = "спорные";
+
+function ekran(t){
+  return String(t == null ? "" : t)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function podhodit(s){
+  if(FILTR === "все") return true;
+  if(FILTR === "спорные") return !!s.spornoe;
+  if(FILTR === "без изделий") return !s.kody.length;
+  if(FILTR === "поправленные") return s.kto_privyazal === "человек";
+  return true;
+}
+
+function narisovatFiltry(){
+  var nazvaniya = ["спорные", "без изделий", "поправленные", "все"];
+  document.getElementById("filtry").innerHTML = nazvaniya.map(function(n){
+    var skolko = D.stranicy.filter(function(s){
+      var b = FILTR; FILTR = n; var r = podhodit(s); FILTR = b; return r;
+    }).length;
+    return '<button class="filtr' + (n === FILTR ? ' vybran' : '') +
+           '" onclick="postavitFiltr(\'' + n + '\')">' + n + ' (' + skolko + ')</button>';
+  }).join("");
+}
+
+function postavitFiltr(n){ FILTR = n; narisovat(); }
+
+function narisovat(){
+  narisovatFiltry();
+  var vidno = D.stranicy.filter(podhodit);
+  document.getElementById("spisok").innerHTML = vidno.map(function(s){
+    var klass = s.kto_privyazal === "человек" ? " pravlena" : (s.spornoe ? " spornaya" : "");
+    var knopki = KODY.map(function(k){
+      var est = s.kody.indexOf(k) >= 0;
+      var bylo = (s.kody_modeli || []).indexOf(k) >= 0;
+      return '<span class="kod' + (est ? ' otmechen' : '') + (bylo ? ' byl-u-modeli' : '') +
+             '" data-fajl="' + ekran(s.fajl) + '" data-kod="' + ekran(k) +
+             '" onclick="perekluchit(this)">' + ekran(k) + '</span>';
+    }).join("");
+    return '<div class="stranica' + klass + '" id="s-' + ekran(s.fajl) + '">' +
+      '<div class="kartinka">' +
+        '<img loading="lazy" src="vizual/' + ekran(s.fajl) + '" ' +
+             'onclick="window.open(this.src)" alt="">' +
+        '<div class="nomer">лист ' + s.stranica + ' · ' + ekran(s.pomeshchenie || "помещение не определено") +
+        (s.kto_privyazal === "человек" ? ' · <b>поправлено человеком</b>' : '') + '</div>' +
+      '</div>' +
+      '<div class="pravaya">' +
+        (s.spornoe ? '<div class="predupr">⚠ ' + ekran(s.spornoe) + '</div>' : '') +
+        '<div class="opisanie">' + ekran((s.chto_vidno || "").slice(0, 260)) + '</div>' +
+        '<div class="kody">' + knopki + '</div>' +
+        '<div class="niz">' +
+          '<button class="sohranit" onclick="sohranit(\'' + ekran(s.fajl) + '\')">Сохранить</button>' +
+          '<span class="sost" id="sost-' + ekran(s.fajl) + '"></span>' +
+        '</div>' +
+      '</div></div>';
+  }).join("") || '<div class="vvod">В этой группе пусто.</div>';
+}
+
+function perekluchit(el){
+  var s = D.stranicy.filter(function(x){ return x.fajl === el.dataset.fajl; })[0];
+  if(!s) return;
+  var i = s.kody.indexOf(el.dataset.kod);
+  if(i >= 0) s.kody.splice(i, 1); else s.kody.push(el.dataset.kod);
+  el.classList.toggle("otmechen");
+  var sost = document.getElementById("sost-" + s.fajl);
+  if(sost){ sost.className = "sost"; sost.textContent = "не сохранено"; }
+}
+
+async function sohranit(fajl){
+  var s = D.stranicy.filter(function(x){ return x.fajl === fajl; })[0];
+  if(!s) return;
+  var blok = document.getElementById("s-" + fajl);
+  var knopka = blok.querySelector(".sohranit");
+  var sost = document.getElementById("sost-" + fajl);
+  knopka.disabled = true;
+  sost.className = "sost";
+  sost.textContent = "Сохраняю…";
+  try{
+    const res = await fetch(MOSTIK, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Визуализации_привязка", prefiksID: "ВИЗ",
+      klyuchPovtora: { "Страница": fajl },
+      znacheniya: {
+        "Страница": fajl,
+        "Лист альбома": String(s.stranica),
+        "Изделия": s.kody.join(", "),
+        "Было у модели": (s.kody_modeli || []).join(", "),
+        "Помещение": s.pomeshchenie || "",
+        "Кто поправил": "Мансур",
+        "Когда": new Date().toISOString().slice(0, 16).replace("T", " "),
+      },
+    }) });
+    const d = await res.json();
+    if(!d.ok) throw new Error(d.error || "мостик отказал");
+    s.kto_privyazal = "человек";
+    sost.className = "sost gotovo";
+    sost.textContent = "✓ Записано. Робот больше не переназначит эту страницу сам.";
+    blok.classList.remove("spornaya");
+    blok.classList.add("pravlena");
+  } catch(e){
+    sost.textContent = "Не получилось: " + e.message;
+  }
+  knopka.disabled = false;
+}
+
+fetch("vizualizacii.json?" + Date.now())
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    D = d;
+    var nabor = {};
+    d.stranicy.forEach(function(s){
+      (s.kody || []).forEach(function(k){ nabor[k] = 1; });
+      (s.kody_modeli || []).forEach(function(k){ nabor[k] = 1; });
+    });
+    Object.keys(nabor).forEach(function(k){ KODY.push(k); });
+    KODY.sort(function(a, b){
+      var ca = parseInt(a.replace(/\D+/g, ""), 10) || 0;
+      var cb = parseInt(b.replace(/\D+/g, ""), 10) || 0;
+      return ca - cb;
+    });
+    narisovat();
+  })
+  .catch(function(){
+    document.getElementById("spisok").innerHTML =
+      '<div class="vvod">Не удалось загрузить разбор. Обновите страницу.</div>';
+  });
+</script>
+</body>
+</html>
