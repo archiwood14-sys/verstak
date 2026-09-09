@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Пилоты на согласование — ARCHIWOOD</title>
+<style>
+  :root{
+    --fon:#f6f5f3; --karta:#fff; --tekst:#1c1a17; --tusklo:#6b665e;
+    --liniya:#e3ded6; --akcent:#8a6a3f; --svezhee:#2f7d4f; --zhdem:#b9b3a8;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fon);color:var(--tekst);
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       -webkit-text-size-adjust:100%}
+  .obertka{max-width:900px;margin:0 auto;padding:20px 16px 80px}
+
+  header{padding:8px 0 20px}
+  h1{margin:0 0 4px;font-size:24px;font-weight:650;letter-spacing:-.01em}
+  .podzagolovok{color:var(--tusklo);font-size:15px}
+
+  .obekty{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+  .obekt{padding:9px 15px;border:1px solid var(--liniya);border-radius:999px;
+         background:var(--karta);cursor:pointer;font-size:15px;white-space:nowrap}
+  .obekt.vybran{background:var(--tekst);color:#fff;border-color:var(--tekst)}
+
+  .svodka{color:var(--tusklo);font-size:14px;margin:14px 0 18px}
+
+  .izdelie{background:var(--karta);border:1px solid var(--liniya);border-radius:14px;
+           padding:16px;margin-bottom:12px}
+  .shapka{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .kod{font-weight:650;font-size:17px}
+  .nazvanie{flex:1;min-width:200px}
+  .gde{color:var(--tusklo);font-size:14px}
+
+  .pilot{display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+         margin-top:12px;padding-top:12px;border-top:1px solid var(--liniya)}
+  .metka{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+         padding:4px 9px;border-radius:6px;white-space:nowrap}
+  .metka.svezhee{background:#e8f3ec;color:var(--svezhee)}
+  .metka.staraya{background:#f0ede8;color:var(--tusklo)}
+  .data{color:var(--tusklo);font-size:14px}
+  .otkryt{margin-left:auto;padding:10px 18px;border-radius:10px;background:var(--akcent);
+          color:#fff;text-decoration:none;font-size:15px;font-weight:550;white-space:nowrap}
+  .otkryt.tihaya{background:transparent;color:var(--akcent);
+                 border:1px solid var(--liniya);font-weight:450}
+  .imya-fajla{font-size:13px;color:var(--tusklo);width:100%;word-break:break-word}
+
+  .net{margin-top:10px;color:var(--zhdem);font-size:15px}
+  .prezhnie{margin-top:6px}
+  .prezhnie summary{cursor:pointer;color:var(--tusklo);font-size:14px;padding:6px 0}
+
+  .snoska{margin-top:32px;padding:16px;background:#fff;border:1px solid var(--liniya);
+          border-radius:12px;color:var(--tusklo);font-size:14px}
+  @media(max-width:600px){
+    .obertka{padding:16px 12px 60px}
+    h1{font-size:21px}
+    .otkryt{margin-left:0;width:100%;text-align:center}
+  }
+</style>
+</head>
+<body>
+<div class="obertka">
+  <header>
+    <h1>Пилоты на согласование</h1>
+    <div class="podzagolovok">ARCHIWOOD · мебель индивидуального изготовления</div>
+  </header>
+
+  <div class="obekty" id="obekty"></div>
+  <div class="svodka" id="svodka"></div>
+  <div id="spisok"></div>
+
+  <div class="snoska">
+    Здесь всегда лежит самая свежая версия пилота по каждому изделию — она отмечена
+    зелёным. Прежние версии не удаляются: их можно раскрыть и сравнить.
+    Страница обновляется сама, как только новый пилот приходит в работу.
+    <div style="margin-top:8px" id="obnovleno"></div>
+  </div>
+</div>
+
+<script>
+var DANNYE = null, VYBRAN = null;
+
+function den(s){
+  if(!s) return "";
+  var d = s.slice(0,10).split("-");
+  return d[2] + "." + d[1] + "." + d[0];
+}
+
+function risovatObekty(){
+  var el = document.getElementById("obekty");
+  el.innerHTML = "";
+  DANNYE.obekty.forEach(function(ob){
+    var b = document.createElement("button");
+    b.className = "obekt" + (ob.nazvanie === VYBRAN ? " vybran" : "");
+    b.textContent = ob.nazvanie;
+    b.onclick = function(){ VYBRAN = ob.nazvanie; risovat(); };
+    el.appendChild(b);
+  });
+}
+
+function pilotHtml(p, deystvuyushchaya){
+  var metka = deystvuyushchaya
+      ? '<span class="metka svezhee">последняя версия</span>'
+      : '<span class="metka staraya">версия ' + p.versiya + '</span>';
+  var knopka = p.ssylka
+      ? '<a class="otkryt' + (deystvuyushchaya ? '' : ' tihaya') + '" href="' +
+        p.ssylka + '" target="_blank" rel="noopener">Открыть</a>'
+      : '<span class="data">файл ещё загружается</span>';
+  return '<div class="pilot">' + metka +
+         '<span class="data">' + den(p.kogda) + '</span>' + knopka +
+         '<span class="imya-fajla">' + p.fajl + '</span></div>';
+}
+
+function risovat(){
+  risovatObekty();
+  var ob = DANNYE.obekty.filter(function(o){ return o.nazvanie === VYBRAN; })[0];
+  var spisok = document.getElementById("spisok");
+  if(!ob){ spisok.innerHTML = ""; return; }
+
+  document.getElementById("svodka").textContent =
+      "Изделий: " + ob.izdeliy + " · с пилотами: " + ob.s_pilotami +
+      (ob.s_pilotami === 0 ? " — работа только начинается, первые пилоты появятся здесь" : "");
+
+  spisok.innerHTML = ob.izdeliya.map(function(izd){
+    var vnutri = '<div class="shapka">' +
+        '<span class="kod">' + izd.kod + '</span>' +
+        '<span class="nazvanie">' + (izd.nazvanie || "") + '</span>' +
+        '<span class="gde">' + (izd.gde || "") + '</span></div>';
+
+    if(!izd.piloty.length){
+      vnutri += '<div class="net">пилота пока нет</div>';
+    } else {
+      vnutri += pilotHtml(izd.piloty[0], true);
+      if(izd.piloty.length > 1){
+        vnutri += '<details class="prezhnie"><summary>прежние версии (' +
+                  (izd.piloty.length - 1) + ')</summary>' +
+                  izd.piloty.slice(1).map(function(p){ return pilotHtml(p, false); }).join("") +
+                  '</details>';
+      }
+    }
+    return '<div class="izdelie">' + vnutri + '</div>';
+  }).join("");
+}
+
+fetch("piloty.json?" + Date.now())
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    DANNYE = d;
+    var iz_ssylki = new URLSearchParams(location.search).get("ob");
+    var imena = d.obekty.map(function(o){ return o.nazvanie; });
+    VYBRAN = (iz_ssylki && imena.indexOf(iz_ssylki) >= 0) ? iz_ssylki
+           : (imena.indexOf("Ильинка") >= 0 ? "Ильинка" : imena[0]);
+    document.getElementById("obnovleno").textContent = "Обновлено: " + d.obnovleno;
+    risovat();
+  })
+  .catch(function(){
+    document.getElementById("spisok").innerHTML =
+      '<div class="izdelie">Не удалось загрузить список. Обновите страницу.</div>';
+  });
+</script>
+</body>
+</html>
