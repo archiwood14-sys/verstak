@@ -572,8 +572,16 @@
   .rm-fajl img, .rm-zagl { width:100%; height:96px; object-fit:cover; display:flex; align-items:center;
                            justify-content:center; background:#ece7dc; color:var(--muted); font-size:13px; }
   .rm-fajl small { font-size:11.5px; color:var(--muted); padding:5px 7px; line-height:1.3; }
-  .rm-fajl.gotov { padding:8px; gap:6px; cursor:default; }
-  .rm-fajl.gotov .btn { text-align:center; text-decoration:none; font-size:14px; padding:8px; }
+  .rm-smotr { position:fixed; inset:0; background:#16140f; z-index:90; display:flex; flex-direction:column; }
+  .rm-smotr-verh, .rm-smotr-niz { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:10px 12px;
+                                  background:#1f1c16; color:#eee6da; font-size:14px; }
+  .rm-smotr-imya { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rm-smotr button, .rm-smotr a { background:rgba(255,255,255,.13); color:#fff; border:0; border-radius:9px;
+                                  padding:9px 14px; font:inherit; font-size:15px; cursor:pointer; text-decoration:none; }
+  .rm-smotr .rm-smotr-skachat { background:var(--accent); }
+  .rm-smotr-polotno { flex:1; overflow:auto; -webkit-overflow-scrolling:touch; text-align:center; padding:12px 0; }
+  .rm-smotr-polotno canvas, .rm-smotr-polotno img { display:block; margin:0 auto 12px; background:#fff; max-width:none; }
+  .rm-smotr-zagr { color:#cfc7ba; padding:40px 12px; }
   .rm-fajl.net { padding:10px; color:var(--muted); font-size:13px; cursor:default; }
   .rm-voprosy { margin-top:11px; background:#fbf6ee; border-radius:11px; padding:10px 13px; font-size:14.5px; }
   .rm-voprosy h4 { margin:0 0 5px; font-size:14px; color:#8a5f1c; }
@@ -1191,7 +1199,8 @@ async function renderRabocheeMesto(app, segsHtml) {
     return;
   }
   spisok.innerHTML = vidno.map(rmKartochka).join("");
-  spisok.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () => rmOtkryt(el)));
+  spisok.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () =>
+    rmSmotret(P.find(p => p.id === el.dataset.pachka), +el.dataset.i)));
   spisok.querySelectorAll("[data-pismo]").forEach(el => el.addEventListener("click", () =>
     rmPismo(P.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
   spisok.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
@@ -1207,9 +1216,9 @@ function bindSegs(app) {
 function rmKartochka(p) {
   const kody = p.kody.length ? p.kody.join(", ") : "";
   const nazv = p.kody.map(rmNazvanie).filter(Boolean);
-  const fajly = p.fajly.map(f => f.net_fajla
+  const fajly = p.fajly.map((f, i) => f.net_fajla
     ? `<div class="rm-fajl net">нет файла<small>${escapeHtml(f.imya)}</small></div>`
-    : `<button class="rm-fajl" data-fajl="${escapeHtml(f.bin)}" data-imya="${escapeHtml(f.imya)}" data-tip="${f.tip}">
+    : `<button class="rm-fajl" data-fajl="${escapeHtml(f.bin)}" data-pachka="${escapeHtml(p.id)}" data-i="${i}">
          ${f.mini ? `<img data-mini="${escapeHtml(f.mini)}" alt="">` : `<span class="rm-zagl">${f.tip === "pdf" ? "PDF" : "файл"}</span>`}
          <small><b>${f.tip === "pdf" ? "Чертёж" : "Вид"}</b> · ${escapeHtml(f.imya)}</small></button>`).join("");
   const voprosy = (p.voprosy || []).map(g =>
@@ -1252,21 +1261,141 @@ function rmMiniatyury(korni) {
   korni.querySelectorAll("img[data-mini]").forEach(i => nab.observe(i));
 }
 
-/* Айпад не даёт открыть новую вкладку из «фоновой» расшифровки — считает её всплывающим
-   окном. Поэтому в два касания: первое — расшифровать, второе — открыть или скачать. */
-async function rmOtkryt(el) {
-  const zam = document.createElement("div");
-  zam.className = "rm-fajl gotov";
-  zam.innerHTML = `<small>Готовлю…</small>`;
-  el.replaceWith(zam);
-  try {
-    const b = await rmFajl(el.dataset.fajl);
-    const url = URL.createObjectURL(new Blob([b], { type: el.dataset.tip === "pdf" ? "application/pdf" : "image/jpeg" }));
-    zam.innerHTML = `<a class="btn primary" href="${url}" target="_blank" rel="noopener">Открыть</a>
-      <a class="btn ghost" href="${url}" download="${escapeHtml(el.dataset.imya)}">Скачать</a>
-      <small>${escapeHtml(el.dataset.imya)}</small>`;
-  } catch (e) { zam.innerHTML = `<small>Не открылся: ${escapeHtml(e.message)}</small>`; }
+/* ---------------- просмотр чертежа внутри приложения ----------------
+   Мансур, 10.09.2026: «Это должно быть в приложении, где она работает». Первая версия
+   открывала файл в новой вкладке браузера — то есть выбрасывала Юлию из приложения.
+   Теперь чертёж открывается поверх рабочего места: приблизить, пролистать все файлы
+   пачки, скачать, закрыть — и она там же, где была. Просмотрщик PDF подгружается только
+   при первом открытии, чтобы приложение не тяжелело для тех, кто чертежи не смотрит. */
+const RM_SM = { spisok: [], nomer: 0, masshtab: 1, pdf: null, url: null, fon: null };
+
+function rmPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  return new Promise((gotovo, oshibka) => {
+    const sk = document.createElement("script");
+    sk.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    sk.onload = () => {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      gotovo(window.pdfjsLib);
+    };
+    sk.onerror = () => oshibka(new Error("просмотрщик не загрузился"));
+    document.head.appendChild(sk);
+  });
 }
+
+function rmSmotret(p, nomer) {
+  if (!p) return;
+  RM_SM.spisok = p.fajly.filter(f => !f.net_fajla);
+  RM_SM.nomer = Math.max(0, RM_SM.spisok.indexOf(p.fajly[nomer]));
+  const fon = document.createElement("div");
+  fon.className = "rm-smotr";
+  fon.innerHTML = `<div class="rm-smotr-verh"><span class="rm-smotr-imya" id="rmSmImya"></span>
+      <span id="rmSmSchet"></span><button id="rmSmZakryt">Закрыть ✕</button></div>
+    <div class="rm-smotr-polotno" id="rmSmPolotno"></div>
+    <div class="rm-smotr-niz">
+      <button id="rmSmNazad">← Файл</button><button id="rmSmVpered">Файл →</button>
+      <button id="rmSmMinus">−</button><button id="rmSmPlus">+</button>
+      <button id="rmSmShir">По ширине</button>
+      <a class="rm-smotr-skachat" id="rmSmSkachat" href="#" download>Скачать</a>
+    </div>`;
+  document.body.appendChild(fon);
+  document.body.style.overflow = "hidden";
+  RM_SM.fon = fon;
+  document.getElementById("rmSmZakryt").onclick = rmSmZakryt;
+  document.getElementById("rmSmNazad").onclick = () => rmSmListat(-1);
+  document.getElementById("rmSmVpered").onclick = () => rmSmListat(1);
+  document.getElementById("rmSmMinus").onclick = () => rmSmMasshtab(0.8);
+  document.getElementById("rmSmPlus").onclick = () => rmSmMasshtab(1.25);
+  document.getElementById("rmSmShir").onclick = rmSmPoShirine;
+  rmSmPokazat();
+}
+
+async function rmSmPokazat() {
+  const f = RM_SM.spisok[RM_SM.nomer];
+  const polotno = document.getElementById("rmSmPolotno");
+  document.getElementById("rmSmImya").textContent = f.imya;
+  document.getElementById("rmSmSchet").textContent = (RM_SM.nomer + 1) + " из " + RM_SM.spisok.length;
+  polotno.innerHTML = `<div class="rm-smotr-zagr">Открываю…</div>`;
+  RM_SM.pdf = null; RM_SM.masshtab = 1;
+  if (RM_SM.url) { URL.revokeObjectURL(RM_SM.url); RM_SM.url = null; }
+  try {
+    const b = await rmFajl(f.bin);
+    RM_SM.url = URL.createObjectURL(new Blob([b], { type: f.tip === "pdf" ? "application/pdf" : "image/jpeg" }));
+    const sk = document.getElementById("rmSmSkachat");
+    sk.href = RM_SM.url; sk.setAttribute("download", f.imya);
+    if (f.tip === "pdf") {
+      const lib = await rmPdfJs();
+      RM_SM.pdf = await lib.getDocument({ data: new Uint8Array(b.slice(0)) }).promise;
+      await rmSmPoShirine();
+    } else {
+      polotno.innerHTML = `<img id="rmSmImg" src="${RM_SM.url}" alt="">`;
+      rmSmPoShirine();
+    }
+  } catch (e) {
+    polotno.innerHTML = `<div class="rm-smotr-zagr">Не удалось показать: ${escapeHtml(e.message)}.
+      Файл можно скачать кнопкой внизу.</div>`;
+  }
+}
+
+async function rmSmRisovatPdf() {
+  const polotno = document.getElementById("rmSmPolotno");
+  const dpr = window.devicePixelRatio || 1;
+  polotno.innerHTML = "";
+  for (let n = 1; n <= RM_SM.pdf.numPages; n++) {
+    const str = await RM_SM.pdf.getPage(n);
+    const vp = str.getViewport({ scale: RM_SM.masshtab });
+    const c = document.createElement("canvas");
+    c.width = Math.floor(vp.width * dpr); c.height = Math.floor(vp.height * dpr);
+    c.style.width = Math.floor(vp.width) + "px"; c.style.height = Math.floor(vp.height) + "px";
+    polotno.appendChild(c);
+    await str.render({ canvasContext: c.getContext("2d"), viewport: str.getViewport({ scale: RM_SM.masshtab * dpr }) }).promise;
+  }
+}
+
+async function rmSmPoShirine() {
+  const polotno = document.getElementById("rmSmPolotno");
+  if (!polotno) return;
+  const shirina = Math.max(200, polotno.clientWidth - 16);
+  if (RM_SM.pdf) {
+    const str = await RM_SM.pdf.getPage(1);
+    RM_SM.masshtab = shirina / str.getViewport({ scale: 1 }).width;
+    await rmSmRisovatPdf();
+  } else {
+    const img = document.getElementById("rmSmImg");
+    if (img) img.style.width = shirina + "px";
+  }
+}
+
+async function rmSmMasshtab(k) {
+  if (RM_SM.pdf) {
+    RM_SM.masshtab = Math.min(8, Math.max(0.2, RM_SM.masshtab * k));
+    await rmSmRisovatPdf();
+  } else {
+    const img = document.getElementById("rmSmImg");
+    if (img) img.style.width = Math.max(120, img.clientWidth * k) + "px";
+  }
+}
+
+function rmSmListat(kuda) {
+  const n = RM_SM.nomer + kuda;
+  if (n < 0 || n >= RM_SM.spisok.length) return;
+  RM_SM.nomer = n; rmSmPokazat();
+}
+
+function rmSmZakryt() {
+  if (RM_SM.fon) RM_SM.fon.remove();
+  RM_SM.fon = null;
+  document.body.style.overflow = "";
+  if (RM_SM.url) { URL.revokeObjectURL(RM_SM.url); RM_SM.url = null; }
+}
+
+document.addEventListener("keydown", e => {
+  if (!RM_SM.fon) return;
+  if (e.key === "Escape") rmSmZakryt();
+  if (e.key === "ArrowLeft") rmSmListat(-1);
+  if (e.key === "ArrowRight") rmSmListat(1);
+});
 
 /* ---------------- письмо ---------------- */
 function rmShablon(p, kuda) {
@@ -2328,7 +2457,7 @@ function renderObligations(objFilter) {
 
   const objLinks = !objFilter && STATE.objectNames.length
     ? `<div class="home-obj-row">${STATE.objectNames.map(n =>
-        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">📦 ${escapeHtml(n)} — изделия</button>`).join("")}</div>`
+        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${rmEsli(n) ? "📐 " + escapeHtml(n) + " — чертежи и согласование" : "📦 " + escapeHtml(n) + " — изделия"}</button>`).join("")}</div>`
     : "";
 
   app.innerHTML = `
@@ -2383,7 +2512,7 @@ function renderHome() {
 
   const objLinks = STATE.objectNames.length
     ? `<div class="home-obj-row">${STATE.objectNames.map(n =>
-        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">📦 ${escapeHtml(n)} — изделия</button>`).join("")}</div>`
+        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${rmEsli(n) ? "📐 " + escapeHtml(n) + " — чертежи и согласование" : "📦 " + escapeHtml(n) + " — изделия"}</button>`).join("")}</div>`
     : "";
 
   const roleName = localStorage.getItem("verstak_role_name") || "";
@@ -2513,6 +2642,11 @@ function renderObjectFinance(objName) {
 }
 
 function renderItem(code) {
+  // Медное Озеро: карточка изделия построена на проектных данных, а их у этого объекта в
+  // приложении не показываем (10.09.2026). Сюда можно попасть по старой памяти «где был» —
+  // тогда ведём в рабочее место Юлии, а не в старую карточку.
+  const rmIzd = (STATE.items || []).find(it => normCode(it["Код"]) === normCode(code));
+  if (rmIzd && rmEsli(rmIzd["Объект"])) { STATE.activeObj = RM_OBEKT; return renderDashboard(); }
   STATE.tekushchiy = { v: "item", code };
   const app = document.getElementById("app");
   const it = STATE.items.find(x => normCode(x["Код"]) === normCode(code));
