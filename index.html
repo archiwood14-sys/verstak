@@ -691,12 +691,18 @@
   // до настоящего разграничения доступа ещё далеко (см. CLAUDE.md, правило про ПДн).
   var ROLES = {
     "Mamacarlo2025":     { name: "Мансур",            dir: "" },
-    "Yulia2026arch":      { name: "Юлия",              dir: "" },
     "Igor2026arch":       { name: "Игорь Михайлович",  dir: "Игорь Михайлович и монтаж" },
     "Proizvodstvo2026":   { name: "Производство",      dir: "производство" },
     "Konstruktory2026":   { name: "Конструкторы",      dir: "конструкторы" },
     "Montazh2026":        { name: "Монтажники",        dir: "Игорь Михайлович и монтаж" },
   };
+  // Юлия входит ЕДИНЫМ паролем (10.09.2026): он же ключ её рабочего места и подпись её
+  // писем. Мансур: «один раз ввела пароль — и больше ничего не должна вводить никуда».
+  // Самого пароля в коде страницы НЕТ — прежний лежал тут открытым текстом, поэтому ключом
+  // рабочего места быть не мог. Здесь только метка, зашифрованная её паролем: пароль верен,
+  // если метку удаётся расшифровать.
+  var VHOD_YULII = { salt: "xnexQTm6hv8aXYw5qYDPEg==", iter: 250000,
+                     metka: "PsbUK/whFhAZ3p6hypqDL5x2pdBRdMx6xDSebagDO8UJrUIHTyHNpHSDz+1Xawu8" };
   var GATE_KEY = "verstak_gate_ok";
   var backdrop = document.getElementById("gateBackdrop");
   if (localStorage.getItem(GATE_KEY) === "1") return;
@@ -731,22 +737,52 @@
     }
     return null;
   }
+  function vpustit(rol) {
+    localStorage.setItem(GATE_KEY, "1");
+    localStorage.setItem("verstak_role_name", rol.name);
+    localStorage.setItem("verstak_role_dir", rol.dir);
+    backdrop.classList.add("hidden");
+    err.textContent = "";
+  }
+  function proverit_yuliyu(vvod) {
+    var chistoe = (vvod || "").trim();
+    if (!chistoe || !window.crypto || !crypto.subtle) return Promise.resolve(null);
+    var varianty = [chistoe, chistoe.toLowerCase(), iz_russkoy_raskladki(chistoe)];
+    var salt = Uint8Array.from(atob(VHOD_YULII.salt), function (c) { return c.charCodeAt(0); });
+    var metka = Uint8Array.from(atob(VHOD_YULII.metka), function (c) { return c.charCodeAt(0); });
+    var i = 0;
+    function sleduyushchiy() {
+      if (i >= varianty.length) return Promise.resolve(null);
+      var p = varianty[i++];
+      return crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"])
+        .then(function (b) {
+          return crypto.subtle.deriveKey({ name: "PBKDF2", salt: salt, iterations: VHOD_YULII.iter, hash: "SHA-256" },
+            b, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+        })
+        .then(function (kl) { return crypto.subtle.decrypt({ name: "AES-GCM", iv: metka.slice(0, 12) }, kl, metka.slice(12)); })
+        .then(function () { return p; }, sleduyushchiy);
+    }
+    return sleduyushchiy();
+  }
   function proverit() {
     var vvod = input.value;
     var rol = nayti_rol(vvod);
-    if (rol) {
-      localStorage.setItem(GATE_KEY, "1");
-      localStorage.setItem("verstak_role_name", rol.name);
-      localStorage.setItem("verstak_role_dir", rol.dir);
-      backdrop.classList.add("hidden");
-    } else {
+    if (rol) { vpustit(rol); return; }
+    err.textContent = "Проверяю…";
+    proverit_yuliyu(vvod).then(function (parol) {
+      if (parol) {
+        // тот же пароль сразу открывает её рабочее место — второй раз вводить не нужно
+        try { localStorage.setItem("rm_yulii_klyuch_mednoe", parol); } catch (e) {}
+        vpustit({ name: "Юлия", dir: "" });
+        return;
+      }
       // Подсказываем, а не просто отфутболиваем: чаще всего дело в раскладке.
       err.textContent = /[а-яё]/i.test(vvod)
         ? "Неверный пароль. Похоже, включена русская раскладка — переключите на английскую."
         : "Неверный пароль";
       input.value = "";
       input.focus();
-    }
+    });
   }
   document.getElementById("gateBtn").addEventListener("click", proverit);
   input.addEventListener("keydown", function (e) { if (e.key === "Enter") proverit(); });
