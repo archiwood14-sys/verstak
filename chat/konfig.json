@@ -1,0 +1,258 @@
+{
+ "chaty": {
+  "067c1318": {
+   "nazvanie": "",
+   "obertki": {
+    "igor": "EAGf4o4rnj5txz/YraD3WF9oiVE2h4muE414vhiFZand0usAxKa9EBP4wKmNgaakuBEn9kz4TiB2QlXo",
+    "mansur": "ziKu+rM8JmOGilE85drY0JbWvYRVV6qnpH6bbdh0Hfd2Xz7dV9Vhh4s5tC+Q+GoOZD/oIfqARA8wcz0z",
+    "montazhniki": "HfXPCLJADG/rOWqsiMkr94EX2F+3wXqokgvrrxD47atFl/edufKyxBiGL5aUNIiWb7Mua/K1kW8DG4KS"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "igor",
+    "montazhniki"
+   ]
+  },
+  "1b0e42f6": {
+   "nazvanie": "",
+   "obertki": {
+    "mansur": "m0VvJCTPKOMEaL/A+/sSqHaCrkW8nb+mF5SrmO+S7qQw459Fu7vOIXJjGXNLdEjiMlXE9PoBgICyrzZ/",
+    "montazhniki": "7oEoSlcNFyv616wZ+jhTuLXhfUlgp2c5Gi8I6BaJ++DJ1sPd/XwMVd16/wpNGqdjE+YkdGCSWr7N7jOD",
+    "yuliya": "qx+ne3x5k44jefJAFKCu97bIIxsZJqdCufPxrI7P4so6aH5H+xaMN/MZVb6C0IYaFYzxGxgj47QhJC6L"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "yuliya",
+    "montazhniki"
+   ]
+  },
+  "4a3c985c": {
+   "nazvanie": "",
+   "obertki": {
+    "mansur": "IgbCJLuoM11oqlukj+VBKfA2QpmCPWmtOFTpbYuJjbvuZG/4+E8p2AeAi+ni4VtGX6PQLNrEBVEsrEAs",
+    "yuliya": "/aqPDYNgADmG9HWvSQmdsBJs1weDjh87fIOJMtKp2K6V+mxwr5IUagXA5m689IJPEzyUoJlfP4TV0WBD"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "mansur",
+    "yuliya"
+   ]
+  },
+  "4ef89705": {
+   "nazvanie": "",
+   "obertki": {
+    "konstruktory": "eyPyhdvZfEZluZBUKS4vXVt87O2SjvPIOv2FGeNNxBBOVo4fmivwfT/SZSdZAy3opIx3oZ9M1I8iUVoP",
+    "mansur": "0+RnYigqBdo7NNymsjTg2UjVCgdWPEKtvvP4sDu47YDTWFS8kpFuiVJ9JjarXj76Wiq5D/NE3FAG53Wv",
+    "yuliya": "OPj3EHRm5stPPhW9acum9RaHRKrKG5zlGvVVatzdI0gKxIyGEIcH+QMf6jY9gcS23BjFHiYzObItmphK"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "yuliya",
+    "konstruktory"
+   ]
+  },
+  "57eec003": {
+   "nazvanie": "",
+   "obertki": {
+    "mansur": "iAmkNANdsCZb7JsmFasePj0ugbzxBt/vq8I/gqv/ErE7nI780/nkTBp6vV+hmNuXnWNJLEEa4znkffhb",
+    "montazhniki": "H7b7F8TP2IamM6ZjfgkZhXI6lpWU0eNSdyEPiV0eRxwT5Bwa7aaVoR597EqVFkWE5SNJMrefYD+/6YEC",
+    "proizvodstvo": "uAtRwVSgeEaAx1o/ROQXlnAdKNcML+8E2ekAcwJro8qRSnYvLUtvRc2aSQGmJUZS08IyQQcAt3q+ReeV"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "proizvodstvo",
+    "montazhniki"
+   ]
+  },
+  "5decdf3e": {
+   "nazvanie": "",
+   "obertki": {
+    "konstruktory": "mwuGgpFAJ96lGwn3qd24S9Y6oP660ls4S/2V4CvzTkJRMmgq8EtiDvidDx28Immq5+Th9vJU3ld/F0bm",
+    "mansur": "zYA+3hCNx4ihFLOliJHDNDZv4asTSC2wDW6dy7qeUY5kjkEuHsUos21u5KaAJX7l3hFkvMPN2SPzTRg1",
+    "proizvodstvo": "IOfJ9NCZT9f581F60BE4X9MKZBSbl9YXr47EwQLQpFw/VEhBUi8jy99ke2bhV98xwOiDXiSQY0FdUxPe"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "proizvodstvo",
+    "konstruktory"
+   ]
+  },
+  "7a072a8e": {
+   "nazvanie": "",
+   "obertki": {
+    "igor": "bF5fODKzworO/ordYZ/RCSUBB7PMO2u+9Vh1CPI7/MxMP48EXm2wQ87Rgw4htTlo2ZkvaWVDf9B6dsUC",
+    "konstruktory": "qRdLt+S+6x6X5KZnyvNyAqNP3UALJalJGcwbwlDZnnEoQjkMUdkI59TU1X1WIalDXQbX1jYfHBDSR1AO",
+    "mansur": "z4bZQVJOTV/n8axXh3tB4BPtlgIS1PMiEJ5qADTYvI9BqzH9h12aR6O4S68S2BbaD1KvmmGxjqqR+Ii3"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "igor",
+    "konstruktory"
+   ]
+  },
+  "94c6d3f0": {
+   "nazvanie": "",
+   "obertki": {
+    "mansur": "WjzNqI1Hg6oGqpaxK0FLggFuZCE0EymCOkNYeh4S6fzgVKGMvrfQ0vnNEFpYtQZxErqDgLLv58INGw36",
+    "montazhniki": "az35hvaux//OWAUvqflj55abaXnUJtkIaXDvkOBNN0MGXn7BG2JCwV3W2vz6ZZQl+kFmKiyJhqdrWaf+"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "mansur",
+    "montazhniki"
+   ]
+  },
+  "a1231636": {
+   "nazvanie": "",
+   "obertki": {
+    "konstruktory": "nzM/IHADRhEGTshHBOehgYEOwEcv4QbxNPIW7pqj1Ns4kWIq0+raSlmYz/XUe3yUdRfMWxdnSiZemfTP",
+    "mansur": "s8jPhOLIsJGAJXEZljxnhghi2Loxys5CY73283j7E8RmxVebqTPMQyT64jX4dmnj96kZWdG5EzO4+E4Y"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "mansur",
+    "konstruktory"
+   ]
+  },
+  "a99cdda7": {
+   "nazvanie": "",
+   "obertki": {
+    "igor": "r3E6SDX/igsaVRN7bSNX1GMGA+2O2QYGwoFxtyT1yxaLG8DDja0MgMgyaocq1/FZw612RkOgggh/NHI+",
+    "mansur": "SH3dt9+IX+s7iw97r8m1n5vI/BoMbwK4jOzefqzRAc4TV3uQM82zJtziSN7Pchzz0FpKjrnZ7C5m6qhe",
+    "proizvodstvo": "2+Ounk67lnEHBk9J+37xdZMQbkESdNRnMaRCAqWR+lWCCUYLBbyDnx5G5AjPNeE483d/8qLnMM8lIC2B"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "igor",
+    "proizvodstvo"
+   ]
+  },
+  "b77f22e3": {
+   "nazvanie": "",
+   "obertki": {
+    "igor": "Da0y+abcdhR4y1f/VxMdnjIXGuw87a7uonAYB3lV6cl7s63Ye2f/ZRpiE6fVnbX1KDlYAw/CjPD+44Or",
+    "mansur": "FuPVmDyJ6cxoXkG9ss6Sgpq82AGKwzcPRZmA35Mqg+Ocaq9NX48BRyop8R9sYXmTSwLyKq0t+8b7JFZx"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "mansur",
+    "igor"
+   ]
+  },
+  "cc67ea05": {
+   "nazvanie": "",
+   "obertki": {
+    "konstruktory": "sclfxcqLZlAbFGM3DlkzcZLdSGqhx12TZUuhH1ThJEJvIgtlUcJeqxLhAyndcrZxTt5g/qF97oGL48A3",
+    "mansur": "AlX25pifJzHmJO3EX09ycdHWGGfB1sR9Wg56D/NenoBFTkREbzSLMQvnnFnubJO0AEELxjaq8CoXD2lf",
+    "montazhniki": "YvlQZmiBAUXlewOxALFVjCfFznOWnecYwuTRLSD76XKoIukTjbQe4geTnz4+mRNVV9/fDK0FFS+JfaYm"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "konstruktory",
+    "montazhniki"
+   ]
+  },
+  "cd318161": {
+   "nazvanie": "",
+   "obertki": {
+    "igor": "t+A4DoHb0XN1Ohvt4VezMif781Ga2NPusSu3J3Sqav2+N6It8+5bxFpkeEVkdwPKCqcI8AfhEQSXyxTZ",
+    "mansur": "bn+9myBKDgboQQqHePj+Rt5QkNgyvMRedq18auZSCHViMUWnCM385+x1zThZlrB8XY47I/X3fo8gj0X/",
+    "yuliya": "bM4m2p8fAYqCqKh+BQT2zwOLIjD0YBlVIRhqjyl18Sfu7Hcnz3edhMhgJR/p+Nj0V0l6gZ8NG6PFTN71"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "yuliya",
+    "igor"
+   ]
+  },
+  "dcd1a497": {
+   "nazvanie": "",
+   "obertki": {
+    "mansur": "gw6wOMTFYOqY1ufMaC+SH/yu+/xwAN1BMgtSP1ST6dFsFh2jDnz25agotypDK+J3b9tduZcBkf69JwE/",
+    "proizvodstvo": "hrspw/8uAjZgVxhcdF3+yYIXH+If/JDyGGGWZDqOiB9vJ2Lm9IZdYCP2WTIhomdGVIpaOe6Ovm91kWd0"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "mansur",
+    "proizvodstvo"
+   ]
+  },
+  "f6522718": {
+   "nazvanie": "",
+   "obertki": {
+    "mansur": "TXoGSmNIj5W96NYwEAZYYa2YNWoyuTySt2/sp8WwmMW98mCKM6Xy0B3cStFGskrpXgAQ/v1LLqpLr4qa",
+    "proizvodstvo": "cCAnqcD8iUliSUHNFeb8aGvz4H2apo68e3AXNGUeXE2ix7eWyv/IAIRgOeB3Dm3LI8APYLOW9mjYHALf",
+    "yuliya": "tm4AXA72SFF8mnPIMj9h2E0ru1aKM/LbrlHg3DvNEeO5pbucY2q66zW98sm7OuzEuuaNSyzEY03x04/h"
+   },
+   "tip": "lichnyy",
+   "uchastniki": [
+    "yuliya",
+    "proizvodstvo"
+   ]
+  }
+ },
+ "iter": 250000,
+ "proekty": [
+  "Медное Озеро",
+  "Плющиха",
+  "Захарьевская",
+  "Ильинка"
+ ],
+ "uchastniki": {
+  "igor": {
+   "dir": "Игорь Михайлович и монтаж",
+   "imya": "Игорь Михайлович",
+   "iter": 250000,
+   "metka": "8QWORRLGSuwThH3CNED+UKTII7uyp4GT7jS/y5grP0UtRcDlSmOm7Vc2gNcdlAc=",
+   "rol": "sotrudnik",
+   "salt": "49yqHVyD4+CihTpdYUWdIQ==",
+   "tolko_chat": true
+  },
+  "konstruktory": {
+   "dir": "конструкторы",
+   "imya": "Конструкторы",
+   "iter": 250000,
+   "metka": "FLsPUQT6mtvZO5SLacIAq1ltbriw6SgfCaQRxrEcDVby2wuAWHsbTCEDPBqk9cU=",
+   "rol": "sotrudnik",
+   "salt": "m1p4/LbSXH5tzQjjl2idlg==",
+   "tolko_chat": true
+  },
+  "mansur": {
+   "dir": "",
+   "imya": "Мансур",
+   "iter": 250000,
+   "metka": "+CiY4vZJ88IKth/6Yk+F3B/3c/jmGT5gDBOg6f+1H15RcmCfTa2xDZ0iRS8ihkk=",
+   "rol": "vladelec",
+   "salt": "z+Su3QAFlpWjeDtyTXZPmQ==",
+   "tolko_chat": false
+  },
+  "montazhniki": {
+   "dir": "Игорь Михайлович и монтаж",
+   "imya": "Монтажники",
+   "iter": 250000,
+   "metka": "ciB7P9cCCA9TbmOGksxRhiHxEuDNS12u2ZxbU5Uz0SdbbLr/AN7fepgAIkFMTPI=",
+   "rol": "sotrudnik",
+   "salt": "C/LCZ7ub6FANUOZMrh8I5Q==",
+   "tolko_chat": true
+  },
+  "proizvodstvo": {
+   "dir": "производство",
+   "imya": "Производство",
+   "iter": 250000,
+   "metka": "Vx/HHscC+DvSZOzk+9g0UPodLgFYIIXfbV7AibHvIaSe0kb/D9hpuYVPO4otrQc=",
+   "rol": "sotrudnik",
+   "salt": "0xujmeKjRXoTK9z/VeMOhg==",
+   "tolko_chat": true
+  },
+  "yuliya": {
+   "dir": "",
+   "imya": "Юлия",
+   "iter": 250000,
+   "metka": "0iMCaBFbsGCwIhTjfxQoujVyeFRRD9IjoT9Bmk7paBo1SDxCw1yMN9VWmH9Si9M=",
+   "rol": "sotrudnik",
+   "salt": "xnexQTm6hv8aXYw5qYDPEg==",
+   "tolko_chat": false
+  }
+ },
+ "v": 1
+}
