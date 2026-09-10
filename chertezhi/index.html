@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Чертежи — ARCHIWOOD</title>
+<link rel="icon" href="../piloty/logo.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{--fon:#f6f5f3;--karta:#fff;--tekst:#1c1a17;--tusklo:#6b665e;--liniya:#e3ded6;
+        --akcent:#c08a4f;--horosho:#2f7d4f;--spor:#b8863b;--zhdem:#b0aaa0}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fon);color:var(--tekst);
+       font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       -webkit-text-size-adjust:100%}
+  button{font:inherit}
+
+  .shapka{background:var(--karta);border-bottom:1px solid var(--liniya);padding:22px 16px 18px;text-align:center}
+  .shapka img{height:64px;display:block;margin:0 auto 12px}
+  .shapka h1{margin:0;font-size:21px;font-weight:600}
+  .shapka .objekt{margin-top:4px;color:var(--tusklo);font-size:15px}
+
+  .obertka{max-width:960px;margin:0 auto;padding:20px 16px 90px}
+
+  /* вход */
+  .vhod{max-width:380px;margin:40px auto;background:var(--karta);border:1px solid var(--liniya);
+        border-radius:14px;padding:22px}
+  .vhod input{width:100%;padding:12px 13px;font-size:17px;border:1px solid var(--liniya);
+              border-radius:10px;margin:12px 0}
+  .vhod button{width:100%;padding:12px;border:0;border-radius:10px;background:var(--tekst);
+               color:#fff;font-size:16px;cursor:pointer}
+  .vhod .oshibka{color:#a4442f;font-size:14px;min-height:20px;margin-top:8px}
+
+  .svodka{color:var(--tusklo);font-size:14px;margin:0 0 16px}
+  .pod-voprosom{background:#fbf5ea;border:1px solid #ecd8b4;border-radius:12px;padding:13px 15px;
+                margin-bottom:18px;font-size:14.5px}
+  .poisk{width:100%;padding:11px 13px;font-size:16px;border:1px solid var(--liniya);
+         border-radius:10px;margin-bottom:14px;background:var(--karta)}
+
+  .izdelie{background:var(--karta);border:1px solid var(--liniya);border-radius:14px;padding:15px;margin-bottom:12px}
+  .shapka-izd{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}
+  .kod{font-weight:650;font-size:17px}
+  .nazvanie{flex:1;min-width:190px}
+  .gde{color:var(--tusklo);font-size:14px}
+  .net{margin-top:9px;color:var(--zhdem);font-size:15px}
+
+  .pachka{margin-top:13px;padding-top:13px;border-top:1px solid var(--liniya)}
+  .pachka.staraya{opacity:.9}
+  .pachka-verh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+  .metka{font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
+         padding:4px 8px;border-radius:6px;white-space:nowrap}
+  .metka.svezhee{background:#e8f3ec;color:var(--horosho)}
+  .metka.staraya{background:#f0ede8;color:var(--tusklo)}
+  .metka.zak{background:#eef1f8;color:#3c5a8a}
+  .metka.vopros{background:#fbf0dc;color:#8a5f1c}
+  .zagolovok-pachki{font-size:14.5px}
+  .data{color:var(--tusklo);font-size:13.5px}
+
+  .fajly{display:flex;gap:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .fajl{flex:0 0 auto;width:132px;border:1px solid var(--liniya);border-radius:10px;overflow:hidden;
+        background:#faf8f5;cursor:pointer;padding:0;text-align:left}
+  .fajl .mini{width:100%;height:96px;object-fit:cover;display:block;background:#efece7}
+  .fajl .zaglushka{height:96px;display:flex;align-items:center;justify-content:center;
+                   color:var(--tusklo);font-size:13px;background:#efece7}
+  .fajl .podpis{font-size:11.5px;color:var(--tusklo);padding:5px 7px;line-height:1.3;
+                display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .fajl .tip{font-weight:600;color:var(--akcent)}
+
+  .zamech{color:#8a5f1c;font-size:13.5px;margin:6px 0}
+  .teksty{margin-top:9px}
+  .teksty summary{cursor:pointer;color:var(--tusklo);font-size:13.5px}
+  .tekst{font-size:14px;padding:7px 10px;margin-top:6px;background:#faf8f5;border-radius:8px;white-space:pre-wrap}
+  .tekst .kogda{color:var(--tusklo);font-size:12.5px;display:block}
+
+  .perepr{margin-top:8px}
+  .perepr summary{cursor:pointer;color:var(--tusklo);font-size:13.5px}
+  .kody-vybor{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .k{padding:5px 10px;border:1px solid var(--liniya);border-radius:8px;background:#faf8f5;cursor:pointer;font-size:13.5px}
+  .k.da{background:var(--akcent);color:#fff;border-color:var(--akcent)}
+  .k.podskazka{border-style:dashed;border-color:var(--spor)}
+  .sohr{padding:8px 15px;border:0;border-radius:9px;background:var(--tekst);color:#fff;cursor:pointer}
+  .sost{font-size:13.5px;color:var(--tusklo);margin-left:8px}
+
+  /* просмотр */
+  .smotr{position:fixed;inset:0;background:#16140f;z-index:50;display:none;flex-direction:column}
+  .smotr.vidno{display:flex}
+  .smotr-verh,.smotr-niz{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;
+                         color:#eee6da;font-size:14px;background:#1f1c16}
+  .smotr-verh .imya{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .smotr button,.smotr a{background:rgba(255,255,255,.13);color:#fff;border:0;border-radius:9px;
+                         padding:9px 14px;font-size:15px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .smotr .skachat{background:var(--akcent)}
+  .polotno{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;text-align:center;padding:12px 0}
+  .polotno canvas,.polotno img{display:block;margin:0 auto 12px;background:#fff;max-width:none}
+  .zagruzka{color:#cfc7ba;padding:40px 10px}
+
+  .podpis-niz{margin-top:24px;text-align:center;color:var(--tusklo);font-size:13px}
+  @media(max-width:600px){.obertka{padding:16px 11px 70px}.shapka img{height:52px}}
+</style>
+</head>
+<body>
+
+<div class="smotr" id="smotr">
+  <div class="smotr-verh">
+    <span class="imya" id="sm-imya"></span>
+    <span id="sm-schet"></span>
+    <button onclick="zakryt()">Закрыть ✕</button>
+  </div>
+  <div class="polotno" id="polotno"></div>
+  <div class="smotr-niz">
+    <button onclick="listat(-1)">← Файл</button>
+    <button onclick="listat(1)">Файл →</button>
+    <button onclick="masshtab(0.8)">−</button>
+    <button onclick="masshtab(1.25)">+</button>
+    <button onclick="poShirine()">По ширине</button>
+    <a class="skachat" id="sm-skachat" href="#" download>Скачать</a>
+  </div>
+</div>
+
+<div class="shapka">
+  <img src="../piloty/logo.png" alt="ARCHIWOOD">
+  <h1>Чертежи конструктора</h1>
+  <div class="objekt" id="objekt"></div>
+</div>
+
+<div class="obertka">
+  <div id="vhod" class="vhod">
+    <div>Чертежи защищены паролем — это частный дом заказчика.</div>
+    <input id="parol" type="password" autocomplete="current-password" placeholder="Пароль"
+           onkeydown="if(event.key==='Enter')voyti()">
+    <button onclick="voyti()">Открыть</button>
+    <div class="oshibka" id="oshibka"></div>
+  </div>
+  <div id="soderzhanie" hidden>
+    <div class="svodka" id="svodka"></div>
+    <div id="vopros-blok"></div>
+    <input class="poisk" id="poisk" placeholder="Найти изделие: код, название, помещение" oninput="narisovat()">
+    <div id="spisok"></div>
+    <div class="podpis-niz">ARCHIWOOD · <span id="obnovleno"></span></div>
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+const MOSTIK = "https://script.google.com/macros/s/AKfycbzOiAJDQYpEbfrSioBqxFj2McrOhiAGRgLDzWTAuSEuHxvQRbDWt3YVfKddD5S4jkZueA/exec";
+const OB = new URLSearchParams(location.search).get("ob") || "mednoe";
+const PAPKA = OB + "/";
+let KLYUCH = null, D = null;
+const RASSHIFROVANO = new Map();          // имя .bin -> ArrayBuffer
+const SM = { spisok: [], nomer: 0, masshtab: 1, pdf: null, url: null };
+
+function ekran(t){
+  return String(t == null ? "" : t).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function den(s){ if(!s) return ""; const d = s.slice(0,10).split("-"); return d[2]+"."+d[1]+"."+d[0]; }
+
+/* ---------- ключ и расшифровка ---------- */
+async function vyvestiKlyuch(parol, salt, iter){
+  const baza = await crypto.subtle.importKey("raw", new TextEncoder().encode(parol), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt, iterations: iter, hash:"SHA-256"},
+    baza, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+}
+async function rasshifrovat(buf){
+  const u = new Uint8Array(buf);
+  return crypto.subtle.decrypt({name:"AES-GCM", iv: u.slice(0,12)}, KLYUCH, u.slice(12));
+}
+async function fajlBin(imya){
+  if(RASSHIFROVANO.has(imya)) return RASSHIFROVANO.get(imya);
+  const r = await fetch(PAPKA + "f/" + imya);
+  if(!r.ok) throw new Error("файл не найден");
+  const b = await rasshifrovat(await r.arrayBuffer());
+  RASSHIFROVANO.set(imya, b);
+  return b;
+}
+
+/* Пароль набирали в русской раскладке — тот же приём, что во входе в приложение */
+function izRusskoyRaskladki(s){
+  const ru = "йцукенгшщзхъфывапролджэячсмитьбю", en = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
+  return s.split("").map(ch => { const i = ru.indexOf(ch.toLowerCase()); return i >= 0 ? en[i] : ch; }).join("");
+}
+
+async function voyti(zapomnennyy){
+  const oshibka = document.getElementById("oshibka");
+  const vvod = (zapomnennyy || document.getElementById("parol").value || "").trim();
+  if(!vvod) return;
+  oshibka.textContent = "Проверяю…";
+  try{
+    const meta = await (await fetch(PAPKA + "meta.json?" + Date.now())).json();
+    const salt = Uint8Array.from(atob(meta.salt), c => c.charCodeAt(0));
+    const shifr = await (await fetch(PAPKA + "spisok.bin?" + Date.now())).arrayBuffer();
+    const varianty = [vvod, vvod.toLowerCase(), izRusskoyRaskladki(vvod)];
+    for(const p of varianty){
+      try{
+        KLYUCH = await vyvestiKlyuch(p, salt, meta.iter);
+        const u = new Uint8Array(shifr);
+        const otkr = await crypto.subtle.decrypt({name:"AES-GCM", iv: u.slice(0,12)}, KLYUCH, u.slice(12));
+        D = JSON.parse(new TextDecoder().decode(otkr));
+        try{ localStorage.setItem("chertezhi_" + OB, p); }catch(e){}
+        document.getElementById("vhod").hidden = true;
+        document.getElementById("soderzhanie").hidden = false;
+        pokazat();
+        return;
+      }catch(e){ KLYUCH = null; }
+    }
+    oshibka.textContent = zapomnennyy ? "" : "Пароль не подошёл.";
+  }catch(e){
+    oshibka.textContent = "Не удалось загрузить: " + e.message;
+  }
+}
+
+/* ---------- список ---------- */
+function pokazat(){
+  document.getElementById("objekt").textContent = D.obekt;
+  const s = D.izdeliya.filter(i => i.pachki.length).length;
+  document.getElementById("svodka").textContent =
+    "Изделий с чертежами: " + s + " из " + D.izdeliya.length + " · пачек: " + D.pachek;
+  document.getElementById("obnovleno").textContent = "обновлено " + (D.obnovleno || "");
+  if(D.pod_voprosom){
+    document.getElementById("vopros-blok").innerHTML = '<div class="pod-voprosom">⚠ <b>' + D.pod_voprosom +
+      ' пачки под вопросом</b> — код в имени файла не сходится с описанием изделия в списке. ' +
+      'Они отмечены жёлтым; там же подсказка, на что похоже, и кнопка перепривязать.</div>';
+  }
+  narisovat();
+}
+
+function narisovat(){
+  const q = (document.getElementById("poisk").value || "").toLowerCase().trim();
+  const podhodit = i => !q || (i.kod + " " + i.nazvanie + " " + i.gde).toLowerCase().includes(q);
+  let html = D.izdeliya.filter(podhodit).map(izd => kartochka(izd)).join("");
+  if(D.bez_koda.length && (!q || "без кода".includes(q))){
+    html += kartochka({kod: "Без кода", nazvanie: "Пачки, где в имени файла нет кода изделия", gde: "", pachki: D.bez_koda});
+  }
+  document.getElementById("spisok").innerHTML = html || '<div class="izdelie">Ничего не нашлось.</div>';
+  zagruzitMiniatyury();
+}
+
+function kartochka(izd){
+  let v = '<div class="izdelie"><div class="shapka-izd"><span class="kod">' + ekran(izd.kod) +
+          '</span><span class="nazvanie">' + ekran(izd.nazvanie) + '</span><span class="gde">' +
+          ekran(izd.gde) + '</span></div>';
+  if(!izd.pachki.length) return v + '<div class="net">чертежей пока нет</div></div>';
+  izd.pachki.forEach((p, n) => { v += pachkaHtml(p, n === 0); });
+  return v + '</div>';
+}
+
+function pachkaHtml(p, svezhaya){
+  let v = '<div class="pachka' + (svezhaya ? '' : ' staraya') + '"><div class="pachka-verh">' +
+    (svezhaya ? '<span class="metka svezhee">последняя</span>' : '<span class="metka staraya">прежняя</span>') +
+    '<span class="data">' + den(p.kogda) + ' ' + ekran(p.kogda.slice(11)) + '</span>' +
+    (p.u_zakazchika ? '<span class="metka zak">у заказчика с ' + den(p.u_zakazchika) + '</span>' : '') +
+    (p.zamechaniya.length ? '<span class="metka vopros">под вопросом</span>' : '') +
+    '<span class="zagolovok-pachki">' + ekran(p.zagolovok) + '</span></div>';
+  p.zamechaniya.forEach(z => { v += '<div class="zamech">⚠ ' + ekran(z) + '</div>'; });
+  if(p.podskazki.length) v += '<div class="zamech">→ по описанию похоже на: <b>' + ekran(p.podskazki.join(", ")) + '</b></div>';
+
+  v += '<div class="fajly">' + p.fajly.map((f, i) => {
+    if(f.net_fajla) return '<div class="fajl"><div class="zaglushka">нет файла</div><div class="podpis">' + ekran(f.imya) + '</div></div>';
+    return '<button class="fajl" onclick="otkryt(\'' + ekran(p.id) + '\',' + i + ')">' +
+      (f.mini ? '<img class="mini" data-mini="' + ekran(f.mini) + '" alt="">' : '<div class="zaglushka">' + (f.tip === "pdf" ? "PDF" : "файл") + '</div>') +
+      '<div class="podpis"><span class="tip">' + (f.tip === "pdf" ? "Чертёж" : "Вид") + '</span> · ' + ekran(f.imya) + '</div></button>';
+  }).join("") + '</div>';
+
+  if(p.teksty && p.teksty.length){
+    v += '<details class="teksty"><summary>Что писала конструктор (' + p.teksty.length + ')</summary>' +
+      p.teksty.map(t => '<div class="tekst"><span class="kogda">' + ekran(t.kogda) + '</span>' + ekran(t.tekst) + '</div>').join("") +
+      '</details>';
+  }
+  v += perepryvazka(p);
+  return v + '</div>';
+}
+
+/* ---------- перепривязка ---------- */
+function perepryvazka(p){
+  const kody = D.izdeliya.map(i => i.kod);
+  return '<details class="perepr"><summary>Привязано к: ' + ekran(p.kody.join(", ") || "ничему") +
+    ' (' + ekran(p.kto_privyazal) + ') — изменить</summary><div class="kody-vybor" data-pachka="' + ekran(p.id) + '">' +
+    kody.map(k => '<span class="k' + (p.kody.indexOf(k) >= 0 ? ' da' : '') +
+      (p.podskazki.indexOf(k) >= 0 ? ' podskazka' : '') + '" onclick="this.classList.toggle(\'da\')">' +
+      ekran(k) + '</span>').join("") +
+    '</div><button class="sohr" onclick="sohranit(this,\'' + ekran(p.id) + '\')">Сохранить</button>' +
+    '<span class="sost"></span></details>';
+}
+
+async function sohranit(knopka, id){
+  const blok = knopka.parentElement.querySelector(".kody-vybor");
+  const vybrano = [...blok.querySelectorAll(".k.da")].map(e => e.textContent);
+  const sost = knopka.parentElement.querySelector(".sost");
+  const p = vsePachki().find(x => x.id === id);
+  knopka.disabled = true; sost.textContent = "Сохраняю…";
+  try{
+    const r = await fetch(MOSTIK, {method:"POST", body: JSON.stringify({
+      type:"stroka", list:"Чертежи_привязка", prefiksID:"ЧЕР",
+      klyuchPovtora: {"Пачка": id},
+      znacheniya: {"Пачка": id, "Объект": D.obekt, "Изделия": vybrano.join(", "),
+        "Было": p ? p.kody.join(", ") : "", "Название пачки": p ? p.zagolovok : "",
+        "Кто поправил": "с сайта чертежей", "Когда": new Date().toISOString().slice(0,16).replace("T"," ")}
+    })});
+    const d = await r.json();
+    if(!d.ok) throw new Error(d.error || "мостик отказал");
+    sost.textContent = "✓ Записано. Страница переложит пачку при ближайшем обновлении (в течение часа).";
+  }catch(e){ sost.textContent = "Не получилось: " + e.message; }
+  knopka.disabled = false;
+}
+
+function vsePachki(){
+  const vse = [];
+  D.izdeliya.forEach(i => i.pachki.forEach(p => vse.push(p)));
+  D.bez_koda.forEach(p => vse.push(p));
+  return vse;
+}
+
+/* ---------- миниатюры: расшифровываем, только когда видны ---------- */
+let nablyudatel = null;
+function zagruzitMiniatyury(){
+  if(nablyudatel) nablyudatel.disconnect();
+  nablyudatel = new IntersectionObserver(zapisi => {
+    zapisi.forEach(async z => {
+      if(!z.isIntersecting) return;
+      const img = z.target; nablyudatel.unobserve(img);
+      try{
+        const b = await fajlBin(img.dataset.mini);
+        img.src = URL.createObjectURL(new Blob([b], {type:"image/jpeg"}));
+      }catch(e){}
+    });
+  }, {rootMargin:"200px"});
+  document.querySelectorAll("img[data-mini]").forEach(i => nablyudatel.observe(i));
+}
+
+/* ---------- просмотр ---------- */
+function otkryt(idPachki, nomer){
+  const p = vsePachki().find(x => x.id === idPachki);
+  if(!p) return;
+  SM.spisok = p.fajly.filter(f => !f.net_fajla);
+  SM.nomer = Math.max(0, SM.spisok.indexOf(p.fajly[nomer]));
+  document.getElementById("smotr").classList.add("vidno");
+  document.body.style.overflow = "hidden";
+  pokazatFajl();
+}
+
+async function pokazatFajl(){
+  const f = SM.spisok[SM.nomer];
+  const polotno = document.getElementById("polotno");
+  document.getElementById("sm-imya").textContent = f.imya;
+  document.getElementById("sm-schet").textContent = (SM.nomer + 1) + " из " + SM.spisok.length;
+  polotno.innerHTML = '<div class="zagruzka">Открываю…</div>';
+  SM.pdf = null; SM.masshtab = 1;
+  if(SM.url){ URL.revokeObjectURL(SM.url); SM.url = null; }
+  try{
+    const b = await fajlBin(f.bin);
+    const tip = f.tip === "pdf" ? "application/pdf" : "image/jpeg";
+    SM.url = URL.createObjectURL(new Blob([b], {type: tip}));
+    const skachat = document.getElementById("sm-skachat");
+    skachat.href = SM.url; skachat.setAttribute("download", f.imya);
+    if(f.tip === "pdf"){
+      SM.pdf = await pdfjsLib.getDocument({data: new Uint8Array(b.slice(0))}).promise;
+      await poShirine();
+    } else {
+      polotno.innerHTML = '<img id="sm-img" src="' + SM.url + '" alt="">';
+      const img = document.getElementById("sm-img");
+      img.onload = () => poShirine();
+    }
+  }catch(e){
+    polotno.innerHTML = '<div class="zagruzka">Не удалось открыть: ' + ekran(e.message) + '</div>';
+  }
+}
+
+async function narisovatPdf(){
+  const polotno = document.getElementById("polotno");
+  const dpr = window.devicePixelRatio || 1;
+  polotno.innerHTML = "";
+  for(let n = 1; n <= SM.pdf.numPages; n++){
+    const str = await SM.pdf.getPage(n);
+    const vp = str.getViewport({scale: SM.masshtab});
+    const c = document.createElement("canvas");
+    c.width = Math.floor(vp.width * dpr); c.height = Math.floor(vp.height * dpr);
+    c.style.width = Math.floor(vp.width) + "px"; c.style.height = Math.floor(vp.height) + "px";
+    polotno.appendChild(c);
+    await str.render({canvasContext: c.getContext("2d"), viewport: str.getViewport({scale: SM.masshtab * dpr})}).promise;
+  }
+}
+
+async function poShirine(){
+  const polotno = document.getElementById("polotno");
+  const shirina = polotno.clientWidth - 16;
+  if(SM.pdf){
+    const str = await SM.pdf.getPage(1);
+    SM.masshtab = shirina / str.getViewport({scale:1}).width;
+    await narisovatPdf();
+  } else {
+    const img = document.getElementById("sm-img");
+    if(img){ img.style.width = shirina + "px"; SM.masshtab = 1; }
+  }
+}
+
+async function masshtab(k){
+  if(SM.pdf){
+    SM.masshtab = Math.min(8, Math.max(0.2, SM.masshtab * k));
+    await narisovatPdf();
+  } else {
+    const img = document.getElementById("sm-img");
+    if(img){ img.style.width = Math.max(120, img.clientWidth * k) + "px"; }
+  }
+}
+
+function listat(kuda){
+  const n = SM.nomer + kuda;
+  if(n < 0 || n >= SM.spisok.length) return;
+  SM.nomer = n; pokazatFajl();
+}
+function zakryt(){
+  document.getElementById("smotr").classList.remove("vidno");
+  document.body.style.overflow = "";
+  document.getElementById("polotno").innerHTML = "";
+}
+document.addEventListener("keydown", e => {
+  if(!document.getElementById("smotr").classList.contains("vidno")) return;
+  if(e.key === "Escape") zakryt();
+  if(e.key === "ArrowLeft") listat(-1);
+  if(e.key === "ArrowRight") listat(1);
+});
+
+/* запомненный пароль на этом устройстве — входим сами */
+try{ const z = localStorage.getItem("chertezhi_" + OB); if(z) voyti(z); }catch(e){}
+</script>
+</body>
+</html>
