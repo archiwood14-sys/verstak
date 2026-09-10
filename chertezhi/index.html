@@ -42,6 +42,7 @@
   .plitka span{display:block;font-size:13px;color:var(--tusklo);margin-top:3px;line-height:1.25}
   .plitka.vybrana{border-color:var(--tekst);box-shadow:0 0 0 1px var(--tekst)}
   .plitka.soglasovanie b{color:var(--sinij)}
+  .plitka.korrektirovki b{color:var(--akcent)}
   .plitka.voprosy b{color:var(--vopros)}
   .plitka.net b{color:var(--zhdem)}
   @media(max-width:700px){
@@ -61,7 +62,7 @@
   .gde{color:var(--tusklo);font-size:14px;margin-top:2px}
   .status{font-size:12px;font-weight:600;letter-spacing:.02em;padding:5px 9px;border-radius:7px;white-space:nowrap}
   .status.soglasovanie{background:#eef1f8;color:var(--sinij)}
-  .status.rabota{background:#f1eee8;color:var(--tusklo)}
+  .status.korrektirovki{background:#f8efe3;color:#8a5a20}
 
   .pachka{margin-top:14px;padding-top:14px;border-top:1px solid var(--liniya)}
   .p-verh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:14px}
@@ -235,7 +236,7 @@ async function voyti(zapomnennyy){
 const PLITKI = [
   ["vse",          "Все чертежи"],
   ["soglasovanie", "На согласовании"],
-  ["rabota",       "Готовятся к согласованию"],
+  ["korrektirovki","Отправлены с корректировками"],
   ["voprosy",      "С открытыми вопросами"],
   ["net",          "Без чертежей"],
 ];
@@ -243,7 +244,7 @@ const PLITKI = [
 function pokazat(){
   document.getElementById("objekt").textContent = D.obekt;
   document.getElementById("podval").textContent = D.posledniy_chertezh
-    ? "Последний чертёж получен " + den(D.posledniy_chertezh) : "";
+    ? "Последний чертёж направлен " + den(D.posledniy_chertezh) : "";
   narisovat();
 }
 
@@ -270,7 +271,7 @@ function narisovat(){
 
   if(FILTR === "net"){
     spisok.innerHTML = vidno.length
-      ? '<p class="net-poyasn">По этим изделиям чертежи ещё не готовились.</p><div class="net-spisok">' +
+      ? '<p class="net-poyasn">По этим изделиям чертежи ещё не направлялись на согласование.</p><div class="net-spisok">' +
         vidno.map(k => '<div class="net-stroka"><span class="kod">' + ekran(k.podpis_kodov) + '</span>' +
           '<span class="nazv">' + ekran(k.nazvaniya.join(" + ")) + '<div class="gde">' + ekran(k.gde) + '</div></span></div>').join("") +
         '</div>'
@@ -282,9 +283,10 @@ function narisovat(){
 }
 
 function kartochka(k){
-  const status = k.status === "soglasovanie"
-    ? '<span class="status soglasovanie">на согласовании с ' + den(k.pachki[0].u_zakazchika) + '</span>'
-    : '<span class="status rabota">готовится к согласованию</span>';
+  /* заказчик видит только свою сторону: ждём его решения — или он вернул правки и ждёт нас */
+  const status = k.status === "korrektirovki"
+    ? '<span class="status korrektirovki">ваши корректировки — вносим</span>'
+    : '<span class="status soglasovanie">на согласовании с ' + den(k.pachki[0].u_zakazchika) + '</span>';
   let v = '<div class="kartochka"><div class="k-verh">' +
     (k.podpis_kodov ? '<span class="kod">' + ekran(k.podpis_kodov) + '</span>' : '') +
     '<span class="nazv">' + k.nazvaniya.map(n => '<div>' + ekran(n) + '</div>').join("") +
