@@ -8,79 +8,90 @@
 <link rel="icon" href="../piloty/logo.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
-  :root{--fon:#f6f5f3;--karta:#fff;--tekst:#1c1a17;--tusklo:#6b665e;--liniya:#e3ded6;
-        --akcent:#c08a4f;--horosho:#2f7d4f;--spor:#b8863b;--zhdem:#b0aaa0}
+  :root{--fon:#f6f5f3;--karta:#fff;--tekst:#1c1a17;--tusklo:#6b665e;--liniya:#e6e1d9;
+        --akcent:#b98a52;--horosho:#2f7d4f;--sinij:#3c5a8a;--zhdem:#a59f95;--vopros:#8a5f1c}
   *{box-sizing:border-box}
   body{margin:0;background:var(--fon);color:var(--tekst);
        font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
        -webkit-text-size-adjust:100%}
-  button{font:inherit}
+  button{font:inherit;color:inherit}
 
-  .shapka{background:var(--karta);border-bottom:1px solid var(--liniya);padding:22px 16px 18px;text-align:center}
-  .shapka img{height:64px;display:block;margin:0 auto 12px}
-  .shapka h1{margin:0;font-size:21px;font-weight:600}
-  .shapka .objekt{margin-top:4px;color:var(--tusklo);font-size:15px}
+  /* шапка — простая: знак, слово, объект */
+  .shapka{padding:28px 16px 6px;text-align:center}
+  .shapka img{height:58px;display:block;margin:0 auto 14px}
+  .shapka h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-.01em}
+  .shapka .objekt{margin-top:3px;color:var(--tusklo);font-size:16px}
 
-  .obertka{max-width:960px;margin:0 auto;padding:20px 16px 90px}
+  .obertka{max-width:960px;margin:0 auto;padding:18px 16px 90px}
 
   /* вход */
-  .vhod{max-width:380px;margin:40px auto;background:var(--karta);border:1px solid var(--liniya);
-        border-radius:14px;padding:22px}
+  .vhod{max-width:380px;margin:30px auto;background:var(--karta);border:1px solid var(--liniya);
+        border-radius:16px;padding:22px}
   .vhod input{width:100%;padding:12px 13px;font-size:17px;border:1px solid var(--liniya);
               border-radius:10px;margin:12px 0}
   .vhod button{width:100%;padding:12px;border:0;border-radius:10px;background:var(--tekst);
                color:#fff;font-size:16px;cursor:pointer}
+  .vhod .podskaz{font-size:14px;color:var(--tusklo);margin-top:6px}
   .vhod .oshibka{color:#a4442f;font-size:14px;min-height:20px;margin-top:8px}
 
-  .svodka{color:var(--tusklo);font-size:14px;margin:0 0 16px}
-  .pod-voprosom{background:#fbf5ea;border:1px solid #ecd8b4;border-radius:12px;padding:13px 15px;
-                margin-bottom:18px;font-size:14.5px}
+  /* плитки-фильтры */
+  .plitki{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:4px 0 16px}
+  .plitka{background:var(--karta);border:1px solid var(--liniya);border-radius:14px;
+          padding:13px 12px 11px;cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s}
+  .plitka b{display:block;font-size:26px;font-weight:650;letter-spacing:-.02em;line-height:1.1}
+  .plitka span{display:block;font-size:13px;color:var(--tusklo);margin-top:3px;line-height:1.25}
+  .plitka.vybrana{border-color:var(--tekst);box-shadow:0 0 0 1px var(--tekst)}
+  .plitka.soglasovanie b{color:var(--sinij)}
+  .plitka.voprosy b{color:var(--vopros)}
+  .plitka.net b{color:var(--zhdem)}
+  @media(max-width:700px){
+    .plitki{grid-template-columns:repeat(2,1fr)}
+    .plitka.vse{grid-column:1 / -1}
+  }
+
   .poisk{width:100%;padding:11px 13px;font-size:16px;border:1px solid var(--liniya);
-         border-radius:10px;margin-bottom:14px;background:var(--karta)}
+         border-radius:12px;margin-bottom:14px;background:var(--karta)}
 
-  .izdelie{background:var(--karta);border:1px solid var(--liniya);border-radius:14px;padding:15px;margin-bottom:12px}
-  .shapka-izd{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}
-  .kod{font-weight:650;font-size:17px}
-  .nazvanie{flex:1;min-width:190px}
-  .gde{color:var(--tusklo);font-size:14px}
-  .net{margin-top:9px;color:var(--zhdem);font-size:15px}
+  .kartochka{background:var(--karta);border:1px solid var(--liniya);border-radius:16px;
+             padding:16px;margin-bottom:12px}
+  .k-verh{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .kod{font-weight:650;font-size:17px;white-space:nowrap}
+  .nazv{flex:1;min-width:200px}
+  .nazv div{line-height:1.4}
+  .gde{color:var(--tusklo);font-size:14px;margin-top:2px}
+  .status{font-size:12px;font-weight:600;letter-spacing:.02em;padding:5px 9px;border-radius:7px;white-space:nowrap}
+  .status.soglasovanie{background:#eef1f8;color:var(--sinij)}
+  .status.rabota{background:#f1eee8;color:var(--tusklo)}
 
-  .pachka{margin-top:13px;padding-top:13px;border-top:1px solid var(--liniya)}
-  .pachka.staraya{opacity:.9}
-  .pachka-verh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+  .pachka{margin-top:14px;padding-top:14px;border-top:1px solid var(--liniya)}
+  .p-verh{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:14px}
   .metka{font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;
-         padding:4px 8px;border-radius:6px;white-space:nowrap}
+         padding:4px 8px;border-radius:6px}
   .metka.svezhee{background:#e8f3ec;color:var(--horosho)}
   .metka.staraya{background:#f0ede8;color:var(--tusklo)}
-  .metka.zak{background:#eef1f8;color:#3c5a8a}
-  .metka.vopros{background:#fbf0dc;color:#8a5f1c}
-  .zagolovok-pachki{font-size:14.5px}
-  .data{color:var(--tusklo);font-size:13.5px}
+  .data{color:var(--tusklo)}
 
   .fajly{display:flex;gap:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
-  .fajl{flex:0 0 auto;width:132px;border:1px solid var(--liniya);border-radius:10px;overflow:hidden;
+  .fajl{flex:0 0 auto;width:136px;border:1px solid var(--liniya);border-radius:11px;overflow:hidden;
         background:#faf8f5;cursor:pointer;padding:0;text-align:left}
-  .fajl .mini{width:100%;height:96px;object-fit:cover;display:block;background:#efece7}
-  .fajl .zaglushka{height:96px;display:flex;align-items:center;justify-content:center;
+  .fajl .mini{width:100%;height:98px;object-fit:cover;display:block;background:#efece7}
+  .fajl .zaglushka{height:98px;display:flex;align-items:center;justify-content:center;
                    color:var(--tusklo);font-size:13px;background:#efece7}
   .fajl .podpis{font-size:11.5px;color:var(--tusklo);padding:5px 7px;line-height:1.3;
                 display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .fajl .tip{font-weight:600;color:var(--akcent)}
 
-  .zamech{color:#8a5f1c;font-size:13.5px;margin:6px 0}
-  .teksty{margin-top:9px}
-  .teksty summary{cursor:pointer;color:var(--tusklo);font-size:13.5px}
-  .tekst{font-size:14px;padding:7px 10px;margin-top:6px;background:#faf8f5;border-radius:8px;white-space:pre-wrap}
-  .tekst .kogda{color:var(--tusklo);font-size:12.5px;display:block}
+  .voprosy{margin-top:12px;background:#fbf6ee;border-radius:11px;padding:11px 13px}
+  .voprosy h3{margin:0 0 6px;font-size:14px;font-weight:600;color:var(--vopros)}
+  .voprosy .gruppa{font-size:13px;font-weight:600;color:var(--tusklo);margin:8px 0 2px}
+  .voprosy ol{margin:0;padding-left:20px;font-size:14.5px}
+  .voprosy li{margin:3px 0}
 
-  .perepr{margin-top:8px}
-  .perepr summary{cursor:pointer;color:var(--tusklo);font-size:13.5px}
-  .kody-vybor{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-  .k{padding:5px 10px;border:1px solid var(--liniya);border-radius:8px;background:#faf8f5;cursor:pointer;font-size:13.5px}
-  .k.da{background:var(--akcent);color:#fff;border-color:var(--akcent)}
-  .k.podskazka{border-style:dashed;border-color:var(--spor)}
-  .sohr{padding:8px 15px;border:0;border-radius:9px;background:var(--tekst);color:#fff;cursor:pointer}
-  .sost{font-size:13.5px;color:var(--tusklo);margin-left:8px}
+  .net-spisok{background:var(--karta);border:1px solid var(--liniya);border-radius:16px;padding:6px 16px}
+  .net-stroka{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--liniya);align-items:baseline;flex-wrap:wrap}
+  .net-stroka:last-child{border-bottom:0}
+  .net-stroka .kod{min-width:74px}
+  .net-poyasn{color:var(--tusklo);font-size:14px;margin:0 0 10px}
 
   /* просмотр */
   .smotr{position:fixed;inset:0;background:#16140f;z-index:50;display:none;flex-direction:column}
@@ -95,8 +106,8 @@
   .polotno canvas,.polotno img{display:block;margin:0 auto 12px;background:#fff;max-width:none}
   .zagruzka{color:#cfc7ba;padding:40px 10px}
 
-  .podpis-niz{margin-top:24px;text-align:center;color:var(--tusklo);font-size:13px}
-  @media(max-width:600px){.obertka{padding:16px 11px 70px}.shapka img{height:52px}}
+  .podval{margin-top:26px;text-align:center;color:var(--tusklo);font-size:13px}
+  @media(max-width:600px){.obertka{padding:14px 11px 70px}.shapka img{height:48px}.shapka h1{font-size:21px}}
 </style>
 </head>
 <body>
@@ -120,25 +131,25 @@
 
 <div class="shapka">
   <img src="../piloty/logo.png" alt="ARCHIWOOD">
-  <h1>Чертежи конструктора</h1>
-  <div class="objekt" id="objekt"></div>
+  <h1>Чертежи</h1>
+  <div class="objekt" id="objekt">&nbsp;</div>
 </div>
 
 <div class="obertka">
   <div id="vhod" class="vhod">
     <div>Чертежи защищены паролем — это частный дом заказчика.</div>
-    <div style="font-size:14px;color:#6b665e;margin-top:6px">Можно вставить весь текст сообщения с паролем — страница сама его найдёт.</div>
-    <input id="parol" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Пароль"
-           onkeydown="if(event.key==='Enter')voyti()">
+    <div class="podskaz">Можно вставить весь текст сообщения с паролем — страница сама его найдёт.</div>
+    <input id="parol" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+           placeholder="Пароль" onkeydown="if(event.key==='Enter')voyti()">
     <button onclick="voyti()">Открыть</button>
     <div class="oshibka" id="oshibka"></div>
   </div>
+
   <div id="soderzhanie" hidden>
-    <div class="svodka" id="svodka"></div>
-    <div id="vopros-blok"></div>
+    <div class="plitki" id="plitki"></div>
     <input class="poisk" id="poisk" placeholder="Найти изделие: код, название, помещение" oninput="narisovat()">
     <div id="spisok"></div>
-    <div class="podpis-niz">ARCHIWOOD · <span id="obnovleno"></span></div>
+    <div class="podval" id="podval"></div>
   </div>
 </div>
 
@@ -146,11 +157,10 @@
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-const MOSTIK = "https://script.google.com/macros/s/AKfycbzOiAJDQYpEbfrSioBqxFj2McrOhiAGRgLDzWTAuSEuHxvQRbDWt3YVfKddD5S4jkZueA/exec";
 const OB = new URLSearchParams(location.search).get("ob") || "mednoe";
 const PAPKA = OB + "/";
-let KLYUCH = null, D = null;
-const RASSHIFROVANO = new Map();          // имя .bin -> ArrayBuffer
+let KLYUCH = null, D = null, FILTR = "vse";
+const RASSHIFROVANO = new Map();
 const SM = { spisok: [], nomer: 0, masshtab: 1, pdf: null, url: null };
 
 function ekran(t){
@@ -178,17 +188,13 @@ async function fajlBin(imya){
   return b;
 }
 
-/* Пароль набирали в русской раскладке — тот же приём, что во входе в приложение */
 function izRusskoyRaskladki(s){
   const ru = "йцукенгшщзхъфывапролджэячсмитьбю", en = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
   return s.split("").map(ch => { const i = ru.indexOf(ch.toLowerCase()); return i >= 0 ? en[i] : ch; }).join("");
 }
 
-/* Пароль вставляют с телефона — и телефон портит его по-разному: прихватывает
-   «Пароль:» и соседние строки, меняет дефис на длинное тире, вставляет невидимые
-   знаки. 10.09.2026 Мансур скопировал пароль из сообщения на айфоне — не подошёл.
-   Поэтому чистим: все виды тире превращаем в дефис, невидимое убираем, и из любого
-   вставленного текста — хоть из всего сообщения целиком — вытаскиваем сам пароль. */
+/* Телефон портит вставку: прихватывает «Пароль:» и соседние строки, меняет дефис
+   на длинное тире, вставляет невидимые знаки. Чистим и находим сам пароль. */
 function ochistit(s){
   s = String(s || "").normalize("NFKC");
   s = s.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-");
@@ -206,8 +212,7 @@ async function voyti(zapomnennyy){
     const meta = await (await fetch(PAPKA + "meta.json?" + Date.now())).json();
     const salt = Uint8Array.from(atob(meta.salt), c => c.charCodeAt(0));
     const shifr = await (await fetch(PAPKA + "spisok.bin?" + Date.now())).arrayBuffer();
-    const varianty = [vvod, vvod.toLowerCase(), izRusskoyRaskladki(vvod)];
-    for(const p of varianty){
+    for(const p of [vvod, vvod.toLowerCase(), izRusskoyRaskladki(vvod)]){
       try{
         KLYUCH = await vyvestiKlyuch(p, salt, meta.iter);
         const u = new Uint8Array(shifr);
@@ -226,50 +231,73 @@ async function voyti(zapomnennyy){
   }
 }
 
-/* ---------- список ---------- */
+/* ---------- плитки и список ---------- */
+const PLITKI = [
+  ["vse",          "Все чертежи"],
+  ["soglasovanie", "На согласовании"],
+  ["rabota",       "Готовятся к согласованию"],
+  ["voprosy",      "С открытыми вопросами"],
+  ["net",          "Без чертежей"],
+];
+
 function pokazat(){
   document.getElementById("objekt").textContent = D.obekt;
-  const s = D.izdeliya.filter(i => i.pachki.length).length;
-  document.getElementById("svodka").textContent =
-    "Изделий с чертежами: " + s + " из " + D.izdeliya.length + " · пачек: " + D.pachek;
-  document.getElementById("obnovleno").textContent = "обновлено " + (D.obnovleno || "");
-  if(D.pod_voprosom){
-    document.getElementById("vopros-blok").innerHTML = '<div class="pod-voprosom">⚠ <b>' + D.pod_voprosom +
-      ' пачки под вопросом</b> — код в имени файла не сходится с описанием изделия в списке. ' +
-      'Они отмечены жёлтым; там же подсказка, на что похоже, и кнопка перепривязать.</div>';
-  }
+  document.getElementById("podval").textContent = D.posledniy_chertezh
+    ? "Последний чертёж получен " + den(D.posledniy_chertezh) : "";
   narisovat();
 }
 
+function narisovatPlitki(){
+  document.getElementById("plitki").innerHTML = PLITKI.map(([k, nazv]) =>
+    '<button class="plitka ' + k + (FILTR === k ? ' vybrana' : '') + '" onclick="vybrat(\'' + k + '\')">' +
+    '<b>' + (D.schet[k] || 0) + '</b><span>' + nazv + '</span></button>').join("");
+}
+
+function vybrat(k){ FILTR = k; narisovat(); window.scrollTo({top: document.getElementById("plitki").offsetTop - 10, behavior: "smooth"}); }
+
+function podhodit(k){
+  if(FILTR === "vse") return k.status !== "net";
+  if(FILTR === "voprosy") return k.s_voprosami;
+  return k.status === FILTR;
+}
+
 function narisovat(){
+  narisovatPlitki();
   const q = (document.getElementById("poisk").value || "").toLowerCase().trim();
-  const podhodit = i => !q || (i.kod + " " + i.nazvanie + " " + i.gde).toLowerCase().includes(q);
-  let html = D.izdeliya.filter(podhodit).map(izd => kartochka(izd)).join("");
-  if(D.bez_koda.length && (!q || "без кода".includes(q))){
-    html += kartochka({kod: "Без кода", nazvanie: "Пачки, где в имени файла нет кода изделия", gde: "", pachki: D.bez_koda});
+  const iskomoe = k => !q || (k.podpis_kodov + " " + k.nazvaniya.join(" ") + " " + k.gde).toLowerCase().includes(q);
+  const vidno = D.kartochki.filter(k => podhodit(k) && iskomoe(k));
+  const spisok = document.getElementById("spisok");
+
+  if(FILTR === "net"){
+    spisok.innerHTML = vidno.length
+      ? '<p class="net-poyasn">По этим изделиям чертежи ещё не готовились.</p><div class="net-spisok">' +
+        vidno.map(k => '<div class="net-stroka"><span class="kod">' + ekran(k.podpis_kodov) + '</span>' +
+          '<span class="nazv">' + ekran(k.nazvaniya.join(" + ")) + '<div class="gde">' + ekran(k.gde) + '</div></span></div>').join("") +
+        '</div>'
+      : '<div class="kartochka">Ничего не нашлось.</div>';
+  } else {
+    spisok.innerHTML = vidno.map(kartochka).join("") || '<div class="kartochka">Ничего не нашлось.</div>';
   }
-  document.getElementById("spisok").innerHTML = html || '<div class="izdelie">Ничего не нашлось.</div>';
   zagruzitMiniatyury();
 }
 
-function kartochka(izd){
-  let v = '<div class="izdelie"><div class="shapka-izd"><span class="kod">' + ekran(izd.kod) +
-          '</span><span class="nazvanie">' + ekran(izd.nazvanie) + '</span><span class="gde">' +
-          ekran(izd.gde) + '</span></div>';
-  if(!izd.pachki.length) return v + '<div class="net">чертежей пока нет</div></div>';
-  izd.pachki.forEach((p, n) => { v += pachkaHtml(p, n === 0); });
+function kartochka(k){
+  const status = k.status === "soglasovanie"
+    ? '<span class="status soglasovanie">на согласовании с ' + den(k.pachki[0].u_zakazchika) + '</span>'
+    : '<span class="status rabota">готовится к согласованию</span>';
+  let v = '<div class="kartochka"><div class="k-verh">' +
+    (k.podpis_kodov ? '<span class="kod">' + ekran(k.podpis_kodov) + '</span>' : '') +
+    '<span class="nazv">' + k.nazvaniya.map(n => '<div>' + ekran(n) + '</div>').join("") +
+    (k.gde ? '<div class="gde">' + ekran(k.gde) + '</div>' : '') + '</span>' + status + '</div>';
+  k.pachki.forEach((p, n) => { v += pachka(p, n === 0, k.pachki.length > 1); });
   return v + '</div>';
 }
 
-function pachkaHtml(p, svezhaya){
-  let v = '<div class="pachka' + (svezhaya ? '' : ' staraya') + '"><div class="pachka-verh">' +
-    (svezhaya ? '<span class="metka svezhee">последняя</span>' : '<span class="metka staraya">прежняя</span>') +
-    '<span class="data">' + den(p.kogda) + ' ' + ekran(p.kogda.slice(11)) + '</span>' +
-    (p.u_zakazchika ? '<span class="metka zak">у заказчика с ' + den(p.u_zakazchika) + '</span>' : '') +
-    (p.zamechaniya.length ? '<span class="metka vopros">под вопросом</span>' : '') +
-    '<span class="zagolovok-pachki">' + ekran(p.zagolovok) + '</span></div>';
-  p.zamechaniya.forEach(z => { v += '<div class="zamech">⚠ ' + ekran(z) + '</div>'; });
-  if(p.podskazki.length) v += '<div class="zamech">→ по описанию похоже на: <b>' + ekran(p.podskazki.join(", ")) + '</b></div>';
+function pachka(p, svezhaya, neskolko){
+  let v = '<div class="pachka"><div class="p-verh">' +
+    (neskolko ? (svezhaya ? '<span class="metka svezhee">последняя версия</span>'
+                          : '<span class="metka staraya">прежняя версия</span>') : '') +
+    '<span class="data">' + den(p.kogda) + '</span></div>';
 
   v += '<div class="fajly">' + p.fajly.map((f, i) => {
     if(f.net_fajla) return '<div class="fajl"><div class="zaglushka">нет файла</div><div class="podpis">' + ekran(f.imya) + '</div></div>';
@@ -278,52 +306,18 @@ function pachkaHtml(p, svezhaya){
       '<div class="podpis"><span class="tip">' + (f.tip === "pdf" ? "Чертёж" : "Вид") + '</span> · ' + ekran(f.imya) + '</div></button>';
   }).join("") + '</div>';
 
-  if(p.teksty && p.teksty.length){
-    v += '<details class="teksty"><summary>Что писала конструктор (' + p.teksty.length + ')</summary>' +
-      p.teksty.map(t => '<div class="tekst"><span class="kogda">' + ekran(t.kogda) + '</span>' + ekran(t.tekst) + '</div>').join("") +
-      '</details>';
+  if(svezhaya && p.voprosy && p.voprosy.length){
+    v += '<div class="voprosy"><h3>Открытые вопросы по чертежу</h3>' +
+      p.voprosy.map(g => (g.gruppa ? '<div class="gruppa">' + ekran(g.gruppa) + '</div>' : '') +
+        '<ol>' + g.punkty.map(t => '<li>' + ekran(t) + '</li>').join("") + '</ol>').join("") +
+      '</div>';
   }
-  v += perepryvazka(p);
   return v + '</div>';
-}
-
-/* ---------- перепривязка ---------- */
-function perepryvazka(p){
-  const kody = D.izdeliya.map(i => i.kod);
-  return '<details class="perepr"><summary>Привязано к: ' + ekran(p.kody.join(", ") || "ничему") +
-    ' (' + ekran(p.kto_privyazal) + ') — изменить</summary><div class="kody-vybor" data-pachka="' + ekran(p.id) + '">' +
-    kody.map(k => '<span class="k' + (p.kody.indexOf(k) >= 0 ? ' da' : '') +
-      (p.podskazki.indexOf(k) >= 0 ? ' podskazka' : '') + '" onclick="this.classList.toggle(\'da\')">' +
-      ekran(k) + '</span>').join("") +
-    '</div><button class="sohr" onclick="sohranit(this,\'' + ekran(p.id) + '\')">Сохранить</button>' +
-    '<span class="sost"></span></details>';
-}
-
-async function sohranit(knopka, id){
-  const blok = knopka.parentElement.querySelector(".kody-vybor");
-  const vybrano = [...blok.querySelectorAll(".k.da")].map(e => e.textContent);
-  const sost = knopka.parentElement.querySelector(".sost");
-  const p = vsePachki().find(x => x.id === id);
-  knopka.disabled = true; sost.textContent = "Сохраняю…";
-  try{
-    const r = await fetch(MOSTIK, {method:"POST", body: JSON.stringify({
-      type:"stroka", list:"Чертежи_привязка", prefiksID:"ЧЕР",
-      klyuchPovtora: {"Пачка": id},
-      znacheniya: {"Пачка": id, "Объект": D.obekt, "Изделия": vybrano.join(", "),
-        "Было": p ? p.kody.join(", ") : "", "Название пачки": p ? p.zagolovok : "",
-        "Кто поправил": "с сайта чертежей", "Когда": new Date().toISOString().slice(0,16).replace("T"," ")}
-    })});
-    const d = await r.json();
-    if(!d.ok) throw new Error(d.error || "мостик отказал");
-    sost.textContent = "✓ Записано. Страница переложит пачку при ближайшем обновлении (в течение часа).";
-  }catch(e){ sost.textContent = "Не получилось: " + e.message; }
-  knopka.disabled = false;
 }
 
 function vsePachki(){
   const vse = [];
-  D.izdeliya.forEach(i => i.pachki.forEach(p => vse.push(p)));
-  D.bez_koda.forEach(p => vse.push(p));
+  D.kartochki.forEach(k => k.pachki.forEach(p => { if(!vse.find(x => x.id === p.id)) vse.push(p); }));
   return vse;
 }
 
@@ -374,8 +368,7 @@ async function pokazatFajl(){
       await poShirine();
     } else {
       polotno.innerHTML = '<img id="sm-img" src="' + SM.url + '" alt="">';
-      const img = document.getElementById("sm-img");
-      img.onload = () => poShirine();
+      document.getElementById("sm-img").onload = () => poShirine();
     }
   }catch(e){
     polotno.innerHTML = '<div class="zagruzka">Не удалось открыть: ' + ekran(e.message) + '</div>';
@@ -437,7 +430,6 @@ document.addEventListener("keydown", e => {
   if(e.key === "ArrowRight") listat(1);
 });
 
-/* запомненный пароль на этом устройстве — входим сами */
 try{ const z = localStorage.getItem("chertezhi_" + OB); if(z) voyti(z); }catch(e){}
 </script>
 </body>
