@@ -547,10 +547,25 @@
   .sheet-status { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 18px; }
 
   /* ---------- рабочее место Юлии (Медное Озеро), 10.09.2026 ---------- */
+  .rm-st { display:inline-block; font-size:12px; font-weight:600; padding:4px 9px; border-radius:999px; margin-top:6px; }
+  .rm-st.zak { background:#edf1f8; color:#35568a; }
+  .rm-st.zhdet { background:#faf0e2; color:#8a5a20; }
+  .rm-st.korr { background:#fbe9e5; color:#a4442f; }
+  .rm-st.net { background:var(--surface-2); color:var(--muted); }
+  .rm-st-bolshoy { font-size:13.5px; padding:6px 12px; margin:6px 0 4px; }
+  .rm-izd-meta { font-size:12px; color:var(--muted); margin-top:5px; }
+  .rm-razdel { margin-top:10px; }
+  .rm-razdel-telo { padding:4px 2px 10px; }
+  .rm-analiz { border:1px solid var(--line); border-radius:12px; padding:12px 14px; margin:8px 0; font-size:14.5px; }
+  .rm-analiz-ssylka { font-size:12.5px; color:var(--muted); margin-bottom:6px; }
+  .rm-analiz-blok { margin-top:8px; }
+  .rm-analiz-z { font-size:12.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; }
+  .rm-analiz ul { margin:2px 0 0; padding-left:18px; }
+  .rm-zapis { font-size:14.5px; padding:6px 0; border-bottom:1px solid var(--line); }
   .rm-shapka { display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; margin:14px 0 12px; }
   .rm-shapka h2 { margin:0; font-size:19px; flex:1; min-width:240px; }
   .rm-ssylka { color:var(--accent); font-size:14px; text-decoration:none; white-space:nowrap; }
-  .rm-plitki { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:14px; }
+  .rm-plitki { display:grid; grid-template-columns:repeat(5,1fr); gap:9px; margin-bottom:14px; }
   .rm-plitka { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px;
                text-align:left; cursor:pointer; font:inherit; color:inherit; box-shadow:var(--shadow); }
   .rm-plitka b { display:block; font-size:25px; line-height:1.1; }
@@ -1102,7 +1117,7 @@ function sobratVnimanie(objName) {
 const RM_OBEKT = "Медное Озеро";
 const RM_PAPKA = "chertezhi/mednoe-v/";
 const RM_LS = "rm_yulii_klyuch_mednoe";
-const RM = { klyuch: null, D: null, fajly: new Map(), vid: "zhdet" };
+const RM = { klyuch: null, D: null, fajly: new Map(), vid: "izdeliya" };
 
 function rmEsli(obj) { return obj === RM_OBEKT; }
 
@@ -1223,6 +1238,7 @@ async function renderRabocheeMesto(app) {
   const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0 };
   P.forEach(p => { s[p.status] = (s[p.status] || 0) + 1; });
   const PLITKI = [
+    ["izdeliya", "Изделия", (RM.D.izdeliya || []).length],
     ["zhdet", "Ждут отправки заказчику", s.zhdet],
     ["otpravlen", "На согласовании у заказчика", s.otpravlen],
     ["korrektirovki", "Заказчик вернул с корректировками", s.korrektirovki],
@@ -1244,6 +1260,7 @@ async function renderRabocheeMesto(app) {
 
   const spisok = document.getElementById("rmSpisok");
   if (RM.vid === "arhiv") return rmArhiv(spisok);
+  if (RM.vid === "izdeliya") return rmSpisokIzdeliy(spisok);
   const vidno = P.filter(p => p.status === RM.vid);
   if (!vidno.length) {
     spisok.innerHTML = `<div class="rm-pusto">${RM.vid === "zhdet" ? "Все чертежи от конструктора уже у заказчика."
@@ -1311,6 +1328,171 @@ function rmMiniatyury(korni) {
     try { z.target.src = URL.createObjectURL(new Blob([await rmFajl(z.target.dataset.mini)], { type: "image/jpeg" })); } catch (e) {}
   }), { rootMargin: "200px" });
   korni.querySelectorAll("img[data-mini]").forEach(i => nab.observe(i));
+}
+
+/* ---------------- список изделий и страница изделия (10.09.2026) ----------------
+   Мансур: «чтобы она могла зайти в список изделий и видеть их карточки и статусы сразу:
+   что с этим чертежом, есть ли по нему вопросы; нажав на карточку — переходит к этому
+   чертежу, а на этой странице собрано всё, что есть по чертежу, включая сами чертежи,
+   не пластом, а распределено: раскрыл — открылось». */
+function rmPachkiIzdeliya(kod) {
+  return (RM.D && RM.D.pachki || []).filter(p => p.kody.includes(kod))
+    .sort((a, b) => b.kogda.localeCompare(a.kogda));
+}
+function rmStatusIzdeliya(p) {
+  if (!p) return { cls: "net", tekst: "чертежа ещё нет" };
+  if (p.status === "korrektirovki") return { cls: "korr", tekst: "вернулся с корректировками" };
+  if (p.status === "otpravlen") return { cls: "zak", tekst: "у заказчика с " + rmDen(p.u_zakazchika) };
+  return { cls: "zhdet", tekst: "чертёж ждёт отправки" };
+}
+function rmChisloVoprosov(p) {
+  return p ? (p.voprosy || []).reduce((n, g) => n + g.punkty.length, 0) : 0;
+}
+
+function rmSpisokIzdeliy(el) {
+  const kartochki = (RM.D.izdeliya || []).map(i => {
+    const pachki = rmPachkiIzdeliya(i.kod);
+    const st = rmStatusIzdeliya(pachki[0]);
+    const vopr = rmChisloVoprosov(pachki[0]);
+    const vmeste = pachki[0] ? pachki[0].kody.filter(k => k !== i.kod) : [];
+    const meta = [];
+    if (pachki.length) meta.push("версий " + pachki.length);
+    if (vopr) meta.push("вопросов " + vopr);
+    if (vmeste.length) meta.push("один чертёж с " + vmeste.join(", "));
+    return `<button class="item-card rm-izd" data-code="${escapeHtml(i.kod)}">
+      <div class="code">${escapeHtml(i.kod)}</div>
+      <div class="nm">${escapeHtml(i.nazvanie || "")}</div>
+      <div class="room">${escapeHtml(i.gde || "")}</div>
+      <div class="rm-st ${st.cls}">${escapeHtml(st.tekst)}</div>
+      ${meta.length ? `<div class="rm-izd-meta">${escapeHtml(meta.join(" · "))}</div>` : ""}
+    </button>`;
+  }).join("");
+  el.innerHTML = `<div class="item-grid">${kartochki}</div>`;
+  el.querySelectorAll(".rm-izd").forEach(b => b.addEventListener("click", () => nav(() => renderItem(b.dataset.code))));
+  const poisk = document.getElementById("search");
+  if (poisk && poisk.value) filterGrid(poisk.value);
+}
+
+function rmFajlyHtml(p) {
+  return `<div class="rm-fajly">${p.fajly.map((f, i) => f.net_fajla
+    ? `<div class="rm-fajl net">нет файла<small>${escapeHtml(f.imya)}</small></div>`
+    : `<button class="rm-fajl" data-fajl="${escapeHtml(f.bin)}" data-pachka="${escapeHtml(p.id)}" data-i="${i}">
+         ${f.mini ? `<img data-mini="${escapeHtml(f.mini)}" alt="">` : `<span class="rm-zagl">${f.tip === "pdf" ? "PDF" : "файл"}</span>`}
+         <small><b>${f.tip === "pdf" ? "Чертёж" : "Вид"}</b> · ${escapeHtml(f.imya)}</small></button>`).join("")}</div>`;
+}
+
+function rmVoprosyHtml(p) {
+  return (p.voprosy || []).map(g => (g.gruppa ? `<div class="rm-gruppa">${escapeHtml(g.gruppa)}</div>` : "") +
+    `<ol>${g.punkty.map(t => `<li>${escapeHtml(t)}</li>`).join("")}</ol>`).join("");
+}
+
+function rmChtoNaChertezheHtml(p) {
+  const razbory = p.fajly.filter(f => f.tip === "pdf" && f.analiz);
+  if (!razbory.length) {
+    return `<div class="rm-tusklo">Разбор этого чертежа ещё идёт — появится здесь сам.</div>`;
+  }
+  return razbory.map(f => {
+    const a = f.analiz, sv = a.svodka || {};
+    const dosl = Object.entries(sv.iz_teksta_doslovno || {})
+      .map(([k, v]) => `<div><b>${escapeHtml(k[0].toUpperCase() + k.slice(1))}:</b> ${escapeHtml(v)}</div>`).join("");
+    const gab = sv.gabarity || {};
+    const gabStr = [["Ш", gab.shirina], ["В", gab.vysota], ["Г", gab.glubina]].filter(x => x[1]).map(x => x[0] + " " + x[1]).join(" · ");
+    const listy = (a.listy || []).map(L => `<li><b>лист ${L.list}</b> — ${escapeHtml(L.vid || "")}${L.chto ? ": " + escapeHtml(L.chto) : ""}</li>`).join("");
+    return `<div class="rm-analiz">
+      <div class="rm-analiz-ssylka">${escapeHtml(a.ssylka || "")} · ${escapeHtml(f.imya)}</div>
+      ${sv.nazvanie_na_chertezhe ? `<div><b>Со штампа:</b> ${escapeHtml(sv.nazvanie_na_chertezhe)}</div>` : ""}
+      ${dosl ? `<div class="rm-analiz-blok"><div class="rm-analiz-z">Дословно с чертежа</div>${dosl}</div>` : ""}
+      ${gabStr ? `<div class="rm-analiz-blok"><div class="rm-analiz-z">Габариты <span class="rm-tusklo">(по разбору модели — проверять)</span></div>${escapeHtml(gabStr)}</div>` : ""}
+      ${(sv.napolnenie || []).length ? `<div class="rm-analiz-blok"><div class="rm-analiz-z">Наполнение</div>${escapeHtml(sv.napolnenie.join("; "))}</div>` : ""}
+      ${listy ? `<div class="rm-analiz-blok"><div class="rm-analiz-z">Листы</div><ul>${listy}</ul></div>` : ""}
+      ${(sv.vse_razmery_s_chertezha || []).length ? `<div class="rm-analiz-blok"><div class="rm-analiz-z">Размеры с чертежа (${sv.vse_razmery_s_chertezha.length})</div>
+        <div class="rm-tusklo">${escapeHtml(sv.vse_razmery_s_chertezha.join(", "))}</div></div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function rmZapisiHtml(rec) {
+  let v = "", vsego = 0;
+  for (const b of BLOCKS) {
+    const rows = rec[b.tab] || [];
+    if (!rows.length) continue;
+    vsego += rows.length;
+    v += `<div class="rm-gruppa">${b.emoji} ${escapeHtml(b.label)} (${rows.length})</div>` + rows.map(r =>
+      `<div class="rm-zapis"><span class="rm-data">${escapeHtml(r["Дата события"] || "")}</span> ${escapeHtml(r[b.textCol] || "")}</div>`).join("");
+  }
+  return { html: v, vsego };
+}
+
+function rmRazdel(zagolovok, schet, soderzhimoe, otkryt) {
+  return `<details class="acc rm-razdel"${otkryt ? " open" : ""}>
+    <summary>${zagolovok}${schet !== null ? ` <span class="cnt">${schet}</span>` : ""}<span class="chev">▸</span></summary>
+    <div class="rm-razdel-telo">${soderzhimoe}</div></details>`;
+}
+
+async function renderIzdelieMO(code, it, rec) {
+  const app = document.getElementById("app");
+  app.innerHTML = `<div class="item-detail-wrap"><div class="rm-pusto">Собираю всё по изделию…</div></div>`;
+  if (!RM.D) { try { const z = localStorage.getItem(RM_LS); if (z) await rmVoyti(z); } catch (e) {} }
+  if (STATE.tekushchiy.v !== "item" || STATE.tekushchiy.code !== code) return;   // ушли, пока грузилось
+  const kod = it ? it["Код"] : code;
+  const pachki = rmPachkiIzdeliya(kod);
+  const posl = pachki[0];
+  const st = rmStatusIzdeliya(posl);
+  const vmeste = posl ? posl.kody.filter(k => k !== kod) : [];
+  const zapisi = rmZapisiHtml(rec);
+  const faylyPerepiski = rec["Б6_Файлы"] || [];
+
+  let knopki = "";
+  if (posl && posl.status === "zhdet") knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}">Подготовить письмо заказчику</button>`;
+  else if (posl && posl.status === "otpravlen") knopki = `<button class="btn ghost" data-pismo="${escapeHtml(posl.id)}">Отправить повторно</button>
+    <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(posl.id)}">Заказчик вернул с корректировками</button>`;
+  else if (posl) knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}" data-kuda="olga">Передать корректировки конструктору</button>
+    <button class="btn ghost" data-status="правки внесены" data-pachka="${escapeHtml(posl.id)}">Правки внесены — снять отметку</button>`;
+
+  let razdely = "";
+  if (!RM.D) {
+    razdely += `<div class="rm-vnutr">Чертежи и вопросы по ним видны после входа с паролем Юлии.</div>`;
+  } else if (!posl) {
+    razdely += `<div class="rm-pusto">По этому изделию чертежей от конструктора пока не было.</div>`;
+  } else {
+    const vnutr = (posl.zamechaniya || []).length ? `<div class="rm-vnutr">⚠ Для нас, не для заказчика: ${escapeHtml(posl.zamechaniya.join("; "))}` +
+      ((posl.podskazki || []).length ? ` · по описанию похоже на <b>${escapeHtml(posl.podskazki.join(", "))}</b>` : "") + `.</div>` : "";
+    razdely += rmRazdel(`📐 Чертежи — последняя версия, ${rmDen(posl.kogda)}`, posl.fajly.length,
+      (vmeste.length ? `<div class="rm-tusklo">Один чертёж вместе с ${escapeHtml(vmeste.join(", "))}.</div>` : "") + vnutr + rmFajlyHtml(posl), true);
+    if (pachki.length > 1) {
+      razdely += rmRazdel("🗂 Прежние версии", pachki.length - 1,
+        pachki.slice(1).map(p => `<div class="rm-gruppa">${rmDen(p.kogda)}</div>` + rmFajlyHtml(p)).join(""), false);
+    }
+    const vopr = rmChisloVoprosov(posl);
+    razdely += rmRazdel("❓ Открытые вопросы по чертежу", vopr,
+      vopr ? `<div class="rm-voprosy">${rmVoprosyHtml(posl)}</div>` : `<div class="rm-tusklo">Открытых вопросов нет.</div>`, vopr > 0);
+    razdely += rmRazdel("🔎 Что на чертеже", null, rmChtoNaChertezheHtml(posl), false);
+  }
+  razdely += rmRazdel("💬 Из переписки: обязательства, вопросы, решения", zapisi.vsego,
+    zapisi.vsego ? zapisi.html : `<div class="rm-tusklo">Записей по этому изделию нет.</div>`, false);
+  if (faylyPerepiski.length) {
+    razdely += rmRazdel("📎 Файлы из переписки", faylyPerepiski.length, faylyPerepiski.map(f =>
+      `<div><a class="file-link" href="${escapeHtml(f["Ссылка на Диск"] || "#")}" target="_blank" rel="noopener">📎 ${escapeHtml(f["Имя файла"] || "")}</a></div>`).join(""), false);
+  }
+
+  app.innerHTML = `<div class="item-detail-wrap">
+    <div class="item-head">
+      <span class="code-chip mono">${escapeHtml(kod)}</span>
+      <h1>${escapeHtml(it ? it["Название"] : "")}</h1>
+    </div>
+    <div class="item-desc">${it && it["Где стоит"] ? "Стоит в помещении «" + escapeHtml(it["Где стоит"]) + "» · " : ""}Медное Озеро</div>
+    <div class="rm-st ${st.cls} rm-st-bolshoy">${escapeHtml(st.tekst)}</div>
+    ${knopki ? `<div class="rm-knopki">${knopki}</div>` : ""}
+    <div class="rm-sost" data-sost="${escapeHtml(posl ? posl.id : "")}"></div>
+    ${razdely}
+  </div>`;
+  app.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () =>
+    rmSmotret(pachki.find(p => p.id === el.dataset.pachka), +el.dataset.i)));
+  app.querySelectorAll("[data-pismo]").forEach(el => el.addEventListener("click", () =>
+    rmPismo(pachki.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
+  app.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
+    rmOtmetit(pachki.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
+  rmMiniatyury(app);
 }
 
 /* ---------------- просмотр чертежа внутри приложения ----------------
@@ -1674,14 +1856,13 @@ function renderDashboard() {
     </div>
     <div class="obj-links-row">
       <button class="obj-fin-link" id="objObligLink">📋 Мои обязательства</button>
-      <button class="obj-fin-link" id="objFinLink">📁 Финансы и документы</button>
+      ${rmEsli(STATE.activeObj) ? "" : '<button class="obj-fin-link" id="objFinLink">📁 Финансы и документы</button>'}
     </div>
     ${attention}
-    ${rmEsli(STATE.activeObj) ? '<div id="rmMesto"></div>' : ""}
-    <section class="blk"><div class="hd"><h2>Изделия</h2><span class="count">${items.length}</span></div>
+    ${rmEsli(STATE.activeObj) ? '<div id="rmMesto"></div>' : `<section class="blk"><div class="hd"><h2>Изделия</h2><span class="count">${items.length}</span></div>
       <div class="item-grid">${cards || ""}</div>
       ${items.length ? "" : '<div class="empty-hint">В этом объекте пока нет изделий в справочнике.</div>'}
-    </section>
+    </section>`}
   `;
 
   const objFinLink = document.getElementById("objFinLink");
@@ -2700,6 +2881,7 @@ function renderItem(code) {
   const app = document.getElementById("app");
   const it = STATE.items.find(x => normCode(x["Код"]) === normCode(code));
   const rec = STATE.itemsByCode.get(normCode(code)) || {};
+  if (rmEsli(it && it["Объект"])) { renderIzdelieMO(code, it, rec); return; }
   const s = STATE.soglas[normCode(code)];
 
   if (!it && !Object.keys(rec).length) {
