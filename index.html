@@ -752,6 +752,8 @@
   .ch-vhod { max-width: 380px; margin: 40px auto; text-align: center; display: flex; flex-direction: column; gap: 12px; }
   .ch-vhod h2 { font-size: 30px; }
   .ch-vhod p { color: var(--muted); margin: 0; }
+  .ch-soob.fakt { background: #fbf6f0; border-style: dashed; border-color: rgba(193,128,72,.45); }
+  .ch-soob.fakt .ch-avtor { color: var(--muted); font-weight: 400; letter-spacing: .5px; }
   .ch-tema { font-size: 12px; opacity: .85; margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid rgba(193,128,72,.25); }
   .ch-soob.ishod .ch-tema { border-bottom-color: rgba(255,255,255,.35); }
   .ch-tema-vybor { display: flex; gap: 8px; padding: 8px 10px 0; background: #fff; border-top: 1px solid var(--line); flex-wrap: wrap; }
@@ -973,7 +975,7 @@
                 localStorage.setItem("chat_uid", uid);
                 localStorage.setItem("chat_k", btoa(String.fromCharCode.apply(null, new Uint8Array(syroy))));
               } catch (e) {}
-              return { uid: uid, imya: u.imya, dir: u.dir, parol: p, tolko: !!u.tolko_chat };
+              return { uid: uid, imya: u.rol_imya || u.imya, dir: u.dir, parol: p, tolko: !!u.tolko_chat };
             }, dalshe);
         }
         return dalshe();
@@ -1771,7 +1773,7 @@ async function chRasshifr(kl, u8) {
 }
 // Только мессенджер — по флагу нового входа ИЛИ по имени входа: кто вошёл старым общим
 // паролем до 10.09.2026, остаётся вошедшим, и флага у него нет — иначе видел бы всё приложение.
-const CH_TOLKO_IMENA = ["Игорь Михайлович", "Производство", "Конструкторы", "Монтажники"];
+const CH_TOLKO_IMENA = ["Игорь Михайлович", "Олег", "Дмитрий", "Ольга", "Производство", "Конструкторы", "Монтажники"];
 function chTolkoChat() {
   try {
     return localStorage.getItem("verstak_tolko_chat") === "1" || CH_TOLKO_IMENA.includes(localStorage.getItem("verstak_role_name") || "");
@@ -1784,7 +1786,11 @@ function chKnopkaDoma() {
 }
 document.addEventListener("click", e => { if (e.target.closest && e.target.closest("#chDoma")) nav(() => renderChat("")); });
 function chUid() { try { return localStorage.getItem("chat_uid") || ""; } catch (e) { return ""; } }
-function chKto(uid) { const u = CH.konfig && CH.konfig.uchastniki[uid]; return u ? u.imya : "—"; }
+function chKto(uid) {
+  if (uid === "fakty") return "Факты реестра";   // их присылает Мак (razoslat_fakty.py)
+  const u = CH.konfig && CH.konfig.uchastniki[uid];
+  return u ? u.imya : "—";
+}
 
 async function chGotov() {
   if (!CH.konfig) {
@@ -1959,14 +1965,19 @@ function chRisovatSpisok() {
       <span class="ch-imya">${escapeHtml(pr)}</span><span class="ch-vremya">${n || ""}</span>
       <span class="ch-posl">${n ? "сообщений по проекту: " + n : "по проекту пока ничего"}</span></button>`;
   }).join("");
+  // Участники — личные; Проекты — группа проекта (все участники + факты реестра);
+  // Коммерция — только Юлия и Игорь; Все переписки и Всё по проектам — только владельцу.
+  const vladelec = (k.uchastniki[uid] || {}).rol === "vladelec";
   const gruppy = [
-    ["Участники", id => k.chaty[id].uchastniki.includes(uid)],
-    ["Проекты", null],
-    ["Все переписки", id => !k.chaty[id].uchastniki.includes(uid)],
+    ["Участники", id => k.chaty[id].tip === "lichnyy" && k.chaty[id].uchastniki.includes(uid)],
+    ["Проекты", id => k.chaty[id].tip === "gruppa" && !k.chaty[id].kommercheskaya],
+    ["Коммерция", id => k.chaty[id].tip === "gruppa" && k.chaty[id].kommercheskaya],
+    ["Все переписки", id => k.chaty[id].tip === "lichnyy" && !k.chaty[id].uchastniki.includes(uid)],
+    ["Всё по проектам", null],
   ];
   let html = "";
   for (const [nazv, podhodit] of gruppy) {
-    if (!podhodit) { if (proekty) html += `<div class="ch-razdel"><span>${nazv}</span><i></i></div>` + proekty; continue; }
+    if (!podhodit) { if (proekty && vladelec) html += `<div class="ch-razdel"><span>${nazv}</span><i></i></div>` + proekty; continue; }
     const ids = vse.filter(podhodit);
     if (!ids.length) continue;
     ids.sort((a, b) => ((chPosl(b) || { d: { w: 0 } }).d.w - (chPosl(a) || { d: { w: 0 } }).d.w));
@@ -1990,7 +2001,8 @@ function chRisovatChat() {
   const cid = CH.otkryt, c = CH.konfig.chaty[cid];
   const chuzhoy = c.tip === "lichnyy" && !c.uchastniki.includes(chUid());
   el.innerHTML = `<div class="ch-shapka"><h2>${escapeHtml(chImya(cid))}</h2>
-      <span class="ch-uch">${c.tip === "lichnyy" ? (chuzhoy ? "переписка сотрудников — видна владельцу" : "личный чат") : c.uchastniki.length + " участников"}</span></div>
+      <span class="ch-uch">${c.tip === "lichnyy" ? (chuzhoy ? "переписка сотрудников — видна владельцу" : "личный чат")
+        : escapeHtml(c.uchastniki.map(chKto).join(", ")) + (c.kommercheskaya ? " · коммерческое — только вам двоим" : " · сюда же приходят факты реестра")}</span></div>
     <div class="ch-lenta" id="chLenta"></div>
     <div class="ch-tema-vybor">
       <select id="chProekt" class="ch-vybor" aria-label="Проект"><option value="">Проект не выбран</option>${(CH.konfig.proekty || []).map(p => `<option>${escapeHtml(p)}</option>`).join("")}</select>
@@ -2009,6 +2021,11 @@ function chRisovatChat() {
     selI.innerHTML = `<option value="">Изделие не выбрано</option>` + STATE.items.filter(i => i["Объект"] === selP.value)
       .map(i => `<option value="${escapeHtml(i["Код"])}">${escapeHtml(i["Код"] + " — " + (i["Название"] || ""))}</option>`).join("");
   });
+  if (c.proekt) {   // в группе проекта проект уже известен
+    selP.value = c.proekt;
+    selP.dispatchEvent(new Event("change"));
+    selP.disabled = true;
+  }
   const otpravit = () => { const t = pole.value.trim(); if (!t) return; pole.value = ""; pole.style.height = ""; chOtpravit(t, null); };
   document.getElementById("chOtpr").addEventListener("click", otpravit);
   pole.addEventListener("keydown", e => {
@@ -2080,7 +2097,7 @@ function chRisovatLentu(vniz) {
     if (dd !== den) { den = dd; html += `<div class="ch-den">${dd}</div>`; }
     const moe = z.kto === uid;
     posl = Math.max(posl, z.d.w);
-    html += `<div class="ch-soob ${moe ? "ishod" : "vhod"}">
+    html += `<div class="ch-soob ${moe ? "ishod" : "vhod"}${z.kto === "fakty" ? " fakt" : ""}">
       ${chAvtorHtml(z, moe)}${chTemaHtml(z)}
       ${z.d.f ? chFajlHtml(z) : ""}${z.d.t ? `<div class="ch-tekst">${chTekst(z.d.t)}</div>` : ""}
       <div class="ch-vr">${z.lokal ? (z.oshibka ? "не отправлено" : "отправляется…") : chVremya(z.d.w)}</div></div>`;
