@@ -1769,7 +1769,14 @@ async function chShifr(kl, u8) {
 async function chRasshifr(kl, u8) {
   return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: u8.slice(0, 12) }, kl, u8.slice(12)));
 }
-function chTolkoChat() { try { return localStorage.getItem("verstak_tolko_chat") === "1"; } catch (e) { return false; } }
+// Только мессенджер — по флагу нового входа ИЛИ по имени входа: кто вошёл старым общим
+// паролем до 10.09.2026, остаётся вошедшим, и флага у него нет — иначе видел бы всё приложение.
+const CH_TOLKO_IMENA = ["Игорь Михайлович", "Производство", "Конструкторы", "Монтажники"];
+function chTolkoChat() {
+  try {
+    return localStorage.getItem("verstak_tolko_chat") === "1" || CH_TOLKO_IMENA.includes(localStorage.getItem("verstak_role_name") || "");
+  } catch (e) { return false; }
+}
 function chKnopkaDoma() {
   let imya = ""; try { imya = localStorage.getItem("verstak_role_name") || ""; } catch (e) {}
   if (!chUid() && imya !== "Юлия" && imya !== "Мансур") return "";
