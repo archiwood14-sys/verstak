@@ -127,7 +127,8 @@
 <div class="obertka">
   <div id="vhod" class="vhod">
     <div>Чертежи защищены паролем — это частный дом заказчика.</div>
-    <input id="parol" type="password" autocomplete="current-password" placeholder="Пароль"
+    <div style="font-size:14px;color:#6b665e;margin-top:6px">Можно вставить весь текст сообщения с паролем — страница сама его найдёт.</div>
+    <input id="parol" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Пароль"
            onkeydown="if(event.key==='Enter')voyti()">
     <button onclick="voyti()">Открыть</button>
     <div class="oshibka" id="oshibka"></div>
@@ -183,9 +184,22 @@ function izRusskoyRaskladki(s){
   return s.split("").map(ch => { const i = ru.indexOf(ch.toLowerCase()); return i >= 0 ? en[i] : ch; }).join("");
 }
 
+/* Пароль вставляют с телефона — и телефон портит его по-разному: прихватывает
+   «Пароль:» и соседние строки, меняет дефис на длинное тире, вставляет невидимые
+   знаки. 10.09.2026 Мансур скопировал пароль из сообщения на айфоне — не подошёл.
+   Поэтому чистим: все виды тире превращаем в дефис, невидимое убираем, и из любого
+   вставленного текста — хоть из всего сообщения целиком — вытаскиваем сам пароль. */
+function ochistit(s){
+  s = String(s || "").normalize("NFKC");
+  s = s.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-");
+  s = s.replace(/[\u00A0\u200B-\u200D\u2060\uFEFF]/g, " ");
+  const m = s.match(/[A-Za-zА-Яа-яЁё]+\s*-\s*[A-Za-zА-Яа-яЁё]+\s*-\s*\d{4}/);
+  return (m ? m[0] : s).replace(/\s+/g, "").trim();
+}
+
 async function voyti(zapomnennyy){
   const oshibka = document.getElementById("oshibka");
-  const vvod = (zapomnennyy || document.getElementById("parol").value || "").trim();
+  const vvod = ochistit(zapomnennyy || document.getElementById("parol").value);
   if(!vvod) return;
   oshibka.textContent = "Проверяю…";
   try{
