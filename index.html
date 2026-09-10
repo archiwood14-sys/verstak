@@ -976,9 +976,12 @@ function buildIndices(raw) {
   // по чертежам (renderRabocheeMesto). Режем здесь, в одном месте, а не в каждом экране:
   // так записи Медного Озера пропадают и с главного экрана, и из «требует внимания», и из
   // обязательств, и из карточек изделий разом. Из самого реестра ничего не удаляется.
+  // 10.09.2026, вечер — поправка Мансура: убирать ТОЛЬКО то, что выросло из проектных
+  // данных, а не всё подряд. Обязательства Юлии из переписки к конструктору отношения не
+  // имеют и должны остаться. Какая запись проектная — решает rmProektnoe().
   for (const t of Object.keys(raw.blockData || {})) {
     if (/^Б(7|8|9|1[0-6])_/.test(t)) {
-      raw.blockData[t] = (raw.blockData[t] || []).filter(r => r["Объект"] !== RM_OBEKT);
+      raw.blockData[t] = (raw.blockData[t] || []).filter(r => !(r["Объект"] === RM_OBEKT && rmProektnoe(r)));
     }
   }
   STATE.blocks = raw.blockData;
@@ -1103,6 +1106,22 @@ const RM = { klyuch: null, D: null, fajly: new Map(), vid: "zhdet" };
 
 function rmEsli(obj) { return obj === RM_OBEKT; }
 
+/* Проектная ли запись. Проверено на всех записях Медного Озера 10.09.2026:
+   • есть номер сообщения — запись из переписки, это работа Юлии, НЕ проектное;
+   • источник — проектный документ (РП, СИ, альбом, «СИ vs РП», даты документов) —
+     разбор проектных данных, зона конструктора;
+   • ни источника, ни цитаты — так записаны сверки «документ против документа»
+     (расхождения, «ждём контрольного замера» и т.п.) — тоже проектное;
+   • источник — чертёж Ольги из чата («ИМ_15_шкаф…pdf») — это работа с конструктором
+     по переписке, НЕ проектное, остаётся. */
+function rmProektnoe(r) {
+  if ((r["Источник — сообщения (ID)"] || "").trim()) return false;
+  const fajly = (r["Источник — файлы"] || "").trim();
+  if (/^(РП|СИ|АЛ|Альбом|даты документов|паспорт)/i.test(fajly)) return true;
+  if (!fajly && !(r["Цитата"] || "").trim()) return true;
+  return false;
+}
+
 function rmOchistit(s) {
   s = String(s || "").normalize("NFKC");
   s = s.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-");
@@ -1168,7 +1187,8 @@ function rmNazvanie(kod) {
 }
 
 /* ---------------- экран ---------------- */
-async function renderRabocheeMesto(app, segsHtml) {
+async function renderRabocheeMesto(app) {
+  if (!app) return;   // app — это блок рабочего места на экране объекта
   if (!RM.D) {
     const zapomnen = (() => { try { return localStorage.getItem(RM_LS); } catch (e) { return null; } })();
     // Вход по сохранённому ключу может сорваться (связь моргнула при загрузке списка).
@@ -1176,9 +1196,8 @@ async function renderRabocheeMesto(app, segsHtml) {
     // этой защиты Юлия увидела бы белую страницу и не поняла бы почему.
     let voshla = false;
     if (zapomnen) { try { voshla = await rmVoyti(zapomnen); } catch (e) { voshla = false; } }
-    if (voshla) return renderRabocheeMesto(app, segsHtml);
-    app.innerHTML = `<div class="segs">${segsHtml}</div>
-      <section class="blk rm-vhod">
+    if (voshla) return renderRabocheeMesto(app);
+    app.innerHTML = `      <section class="blk rm-vhod">
         <div class="hd"><h2>Медное Озеро — чертежи и согласование</h2></div>
         <p class="rm-tusklo">Рабочее место Юлии: чертежи от конструктора, письма заказчику, архив.
         Здесь есть черновики, которые заказчику видеть рано, поэтому нужен ключ. Вводится один раз.</p>
@@ -1187,12 +1206,11 @@ async function renderRabocheeMesto(app, segsHtml) {
         <button class="btn primary" id="rmVoyti">Открыть</button>
         <div class="rm-oshibka" id="rmOsh"></div>
       </section>`;
-    bindSegs(app);
     const voyti = async () => {
       const osh = document.getElementById("rmOsh");
       osh.textContent = "Проверяю…";
       try {
-        if (await rmVoyti(document.getElementById("rmKlyuch").value)) renderRabocheeMesto(app, segsHtml);
+        if (await rmVoyti(document.getElementById("rmKlyuch").value)) renderRabocheeMesto(app);
         else osh.textContent = "Ключ не подошёл.";
       } catch (e) { osh.textContent = "Не удалось загрузить: " + e.message; }
     };
@@ -1213,17 +1231,15 @@ async function renderRabocheeMesto(app, segsHtml) {
   const plitki = PLITKI.map(([k, t, n]) =>
     `<button class="rm-plitka ${k}${RM.vid === k ? " vybrana" : ""}" data-vid="${k}"><b>${n}</b><span>${t}</span></button>`).join("");
 
-  app.innerHTML = `<div class="segs">${segsHtml}</div>
-    <div class="rm-shapka">
+  app.innerHTML = `    <div class="rm-shapka">
       <h2>Медное Озеро — чертежи и согласование с заказчиком</h2>
       <a class="rm-ssylka" href="${escapeHtml(RM.D.stranica_zakazchika)}" target="_blank" rel="noopener">
         Страница заказчика ↗</a>
     </div>
     <div class="rm-plitki">${plitki}</div>
     <div id="rmSpisok"></div>`;
-  bindSegs(app);
   app.querySelectorAll(".rm-plitka").forEach(b => b.addEventListener("click", () => {
-    RM.vid = b.dataset.vid; renderRabocheeMesto(app, segsHtml);
+    RM.vid = b.dataset.vid; renderRabocheeMesto(app);
   }));
 
   const spisok = document.getElementById("rmSpisok");
@@ -1574,7 +1590,6 @@ function renderDashboard() {
     const active = name === STATE.activeObj ? "active" : "";
     return `<div class="seg ${active}" data-obj="${escapeHtml(name)}">${escapeHtml(name)}</div>`;
   }).join("");
-  if (rmEsli(STATE.activeObj)) { renderRabocheeMesto(app, segs); return; }
 
   // Что вообще считается «требует внимания». Раньше сюда попадали только неразрешённые
   // расхождения и красные вопросы — а красная критичность проставлена только у записей
@@ -1662,6 +1677,7 @@ function renderDashboard() {
       <button class="obj-fin-link" id="objFinLink">📁 Финансы и документы</button>
     </div>
     ${attention}
+    ${rmEsli(STATE.activeObj) ? '<div id="rmMesto"></div>' : ""}
     <section class="blk"><div class="hd"><h2>Изделия</h2><span class="count">${items.length}</span></div>
       <div class="item-grid">${cards || ""}</div>
       ${items.length ? "" : '<div class="empty-hint">В этом объекте пока нет изделий в справочнике.</div>'}
@@ -1679,6 +1695,7 @@ function renderDashboard() {
     if (item) openRecordModal(item.r["Номер записи"], item.blok);
   }));
 
+  if (rmEsli(STATE.activeObj)) renderRabocheeMesto(document.getElementById("rmMesto"));
   const search = document.getElementById("search");
   search.addEventListener("input", () => filterGrid(search.value));
   search.addEventListener("keydown", e => {
@@ -2493,7 +2510,7 @@ function renderObligations(objFilter) {
 
   const objLinks = !objFilter && STATE.objectNames.length
     ? `<div class="home-obj-row">${STATE.objectNames.map(n =>
-        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${rmEsli(n) ? "📐 " + escapeHtml(n) + " — чертежи и согласование" : "📦 " + escapeHtml(n) + " — изделия"}</button>`).join("")}</div>`
+        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${"📦 " + escapeHtml(n) + (rmEsli(n) ? " — изделия и согласование" : " — изделия")}</button>`).join("")}</div>`
     : "";
 
   app.innerHTML = `
@@ -2548,7 +2565,7 @@ function renderHome() {
 
   const objLinks = STATE.objectNames.length
     ? `<div class="home-obj-row">${STATE.objectNames.map(n =>
-        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${rmEsli(n) ? "📐 " + escapeHtml(n) + " — чертежи и согласование" : "📦 " + escapeHtml(n) + " — изделия"}</button>`).join("")}</div>`
+        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${"📦 " + escapeHtml(n) + (rmEsli(n) ? " — изделия и согласование" : " — изделия")}</button>`).join("")}</div>`
     : "";
 
   const roleName = localStorage.getItem("verstak_role_name") || "";
@@ -2678,11 +2695,7 @@ function renderObjectFinance(objName) {
 }
 
 function renderItem(code) {
-  // Медное Озеро: карточка изделия построена на проектных данных, а их у этого объекта в
-  // приложении не показываем (10.09.2026). Сюда можно попасть по старой памяти «где был» —
-  // тогда ведём в рабочее место Юлии, а не в старую карточку.
-  const rmIzd = (STATE.items || []).find(it => normCode(it["Код"]) === normCode(code));
-  if (rmIzd && rmEsli(rmIzd["Объект"])) { STATE.activeObj = RM_OBEKT; return renderDashboard(); }
+
   STATE.tekushchiy = { v: "item", code };
   const app = document.getElementById("app");
   const it = STATE.items.find(x => normCode(x["Код"]) === normCode(code));
@@ -2706,9 +2719,13 @@ function renderItem(code) {
   if (s && s["Ссылка на пилот"]) pills += `<a class="pill link" href="${s["Ссылка на пилот"]}" target="_blank" rel="noopener">📁 Пилот на Диске</a>`;
 
   let params = "";
+  // у Медного Озера технические параметры взяты из рабочего проекта — это проектные
+  // данные, их разбирает конструктор; в карточке их не показываем (10.09.2026)
+  const rmBezProekta = rmEsli(it && it["Объект"]);
   if (it && it["Технические параметры (из рабочего проекта)"]) {
     params = `<div class="params-box"><div class="lbl">Технические параметры</div>${escapeHtml(it["Технические параметры (из рабочего проекта)"])}<div class="params-note">У каждого пункта — свой источник в скобках (лист рабочего проекта или номер сообщения). Это не единый документ, сверяйте по каждому факту отдельно.</div></div>`;
   }
+  if (rmBezProekta) params = "";
 
   let filesBox = "";
   const itemFiles = rec["Б6_Файлы"] || [];
@@ -2792,10 +2809,13 @@ function renderItem(code) {
     </div>
   `;
 
+  // У Медного Озера досье собрано из проектных документов — его разбирает конструктор,
+  // поэтому поиск по досье в карточке не показываем (10.09.2026).
+  if (rmBezProekta) { const db = document.querySelector(".dosye-blok"); if (db) db.remove(); }
   // Досье подгружаем сразу, а ищем — пока человек печатает, без всякого ожидания.
   const pole = document.getElementById("dosyePole");
   const kodDlyaDosye = it ? it["Код"] : code;
-  zagruzit_dosye(kodDlyaDosye)
+  if (!rmBezProekta) zagruzit_dosye(kodDlyaDosye)
     .then(() => pokazat_nahodki(kodDlyaDosye, pole ? pole.value : ""))
     .catch(() => {
       const el = document.getElementById("dosyeRezultat");
