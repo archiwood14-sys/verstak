@@ -545,6 +545,58 @@
   .btn.rec.active { background: var(--crit); color: #fff; }
   .btn:disabled { opacity: .5; cursor: default; }
   .sheet-status { font-size: 13px; color: var(--muted); margin-top: 10px; min-height: 18px; }
+
+  /* ---------- рабочее место Юлии (Медное Озеро), 10.09.2026 ---------- */
+  .rm-shapka { display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; margin:14px 0 12px; }
+  .rm-shapka h2 { margin:0; font-size:19px; flex:1; min-width:240px; }
+  .rm-ssylka { color:var(--accent); font-size:14px; text-decoration:none; white-space:nowrap; }
+  .rm-plitki { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:14px; }
+  .rm-plitka { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px;
+               text-align:left; cursor:pointer; font:inherit; color:inherit; box-shadow:var(--shadow); }
+  .rm-plitka b { display:block; font-size:25px; line-height:1.1; }
+  .rm-plitka span { display:block; font-size:13px; color:var(--muted); margin-top:3px; line-height:1.25; }
+  .rm-plitka.zhdet b { color:var(--accent); }
+  .rm-plitka.korrektirovki b { color:var(--warn); }
+  .rm-plitka.vybrana { border-color:var(--ink); box-shadow:0 0 0 1px var(--ink); }
+  @media (max-width:700px) { .rm-plitki { grid-template-columns:repeat(2,1fr); } }
+  .rm-karta { padding:15px; }
+  .rm-karta-verh { display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; margin-bottom:10px; }
+  .rm-kod { font-weight:700; font-size:17px; white-space:nowrap; }
+  .rm-nazv { flex:1; min-width:200px; }
+  .rm-data { color:var(--muted); font-size:13.5px; white-space:nowrap; }
+  .rm-vnutr { background:#fbf1de; color:#7a5313; border-radius:10px; padding:9px 12px; font-size:14px; margin-bottom:10px; }
+  .rm-fajly { display:flex; gap:9px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; }
+  .rm-fajl { flex:0 0 auto; width:136px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+             background:var(--surface-2); padding:0; text-align:left; cursor:pointer; font:inherit; color:inherit;
+             display:flex; flex-direction:column; }
+  .rm-fajl img, .rm-zagl { width:100%; height:96px; object-fit:cover; display:flex; align-items:center;
+                           justify-content:center; background:#ece7dc; color:var(--muted); font-size:13px; }
+  .rm-fajl small { font-size:11.5px; color:var(--muted); padding:5px 7px; line-height:1.3; }
+  .rm-fajl.gotov { padding:8px; gap:6px; cursor:default; }
+  .rm-fajl.gotov .btn { text-align:center; text-decoration:none; font-size:14px; padding:8px; }
+  .rm-fajl.net { padding:10px; color:var(--muted); font-size:13px; cursor:default; }
+  .rm-voprosy { margin-top:11px; background:#fbf6ee; border-radius:11px; padding:10px 13px; font-size:14.5px; }
+  .rm-voprosy h4 { margin:0 0 5px; font-size:14px; color:#8a5f1c; }
+  .rm-voprosy ol { margin:0; padding-left:20px; }
+  .rm-gruppa { font-size:13px; font-weight:700; color:var(--muted); margin-top:6px; }
+  .rm-knopki { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .rm-sost { font-size:14px; color:var(--muted); margin-top:8px; }
+  .rm-pusto { color:var(--muted); padding:18px 4px; }
+  .rm-tusklo { color:var(--muted); font-size:14px; }
+  .rm-pole { width:100%; font:inherit; font-size:16px; padding:10px 12px; border:1px solid var(--line);
+             border-radius:10px; background:var(--surface); margin:4px 0 10px; }
+  textarea.rm-pole { font-size:15px; line-height:1.45; resize:vertical; }
+  .rm-oshibka { color:var(--crit); font-size:14px; min-height:20px; margin-top:6px; }
+  .rm-vhod { padding:18px; max-width:520px; }
+  .rm-okno-fon { position:fixed; inset:0; background:rgba(38,36,32,.45); z-index:80; display:flex;
+                 align-items:flex-start; justify-content:center; overflow:auto; padding:24px 12px; }
+  .rm-okno { background:var(--surface); border-radius:16px; padding:18px; width:100%; max-width:640px; box-shadow:var(--shadow); }
+  .rm-okno h3 { margin:0 0 10px; }
+  .rm-metka { display:block; font-size:13px; color:var(--muted); margin-top:4px; }
+  .rm-galki { display:flex; flex-direction:column; gap:5px; margin:4px 0 10px; font-size:14px; }
+  .rm-arhiv { padding:14px; }
+  .rm-arh-stroka { display:flex; flex-wrap:wrap; gap:4px 10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .rm-arh-stroka small { width:100%; color:var(--muted); }
 </style>
 
 <div class="gate-backdrop hidden" id="gateBackdrop">
@@ -874,6 +926,17 @@ function buildIndices(raw) {
   STATE.items.forEach(it => codeIndex.set(normCode(it["Код"]), it["Код"]));
   STATE.codeIndexSet = new Set(codeIndex.keys());
 
+  // У Медного Озера проектные данные в приложении не показываем (Мансур, 10.09.2026):
+  // вопросы, обязательства, решения, расхождения — всё, что построено на разборе
+  // проектных документов. Их разбирает конструктор; у Юлии вместо этого — рабочее место
+  // по чертежам (renderRabocheeMesto). Режем здесь, в одном месте, а не в каждом экране:
+  // так записи Медного Озера пропадают и с главного экрана, и из «требует внимания», и из
+  // обязательств, и из карточек изделий разом. Из самого реестра ничего не удаляется.
+  for (const t of Object.keys(raw.blockData || {})) {
+    if (/^Б(7|8|9|1[0-6])_/.test(t)) {
+      raw.blockData[t] = (raw.blockData[t] || []).filter(r => r["Объект"] !== RM_OBEKT);
+    }
+  }
   STATE.blocks = raw.blockData;
   // Номера записей, по которым человек уже сказал своё — их карточки из рабочих списков
   // убираем. Список подтягивается живьём; если сети нет (например, внутри превью),
@@ -973,6 +1036,371 @@ function sobratVnimanie(objName) {
 }
 
 /* ---------------- рендер: дашборд ---------------- */
+/* ================================================================================
+   РАБОЧЕЕ МЕСТО ЮЛИИ — Медное Озеро (10.09.2026, поручение Мансура)
+
+   Юлия ведёт здесь работу между конструктором и заказчиком: пришли чертежи от Ольги —
+   она видит их, собирает письмо по стандартной форме (чертежи, вопросы конструктора,
+   свои дополнения) и отправляет в нужную группу Телеграма. Письмо уходит от её имени
+   через отправителя на Маке (1_dvizhok/reestr/otpravitel.py).
+
+   Всё здесь зашифровано КЛЮЧОМ ЮЛИИ: и сам список пачек (там черновики Ольги, которые
+   заказчику видеть рано), и задание на отправку. Задание шифруется потому, что мостик
+   открыт всем, кто знает его адрес: без шифрования посторонний мог бы поставить в очередь
+   письмо от имени Юлии. Отправитель принимает только то, что сумел расшифровать.
+
+   Проектные данные (вопросы, обязательства, решения по разбору документов) у Медного
+   Озера в приложении не показываются: их разбирает конструктор (Мансур, 10.09.2026).
+   ================================================================================ */
+const RM_OBEKT = "Медное Озеро";
+const RM_PAPKA = "chertezhi/mednoe-v/";
+const RM_LS = "rm_yulii_klyuch_mednoe";
+const RM = { klyuch: null, D: null, fajly: new Map(), vid: "zhdet" };
+
+function rmEsli(obj) { return obj === RM_OBEKT; }
+
+function rmOchistit(s) {
+  s = String(s || "").normalize("NFKC");
+  s = s.replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-");
+  s = s.replace(/[\u00A0\u200B-\u200D\u2060\uFEFF]/g, " ");
+  const m = s.match(/[A-Za-zА-Яа-яЁё]+\s*-\s*[A-Za-zА-Яа-яЁё]+\s*-\s*\d{4}/);
+  return (m ? m[0] : s).replace(/\s+/g, "").trim();
+}
+function rmRaskladka(s) {
+  const ru = "йцукенгшщзхъфывапролджэячсмитьбю", en = "qwertyuiop[]asdfghjkl;'zxcvbnm,.";
+  return s.split("").map(c => { const i = ru.indexOf(c.toLowerCase()); return i >= 0 ? en[i] : c; }).join("");
+}
+function rmDen(s) { if (!s) return ""; const d = s.slice(0, 10).split("-"); return d[2] + "." + d[1] + "." + d[0]; }
+function rmKto() { return localStorage.getItem("verstak_role_name") || "без имени"; }
+
+async function rmKlyuch(parol, salt, iter) {
+  const baza = await crypto.subtle.importKey("raw", new TextEncoder().encode(parol), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: iter, hash: "SHA-256" },
+    baza, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+}
+async function rmRasshifrovat(buf) {
+  const u = new Uint8Array(buf);
+  return crypto.subtle.decrypt({ name: "AES-GCM", iv: u.slice(0, 12) }, RM.klyuch, u.slice(12));
+}
+async function rmZashifrovat(tekst) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const shifr = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, RM.klyuch,
+    new TextEncoder().encode(tekst)));
+  const vse = new Uint8Array(iv.length + shifr.length);
+  vse.set(iv); vse.set(shifr, iv.length);
+  let s = ""; vse.forEach(b => s += String.fromCharCode(b));
+  return btoa(s);
+}
+
+async function rmVoyti(vvod) {
+  const chistyy = rmOchistit(vvod);
+  if (!chistyy) return false;
+  const meta = await (await fetch(RM_PAPKA + "meta.json?" + Date.now())).json();
+  const salt = Uint8Array.from(atob(meta.salt), c => c.charCodeAt(0));
+  const shifr = await (await fetch(RM_PAPKA + "spisok.bin?" + Date.now())).arrayBuffer();
+  for (const p of [chistyy, chistyy.toLowerCase(), rmRaskladka(chistyy)]) {
+    try {
+      RM.klyuch = await rmKlyuch(p, salt, meta.iter);
+      RM.D = JSON.parse(new TextDecoder().decode(await rmRasshifrovat(shifr)));
+      try { localStorage.setItem(RM_LS, p); } catch (e) {}
+      return true;
+    } catch (e) { RM.klyuch = null; }
+  }
+  return false;
+}
+
+async function rmFajl(bin) {
+  if (RM.fajly.has(bin)) return RM.fajly.get(bin);
+  const r = await fetch(RM_PAPKA + "f/" + bin);
+  if (!r.ok) throw new Error("файл не найден");
+  const b = await rmRasshifrovat(await r.arrayBuffer());
+  RM.fajly.set(bin, b);
+  return b;
+}
+
+function rmNazvanie(kod) {
+  const i = (RM.D.izdeliya || []).find(x => x.kod === kod);
+  return i ? i.nazvanie + (i.gde ? " (" + i.gde + ")" : "") : "";
+}
+
+/* ---------------- экран ---------------- */
+async function renderRabocheeMesto(app, segsHtml) {
+  if (!RM.D) {
+    const zapomnen = (() => { try { return localStorage.getItem(RM_LS); } catch (e) { return null; } })();
+    // Вход по сохранённому ключу может сорваться (связь моргнула при загрузке списка).
+    // Тогда — не пустой экран, а обычное поле ключа: 10.09.2026 проверка поймала, что без
+    // этой защиты Юлия увидела бы белую страницу и не поняла бы почему.
+    let voshla = false;
+    if (zapomnen) { try { voshla = await rmVoyti(zapomnen); } catch (e) { voshla = false; } }
+    if (voshla) return renderRabocheeMesto(app, segsHtml);
+    app.innerHTML = `<div class="segs">${segsHtml}</div>
+      <section class="blk rm-vhod">
+        <div class="hd"><h2>Медное Озеро — чертежи и согласование</h2></div>
+        <p class="rm-tusklo">Рабочее место Юлии: чертежи от конструктора, письма заказчику, архив.
+        Здесь есть черновики, которые заказчику видеть рано, поэтому нужен ключ. Вводится один раз.</p>
+        <input id="rmKlyuch" class="rm-pole" type="text" autocomplete="off" autocapitalize="off"
+               autocorrect="off" spellcheck="false" placeholder="Ключ рабочего места">
+        <button class="btn primary" id="rmVoyti">Открыть</button>
+        <div class="rm-oshibka" id="rmOsh"></div>
+      </section>`;
+    bindSegs(app);
+    const voyti = async () => {
+      const osh = document.getElementById("rmOsh");
+      osh.textContent = "Проверяю…";
+      try {
+        if (await rmVoyti(document.getElementById("rmKlyuch").value)) renderRabocheeMesto(app, segsHtml);
+        else osh.textContent = "Ключ не подошёл.";
+      } catch (e) { osh.textContent = "Не удалось загрузить: " + e.message; }
+    };
+    document.getElementById("rmVoyti").addEventListener("click", voyti);
+    document.getElementById("rmKlyuch").addEventListener("keydown", e => { if (e.key === "Enter") voyti(); });
+    return;
+  }
+
+  const P = RM.D.pachki || [];
+  const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0 };
+  P.forEach(p => { s[p.status] = (s[p.status] || 0) + 1; });
+  const PLITKI = [
+    ["zhdet", "Ждут отправки заказчику", s.zhdet],
+    ["otpravlen", "На согласовании у заказчика", s.otpravlen],
+    ["korrektirovki", "Заказчик вернул с корректировками", s.korrektirovki],
+    ["arhiv", "Архив", "📁"],
+  ];
+  const plitki = PLITKI.map(([k, t, n]) =>
+    `<button class="rm-plitka ${k}${RM.vid === k ? " vybrana" : ""}" data-vid="${k}"><b>${n}</b><span>${t}</span></button>`).join("");
+
+  app.innerHTML = `<div class="segs">${segsHtml}</div>
+    <div class="rm-shapka">
+      <h2>Медное Озеро — чертежи и согласование с заказчиком</h2>
+      <a class="rm-ssylka" href="${escapeHtml(RM.D.stranica_zakazchika)}" target="_blank" rel="noopener">
+        Страница заказчика ↗</a>
+    </div>
+    <div class="rm-plitki">${plitki}</div>
+    <div id="rmSpisok"></div>`;
+  bindSegs(app);
+  app.querySelectorAll(".rm-plitka").forEach(b => b.addEventListener("click", () => {
+    RM.vid = b.dataset.vid; renderRabocheeMesto(app, segsHtml);
+  }));
+
+  const spisok = document.getElementById("rmSpisok");
+  if (RM.vid === "arhiv") return rmArhiv(spisok);
+  const vidno = P.filter(p => p.status === RM.vid);
+  if (!vidno.length) {
+    spisok.innerHTML = `<div class="rm-pusto">${RM.vid === "zhdet" ? "Все чертежи от конструктора уже у заказчика."
+      : RM.vid === "otpravlen" ? "Сейчас у заказчика ничего нет на согласовании." : "Возвратов с корректировками нет."}</div>`;
+    return;
+  }
+  spisok.innerHTML = vidno.map(rmKartochka).join("");
+  spisok.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () => rmOtkryt(el)));
+  spisok.querySelectorAll("[data-pismo]").forEach(el => el.addEventListener("click", () =>
+    rmPismo(P.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
+  spisok.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
+    rmOtmetit(P.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
+  rmMiniatyury(spisok);
+}
+
+function bindSegs(app) {
+  app.querySelectorAll(".seg").forEach(el => el.addEventListener("click", () =>
+    nav(() => { STATE.activeObj = el.dataset.obj; renderDashboard(); })));
+}
+
+function rmKartochka(p) {
+  const kody = p.kody.length ? p.kody.join(", ") : "";
+  const nazv = p.kody.map(rmNazvanie).filter(Boolean);
+  const fajly = p.fajly.map(f => f.net_fajla
+    ? `<div class="rm-fajl net">нет файла<small>${escapeHtml(f.imya)}</small></div>`
+    : `<button class="rm-fajl" data-fajl="${escapeHtml(f.bin)}" data-imya="${escapeHtml(f.imya)}" data-tip="${f.tip}">
+         ${f.mini ? `<img data-mini="${escapeHtml(f.mini)}" alt="">` : `<span class="rm-zagl">${f.tip === "pdf" ? "PDF" : "файл"}</span>`}
+         <small><b>${f.tip === "pdf" ? "Чертёж" : "Вид"}</b> · ${escapeHtml(f.imya)}</small></button>`).join("");
+  const voprosy = (p.voprosy || []).map(g =>
+    (g.gruppa ? `<div class="rm-gruppa">${escapeHtml(g.gruppa)}</div>` : "") +
+    `<ol>${g.punkty.map(t => `<li>${escapeHtml(t)}</li>`).join("")}</ol>`).join("");
+  const vnutr = (p.zamechaniya || []).length
+    ? `<div class="rm-vnutr">⚠ Для нас, не для заказчика: ${escapeHtml(p.zamechaniya.join("; "))}` +
+      (p.podskazki && p.podskazki.length ? ` · по описанию похоже на <b>${escapeHtml(p.podskazki.join(", "))}</b>` : "") +
+      `. Проверьте код, прежде чем отправлять.</div>` : "";
+  let knopki = "";
+  if (p.status === "zhdet") {
+    knopki = `<button class="btn primary" data-pismo="${escapeHtml(p.id)}">Подготовить письмо заказчику</button>`;
+  } else if (p.status === "otpravlen") {
+    knopki = `<button class="btn ghost" data-pismo="${escapeHtml(p.id)}">Отправить повторно</button>
+      <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(p.id)}">Заказчик вернул с корректировками</button>`;
+  } else {
+    knopki = `<button class="btn primary" data-pismo="${escapeHtml(p.id)}" data-kuda="olga">Передать корректировки конструктору</button>
+      <button class="btn ghost" data-status="правки внесены" data-pachka="${escapeHtml(p.id)}">Правки внесены — снять отметку</button>`;
+  }
+  return `<section class="blk rm-karta">
+    <div class="rm-karta-verh">
+      ${kody ? `<span class="rm-kod">${escapeHtml(kody)}</span>` : ""}
+      <span class="rm-nazv">${nazv.length ? nazv.map(escapeHtml).join("<br>") : escapeHtml(p.zagolovok)}</span>
+      <span class="rm-data">${p.status === "zhdet" ? "от конструктора " + rmDen(p.kogda) : "у заказчика с " + rmDen(p.u_zakazchika)}</span>
+    </div>
+    ${vnutr}
+    <div class="rm-fajly">${fajly}</div>
+    ${voprosy ? `<div class="rm-voprosy"><h4>Вопросы конструктора по чертежу</h4>${voprosy}</div>` : ""}
+    <div class="rm-knopki">${knopki}</div>
+    <div class="rm-sost" data-sost="${escapeHtml(p.id)}"></div>
+  </section>`;
+}
+
+function rmMiniatyury(korni) {
+  const nab = new IntersectionObserver(zap => zap.forEach(async z => {
+    if (!z.isIntersecting) return;
+    nab.unobserve(z.target);
+    try { z.target.src = URL.createObjectURL(new Blob([await rmFajl(z.target.dataset.mini)], { type: "image/jpeg" })); } catch (e) {}
+  }), { rootMargin: "200px" });
+  korni.querySelectorAll("img[data-mini]").forEach(i => nab.observe(i));
+}
+
+/* Айпад не даёт открыть новую вкладку из «фоновой» расшифровки — считает её всплывающим
+   окном. Поэтому в два касания: первое — расшифровать, второе — открыть или скачать. */
+async function rmOtkryt(el) {
+  const zam = document.createElement("div");
+  zam.className = "rm-fajl gotov";
+  zam.innerHTML = `<small>Готовлю…</small>`;
+  el.replaceWith(zam);
+  try {
+    const b = await rmFajl(el.dataset.fajl);
+    const url = URL.createObjectURL(new Blob([b], { type: el.dataset.tip === "pdf" ? "application/pdf" : "image/jpeg" }));
+    zam.innerHTML = `<a class="btn primary" href="${url}" target="_blank" rel="noopener">Открыть</a>
+      <a class="btn ghost" href="${url}" download="${escapeHtml(el.dataset.imya)}">Скачать</a>
+      <small>${escapeHtml(el.dataset.imya)}</small>`;
+  } catch (e) { zam.innerHTML = `<small>Не открылся: ${escapeHtml(e.message)}</small>`; }
+}
+
+/* ---------------- письмо ---------------- */
+function rmShablon(p, kuda) {
+  const stroki = p.kody.map(k => `${k} — ${rmNazvanie(k)}`).filter(s => !s.endsWith("— "));
+  const izd = stroki.length ? stroki.join("\n") : p.zagolovok;
+  const voprosy = [];
+  (p.voprosy || []).forEach(g => {
+    if (g.gruppa) voprosy.push(g.gruppa);
+    g.punkty.forEach((t, i) => voprosy.push(`${i + 1}. ${t}`));
+  });
+  if (kuda === "olga") {
+    return `Ольга, добрый день!\n\nЗаказчик вернул с корректировками:\n${izd}\n\nКорректировки:\n1. \n`;
+  }
+  return `Добрый день!\n\nНаправляем на согласование чертежи:\n${izd}\n` +
+    (voprosy.length ? `\nВопросы по чертежу:\n${voprosy.join("\n")}\n` : "") +
+    `\nВсе чертежи по объекту также лежат на странице согласования:\n${RM.D.stranica_zakazchika}`;
+}
+
+function rmPismo(p, kuda) {
+  if (!p) return;
+  const gruppy = (RM.D.gruppy || []).map(g =>
+    `<option value="${escapeHtml(g.klyuch)}"${g.klyuch === kuda ? " selected" : ""}>${escapeHtml(g.nazvanie)}</option>`).join("");
+  const fajly = p.fajly.filter(f => !f.net_fajla).map((f, i) =>
+    `<label class="rm-galka"><input type="checkbox" data-i="${i}" checked> ${escapeHtml(f.imya)}</label>`).join("");
+  const fon = document.createElement("div");
+  fon.className = "rm-okno-fon";
+  fon.innerHTML = `<div class="rm-okno">
+    <h3>Письмо ${p.kody.length ? "по " + escapeHtml(p.kody.join(", ")) : ""}</h3>
+    <label class="rm-metka">Куда</label>
+    <select id="rmKuda" class="rm-pole">${gruppy}</select>
+    <label class="rm-metka">Текст — можно править и дописывать свои вопросы</label>
+    <textarea id="rmTekst" class="rm-pole" rows="14"></textarea>
+    <label class="rm-metka">Файлы</label>
+    <div class="rm-galki">${fajly}</div>
+    <p class="rm-tusklo">Письмо уйдёт от имени Юлии через её Телеграм, сначала текст, потом файлы.
+    Всё отправленное записывается в архив.</p>
+    <div class="rm-knopki">
+      <button class="btn primary" id="rmOtpravit">Отправить</button>
+      <button class="btn ghost" id="rmOtmena">Отмена</button>
+    </div>
+    <div class="rm-sost" id="rmOknoSost"></div>
+  </div>`;
+  document.body.appendChild(fon);
+  const tekst = document.getElementById("rmTekst");
+  tekst.value = rmShablon(p, kuda);
+  document.getElementById("rmKuda").addEventListener("change", e => { tekst.value = rmShablon(p, e.target.value); });
+  document.getElementById("rmOtmena").addEventListener("click", () => fon.remove());
+  document.getElementById("rmOtpravit").addEventListener("click", async (e) => {
+    const knopka = e.target;
+    const sel = document.getElementById("rmKuda");
+    const kudaNazv = sel.options[sel.selectedIndex].text;
+    const vybrano = [...fon.querySelectorAll(".rm-galka input:checked")]
+      .map(x => p.fajly.filter(f => !f.net_fajla)[+x.dataset.i]);
+    if (!tekst.value.trim()) { alert("Текст письма пустой."); return; }
+    if (!confirm(`Отправить от имени Юлии в «${kudaNazv}»?\nФайлов: ${vybrano.length}`)) return;
+    knopka.disabled = true;
+    const sost = document.getElementById("rmOknoSost");
+    sost.textContent = "Ставлю в очередь…";
+    try {
+      const zadanie = { v: 1, obekt: RM_OBEKT, kuda: sel.value, pachka: p.id, izdeliya: p.kody,
+        tekst: tekst.value, fajly: vybrano.map(f => ({ id: f.id, imya: f.imya })),
+        sozdano: new Date().toISOString().slice(0, 16).replace("T", " ") };
+      const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+        type: "stroka", list: "Отправка_Телеграм", prefiksID: "ОТП",
+        znacheniya: { "Объект": RM_OBEKT, "Кто": rmKto(), "Статус": "в очереди",
+                      "Задание (зашифровано)": await rmZashifrovat(JSON.stringify(zadanie)) } }) });
+      const d = await res.json();
+      if (!d.ok) throw new Error(d.error || "мостик отказал");
+      sost.textContent = `В очереди (${d.id}). Отправитель на Маке заберёт письмо в течение минуты…`;
+      rmSledit(d.id, sost, () => fon.remove());
+    } catch (err) {
+      sost.textContent = "Не получилось: " + err.message;
+      knopka.disabled = false;
+    }
+  });
+}
+
+/* Следим за письмом по очереди, пока отправитель не отметит результат */
+async function rmSledit(id, el, gotovo) {
+  for (let i = 0; i < 24; i++) {
+    await new Promise(r => setTimeout(r, 10000));
+    try {
+      const stroka = (await fetchTab(REESTR_ID, "Отправка_Телеграм")).find(r => r["ID"] === id);
+      if (!stroka) continue;
+      const st = stroka["Статус"] || "";
+      if (st === "в очереди") continue;
+      el.textContent = st === "отправлено" ? `✓ Отправлено ${stroka["Когда отправлено"]}. Записано в архив.`
+        : `${st}${stroka["Ошибка"] ? " — " + stroka["Ошибка"] : ""}`;
+      return;
+    } catch (e) {}
+  }
+  el.textContent = `Письмо ${id} ещё в очереди. Посмотрите статус в архиве позже.`;
+}
+
+/* ---------------- отметки ---------------- */
+async function rmOtmetit(p, status, knopka) {
+  if (!p) return;
+  let chto = "";
+  if (status === "корректировки заказчика") {
+    chto = prompt("Что заказчик просит поправить? (можно коротко)") ;
+    if (chto === null) return;
+  } else if (!confirm("Снять отметку «с корректировками» — правки внесены?")) return;
+  knopka.disabled = true;
+  const sost = document.querySelector(`[data-sost="${CSS.escape(p.id)}"]`);
+  try {
+    const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Чертежи_статус", prefiksID: "СТ",
+      znacheniya: { "Объект": RM_OBEKT, "Изделия": p.kody.join(", "), "Статус": status,
+                    "Что поправить": chto || "", "Кто": rmKto() } }) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || "мостик отказал");
+    if (sost) sost.textContent = "✓ Отмечено. Страница заказчика и это рабочее место обновятся в ближайший час.";
+  } catch (e) {
+    if (sost) sost.textContent = "Не получилось: " + e.message;
+    knopka.disabled = false;
+  }
+}
+
+/* ---------------- архив ---------------- */
+async function rmArhiv(el) {
+  el.innerHTML = `<div class="rm-pusto">Загружаю архив…</div>`;
+  try {
+    const vse = (await fetchTab(REESTR_ID, "Архив_действий")).filter(r => r["Объект"] === RM_OBEKT).reverse();
+    el.innerHTML = vse.length ? `<section class="blk rm-arhiv"><div class="hd"><h2>Архив — что, кому, когда</h2>
+      <span class="count">${vse.length}</span></div>` + vse.map(r => `<div class="rm-arh-stroka">
+        <span class="rm-data">${escapeHtml((r["Дата и время"] || "").slice(0, 16))}</span>
+        <b>${escapeHtml(r["Действие"])}</b>
+        <span>${escapeHtml([r["Изделия"], r["Куда"]].filter(Boolean).join(" · "))}</span>
+        <small>${escapeHtml(r["Кто"])} · ${escapeHtml(r["Подробности"] || "")}</small></div>`).join("") + `</section>`
+      : `<div class="rm-pusto">Архив пуст.</div>`;
+  } catch (e) { el.innerHTML = `<div class="rm-pusto">Архив не загрузился: ${escapeHtml(e.message)}</div>`; }
+}
+
+
 function renderDashboard() {
   STATE.tekushchiy = { v: "dash", obj: STATE.activeObj };
   const app = document.getElementById("app");
@@ -981,6 +1409,7 @@ function renderDashboard() {
     const active = name === STATE.activeObj ? "active" : "";
     return `<div class="seg ${active}" data-obj="${escapeHtml(name)}">${escapeHtml(name)}</div>`;
   }).join("");
+  if (rmEsli(STATE.activeObj)) { renderRabocheeMesto(app, segs); return; }
 
   // Что вообще считается «требует внимания». Раньше сюда попадали только неразрешённые
   // расхождения и красные вопросы — а красная критичность проставлена только у записей
