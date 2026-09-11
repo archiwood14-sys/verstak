@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Архивуд · разбор чертежей</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baskervville&display=swap" rel="stylesheet">
+<style>
+  :root { --fon: #faf0e6; --karta: #fff; --tekst: #262420; --tusklo: #8a7a6a; --liniya: #e9dfd5; --akcent: #c18048; --akcent-t: #9c6333;
+    --ok: #4f9a6e; --vnim: #b98424; --krit: #c9503f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fon); color: var(--tekst); font: 15px/1.5 Arial, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3, .serif { font-family: "Baskervville", serif; font-weight: 400; margin: 0; }
+  .obertka { max-width: 1480px; margin: 0 auto; padding: calc(12px + env(safe-area-inset-top)) 18px 60px; }
+  .verh { display: flex; align-items: center; gap: 18px; padding: 8px 0 18px; border-bottom: 1px solid rgba(193,128,72,.25); }
+  .verh img { height: 54px; width: auto; }
+  .nadpis { font-family: "Baskervville", serif; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; color: var(--akcent); }
+  .verh h1 { font-size: 34px; line-height: 1.1; }
+  .obzor { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 20px 0 8px; }
+  .cifra { background: var(--karta); border: 1px solid var(--liniya); border-radius: 16px; padding: 14px 16px; }
+  .cifra b { display: block; font-family: "Baskervville", serif; font-weight: 400; font-size: 34px; color: var(--akcent); line-height: 1.1; }
+  .cifra span { font-size: 13px; color: var(--tusklo); }
+  .poyasnenie { font-size: 13.5px; color: var(--tusklo); margin: 10px 0 22px; max-width: 900px; }
+  .raskladka { display: grid; grid-template-columns: 290px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 960px) { .raskladka { grid-template-columns: 1fr; } }
+  .spisok { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  @media (max-width: 960px) { .spisok { position: static; flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 6px; } }
+  .punkt { text-align: left; background: var(--karta); border: 1px solid var(--liniya); border-left: 3px solid transparent; border-radius: 12px;
+    padding: 10px 12px; cursor: pointer; font: inherit; color: inherit; min-width: 220px; transition: border-color .3s, transform .3s; }
+  .punkt:hover { transform: translateX(3px); }
+  .punkt.aktiv { border-left-color: var(--akcent); box-shadow: 0 6px 18px rgba(193,128,72,.12); }
+  .punkt .kod { font-size: 12px; font-weight: 700; color: var(--akcent); letter-spacing: .5px; }
+  .punkt .nm { font-family: "Baskervville", serif; font-size: 17px; line-height: 1.25; margin: 2px 0 4px; }
+  .punkt .meta { font-size: 12px; color: var(--tusklo); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .znak { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+  .znak.vnim { background: #faf0e0; color: var(--vnim); } .znak.ok { background: #e8f3ec; color: var(--ok); } .znak.net { background: #fbe9e5; color: var(--krit); }
+  .izd-shapka { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .izd-shapka .kod { font-size: 13px; font-weight: 700; color: var(--akcent); letter-spacing: 1px; }
+  .izd-shapka h2 { font-size: 30px; line-height: 1.15; }
+  .izd-shapka .meta { font-size: 13px; color: var(--tusklo); }
+  .setka { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+  @media (max-width: 1180px) { .setka { grid-template-columns: 1fr; } }
+  .scena { background: radial-gradient(ellipse at 50% 35%, #fffaf3 0%, #f3e6d6 100%); border: 1px solid var(--liniya); border-radius: 20px; overflow: hidden; position: relative; }
+  .holst { width: 100%; aspect-ratio: 4 / 3.2; max-height: 72vh; touch-action: none; cursor: grab; }
+  .holst:active { cursor: grabbing; }
+  .holst canvas { display: block; width: 100% !important; height: 100% !important; }
+  .scena-verh { position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
+  .scena-verh > * { pointer-events: auto; }
+  .tonk { background: rgba(255,255,255,.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(193,128,72,.35);
+    color: var(--akcent); border-radius: 999px; padding: 7px 14px; font: 12px Arial, sans-serif; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; }
+  .tonk:hover { background: var(--akcent); color: #fff; }
+  .gab { padding: 12px 16px; border-top: 1px solid var(--liniya); background: rgba(255,255,255,.6); display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+  .gab b { font-family: "Baskervville", serif; font-weight: 400; font-size: 20px; color: var(--tekst); margin-left: 4px; }
+  .gab .usl { color: var(--vnim); font-size: 12px; margin-left: 4px; }
+  .podskazka3d { font-size: 12px; color: var(--tusklo); padding: 0 16px 12px; background: rgba(255,255,255,.6); }
+  .bez3d { padding: 40px 20px; text-align: center; color: var(--tusklo); }
+  .opis { display: flex; flex-direction: column; gap: 12px; }
+  .blok { background: var(--karta); border: 1px solid var(--liniya); border-radius: 16px; padding: 14px 16px; }
+  .zag { font-family: "Baskervville", serif; font-size: 13px; letter-spacing: 3.5px; text-transform: uppercase; color: var(--akcent); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px; }
+  .zag::after { content: ""; flex: 1; height: 1px; background: rgba(193,128,72,.3); }
+  .blok p { margin: 0 0 8px; font-size: 15.5px; }
+  .blok ul { margin: 0; padding-left: 18px; } .blok li { margin: 3px 0; }
+  .ist { font-size: 12px; color: var(--tusklo); margin-top: 8px; }
+  .proverit { border-color: rgba(185,132,36,.45); background: #fffaf1; }
+  .proverit .zag { color: var(--vnim); }
+  .dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14.5px; }
+  .dl dt { color: var(--tusklo); } .dl dd { margin: 0; }
+  .fishki { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fishka { background: #f3e9df; border-radius: 999px; padding: 3px 10px; font-size: 13px; }
+  .reshenie .knopki { display: flex; gap: 8px; margin-bottom: 8px; }
+  .reshenie button.r { flex: 1; min-height: 44px; border-radius: 12px; border: 1px solid var(--liniya); background: #fff; font: 700 14px Arial, sans-serif; cursor: pointer; }
+  .reshenie button.r.tak.vybr { background: var(--ok); color: #fff; border-color: var(--ok); }
+  .reshenie button.r.netak.vybr { background: var(--krit); color: #fff; border-color: var(--krit); }
+  .reshenie textarea { width: 100%; min-height: 72px; border: 1px solid var(--liniya); border-radius: 12px; padding: 10px 12px; font: 14.5px Arial, sans-serif; resize: vertical; }
+  .reshenie .niz { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .reshenie select { border: 1px solid var(--liniya); border-radius: 10px; padding: 8px; font: 14px Arial, sans-serif; background: #fff; }
+  .sohr { background: var(--akcent); color: #fff; border: none; border-radius: 12px; padding: 10px 18px; font: 700 14px Arial, sans-serif; cursor: pointer; min-height: 42px; }
+  .sost { font-size: 12.5px; color: var(--tusklo); }
+  .listy { margin-top: 18px; }
+  .lenta { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .list-k { background: #fff; border: 1px solid var(--liniya); border-radius: 12px; padding: 6px; cursor: zoom-in; font: inherit; text-align: left; }
+  .list-k img { width: 100%; aspect-ratio: 1.41; object-fit: contain; background: #f7f1ea; border-radius: 8px; display: block; }
+  .list-k small { display: block; font-size: 12px; color: var(--tusklo); padding: 5px 2px 1px; line-height: 1.3; }
+  .lupa { position: fixed; inset: 0; background: rgba(38,36,32,.82); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .lupa img { max-width: 100%; max-height: 100%; border-radius: 10px; background: #fff; }
+  .lupa button { position: fixed; top: 16px; right: 16px; }
+  .zagruzka { padding: 80px 20px; text-align: center; color: var(--tusklo); font-size: 16px; }
+  footer { margin-top: 40px; text-align: center; font-size: 12px; color: var(--tusklo); }
+</style>
+</head>
+<body>
+<div class="obertka">
+  <header class="verh">
+    <img src="logo.png" alt="Архивуд">
+    <div><div class="nadpis">Разбор чертежей глазами конструктора</div><h1 id="obekt">…</h1></div>
+  </header>
+  <div id="kornevoy"><div class="zagruzka">Открываю разбор…</div></div>
+  <footer>Архивуд · данные разбора и объёмные схемы подготовлены на нашем Маке локальными моделями · решение — за руководителем проекта</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const S = { d: null, klyuch: null, papka: "", tek: 0, resheniya: {}, urly: {}, scena: null };
+
+function b64u(s) { s = s.replace(/-/g, "+").replace(/_/g, "/"); return Uint8Array.from(atob(s + "=".repeat((4 - s.length % 4) % 4)), c => c.charCodeAt(0)); }
+function b64(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+async function rasshifr(buf) { const u = new Uint8Array(buf); return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: u.slice(0, 12) }, S.klyuch, u.slice(12))); }
+async function zashifr(u8) { const iv = crypto.getRandomValues(new Uint8Array(12)); const c = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, S.klyuch, u8)); const v = new Uint8Array(12 + c.length); v.set(iv); v.set(c, 12); return v; }
+async function kartinka(b) {
+  if (S.urly[b]) return S.urly[b];
+  const r = await fetch(S.papka + "/f/" + b);
+  S.urly[b] = URL.createObjectURL(new Blob([await rasshifr(await r.arrayBuffer())], { type: "image/jpeg" }));
+  return S.urly[b];
+}
+function dataRu(s) { const m = String(s || "").match(/(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}.${m[2]}.${m[1]}` : (s || ""); }
+
+async function start() {
+  const k = location.hash.slice(1), o = new URLSearchParams(location.search).get("o");
+  if (!k || !o || !/^[a-z0-9]+$/.test(o)) { $("#kornevoy").innerHTML = `<div class="zagruzka">Ссылка неполная — откройте её целиком, так, как её прислали.</div>`; return; }
+  S.papka = o;
+  try {
+    S.klyuch = await crypto.subtle.importKey("raw", b64u(k), "AES-GCM", false, ["encrypt", "decrypt"]);
+    const r = await fetch(o + "/d.bin", { cache: "no-store" });
+    S.d = JSON.parse(new TextDecoder().decode(await rasshifr(await r.arrayBuffer())));
+  } catch (e) { $("#kornevoy").innerHTML = `<div class="zagruzka">Не открылось. Проверьте ссылку.</div>`; return; }
+  $("#obekt").textContent = S.d.obekt;
+  document.title = "Архивуд · разбор чертежей · " + S.d.obekt;
+  await zagruzitResheniya();
+  risovat();
+}
+
+/* ---------- решения «так / не так» ---------- */
+async function zagruzitResheniya() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${S.d.reestr}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent("Разбор_решения")}&_=${Date.now()}`;
+    const t = await (await fetch(url, { cache: "no-store" })).text();
+    const stroki = t.trim().split("\n").slice(1).map(l => l.match(/"((?:[^"]|"")*)"/g) || []).map(a => a.map(x => x.slice(1, -1).replace(/""/g, '"')));
+    for (const [id, kogda, izd, sh] of stroki) {
+      if (!izd || !sh) continue;
+      try { S.resheniya[izd] = JSON.parse(new TextDecoder().decode(await rasshifr(b64u(sh.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""))))); } catch (e) {}
+    }
+  } catch (e) {}
+}
+async function sohranitReshenie(izd, reshenie, komm, kto, sost) {
+  sost.textContent = "Сохраняю…";
+  try {
+    const zapis = { reshenie, komm, kto, kogda: new Date().toISOString() };
+    const sh = b64(await zashifr(new TextEncoder().encode(JSON.stringify(zapis))));
+    const otv = await (await fetch(S.d.mostik, { method: "POST", body: JSON.stringify({ type: "stroka", list: "Разбор_решения", prefiksID: "РЗБ",
+      znacheniya: { "Изделие": izd, "Шифр": sh } }) })).json();
+    if (!otv.ok) throw new Error(otv.error || "не принято");
+    S.resheniya[izd] = zapis;
+    sost.textContent = "Сохранено — решение увидят в Архивуде.";
+    risovatSpisok();
+  } catch (e) { sost.textContent = "Не сохранилось: " + e.message; }
+}
+
+/* ---------- страница ---------- */
+function risovat() {
+  const iz = S.d.izdeliya;
+  const flagov = iz.reduce((a, i) => a + i.flagi.length + (i.vzglyad.proverit || []).length, 0);
+  const kody = new Set(iz.flatMap(i => i.kody));
+  $("#kornevoy").innerHTML = `
+    <div class="obzor">
+      <div class="cifra"><b>${iz.length}</b><span>чертежей разобрано</span></div>
+      <div class="cifra"><b>${kody.size}</b><span>изделий по кодам</span></div>
+      <div class="cifra"><b>${iz.reduce((a, i) => a + i.stranicy.length, 0)}</b><span>листов прочитано</span></div>
+      <div class="cifra"><b>${flagov}</b><span>пунктов «проверить»</span></div>
+    </div>
+    <p class="poyasnenie">Каждый чертёж прочитан по листам: что изображено, фасады, наполнение, узлы, материалы. Материалы, фурнитура и отделка — дословно
+      со штампа. Габариты и объёмная схема — прочтение модели: схема упрощённая и нужна, чтобы быстро понять устройство, а не для производства.
+      Под каждым изделием — «Так» или «Не так» и комментарий: решение сохранится и вернётся в работу.</p>
+    <div class="raskladka"><nav class="spisok" id="spisok"></nav><main id="izdelie"></main></div>`;
+  risovatSpisok();
+  pokazat(S.tek);
+}
+function znakResheniya(i) {
+  const r = S.resheniya[i.id];
+  if (r) return r.reshenie === "tak" ? `<span class="znak ok">так</span>` : `<span class="znak net">не так</span>`;
+  const n = i.flagi.length + (i.vzglyad.proverit || []).length;
+  return n ? `<span class="znak vnim">проверить ${n}</span>` : "";
+}
+function risovatSpisok() {
+  const el = $("#spisok");
+  if (!el) return;
+  el.innerHTML = S.d.izdeliya.map((i, n) => `<button class="punkt${n === S.tek ? " aktiv" : ""}" data-n="${n}">
+      <div class="kod">${esc(i.kody.join(" · ") || "без кода")}</div><div class="nm">${esc(i.nazvanie)}</div>
+      <div class="meta"><span>${esc(dataRu(i.kogda))}</span>${znakResheniya(i)}</div></button>`).join("");
+  el.querySelectorAll(".punkt").forEach(b => b.addEventListener("click", () => { pokazat(+b.dataset.n); if (innerWidth < 960) $("#izdelie").scrollIntoView({ behavior: "smooth" }); }));
+}
+
+const NAZV_NAP = { polka: "полки", yashchik: "ящики", shtanga: "штанга", nisha: "ниша" };
+function pokazat(n) {
+  S.tek = n;
+  risovatSpisok();
+  const i = S.d.izdeliya[n], sp = i.spec, r = S.resheniya[i.id] || {};
+  const dosl = Object.entries(i.doslovno || {}).map(([k, v]) => `<dt>${esc(k[0].toUpperCase() + k.slice(1))}</dt><dd>${esc(v)}</dd>`).join("");
+  const proverit = [...i.flagi, ...(i.vzglyad.proverit || [])];
+  let kto = "Юлия Евгеньевна"; try { kto = localStorage.getItem("razbor_kto") || kto; } catch (e) {}
+  $("#izdelie").innerHTML = `
+    <div class="izd-shapka"><div><div class="kod">${esc(i.kody.join(" · ") || "без кода")}</div><h2>${esc(i.nazvanie)}</h2>
+      <div class="meta">чертёж от ${esc(dataRu(i.kogda))}${i.u_zakazchika ? " · у заказчика с " + esc(dataRu(i.u_zakazchika)) : " · заказчику ещё не отправлен"} · ${esc(i.id)}</div></div></div>
+    <div class="setka">
+      <div class="scena">
+        <div class="holst" id="holst"></div>
+        <div class="scena-verh"><button class="tonk" id="fasadyKn">Фасады: скрыть</button><button class="tonk" id="speredi">Спереди</button></div>
+        <div class="gab">${["w", "h", "d"].map(k => `<span>${({ w: "Ширина", h: "Высота", d: "Глубина" })[k]}<b>${sp.razm[k]}</b> мм${sp.uslovno.includes(k) ? `<span class="usl">условно</span>` : ""}</span>`).join("")}</div>
+        <div class="podskazka3d">Поворачивайте пальцем или мышью, приближайте колёсиком или двумя пальцами. Схема упрощённая — по разбору листов.</div>
+      </div>
+      <div class="opis">
+        <div class="blok"><div class="zag">Взгляд конструктора</div>
+          ${i.vzglyad.kratko ? `<p>${esc(i.vzglyad.kratko)}</p>` : `<p class="sost">Описание ещё готовится локальной моделью.</p>`}
+          ${i.vzglyad.kak.length ? `<ul>${i.vzglyad.kak.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+          <div class="ist">Подготовлено локальной моделью по разбору листов — это прочтение, а не утверждённый факт.</div></div>
+        ${proverit.length ? `<div class="blok proverit"><div class="zag">Что проверить</div><ul>${proverit.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+        ${dosl ? `<div class="blok"><div class="zag">Со штампа, дословно</div><dl class="dl">${dosl}</dl></div>` : ""}
+        ${i.napolnenie.length ? `<div class="blok"><div class="zag">Наполнение</div><div class="fishki">${i.napolnenie.map(x => `<span class="fishka">${esc(x)}</span>`).join("")}</div></div>` : ""}
+        <div class="blok reshenie"><div class="zag">Ваше решение</div>
+          <div class="knopki"><button class="r tak${r.reshenie === "tak" ? " vybr" : ""}" data-r="tak">Так</button><button class="r netak${r.reshenie === "netak" ? " vybr" : ""}" data-r="netak">Не так</button></div>
+          <textarea id="komm" placeholder="Что не так или что уточнить у конструктора…">${esc(r.komm || "")}</textarea>
+          <div class="niz"><select id="kto"><option>Юлия Евгеньевна</option><option>Мансур</option><option>Игорь Михайлович</option></select>
+            <button class="sohr" id="sohr">Сохранить</button><span class="sost" id="sostR">${r.kogda ? "Сохранено: " + esc(r.kto || "") + ", " + new Date(r.kogda).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""}</span></div></div>
+      </div>
+    </div>
+    ${i.razmery.length ? `<div class="listy blok"><div class="zag">Размеры, подтверждённые текстом чертежа</div><div class="fishki">${i.razmery.map(x => `<span class="fishka">${esc(x)}</span>`).join("")}</div></div>` : ""}
+    <div class="listy"><div class="zag">Листы чертежа</div><div class="lenta" id="lentaListov">${i.stranicy.map((b, k) => {
+      const l = i.listy.find(x => x.n === k + 1) || {};
+      return `<button class="list-k" data-b="${b}"><img alt="лист ${k + 1}"><small><b>Лист ${k + 1}</b>${l.vid ? " · " + esc(l.vid) : ""}${l.chto ? "<br>" + esc(l.chto.slice(0, 90)) : ""}</small></button>`;
+    }).join("")}</div></div>
+    ${i.vidy.length ? `<div class="listy"><div class="zag">Виды из той же пачки</div><div class="lenta">${i.vidy.map(b => `<button class="list-k" data-b="${b}"><img alt="вид"></button>`).join("")}</div></div>` : ""}`;
+  $("#kto").value = kto;
+  let vybor = r.reshenie || "";
+  document.querySelectorAll(".reshenie .r").forEach(b => b.addEventListener("click", () => {
+    vybor = b.dataset.r;
+    document.querySelectorAll(".reshenie .r").forEach(x => x.classList.toggle("vybr", x === b));
+  }));
+  $("#sohr").addEventListener("click", () => {
+    if (!vybor) { $("#sostR").textContent = "Выберите «Так» или «Не так»."; return; }
+    try { localStorage.setItem("razbor_kto", $("#kto").value); } catch (e) {}
+    sohranitReshenie(i.id, vybor, $("#komm").value.trim(), $("#kto").value, $("#sostR"));
+  });
+  document.querySelectorAll(".list-k").forEach(async b => {
+    b.addEventListener("click", async () => lupa(await kartinka(b.dataset.b)));
+    try { b.querySelector("img").src = await kartinka(b.dataset.b); } catch (e) {}
+  });
+  postroit3d(i);
+}
+function lupa(src) {
+  const f = document.createElement("div");
+  f.className = "lupa";
+  f.innerHTML = `<img src="${src}" alt="лист"><button class="tonk">Закрыть</button>`;
+  f.addEventListener("click", () => f.remove());
+  document.body.appendChild(f);
+}
+
+/* ---------- объёмная схема ---------- */
+function postroit3d(i) {
+  const holst = $("#holst");
+  if (S.scena) { S.scena.stop(); S.scena = null; }
+  if (!window.THREE) { holst.innerHTML = `<div class="bez3d">Объёмная схема не загрузилась — проверьте интернет.</div>`; return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { holst.innerHTML = `<div class="bez3d">Это устройство не показывает объёмные схемы.</div>`; return; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  holst.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 100);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xe6d6c2, 0.95));
+  const svet = new THREE.DirectionalLight(0xffffff, 0.55); svet.position.set(2.5, 4, 5); scene.add(svet);
+  const { gruppa, fasady, razmer } = sobrat(i);
+  scene.add(gruppa);
+  const pol = new THREE.Mesh(new THREE.CircleGeometry(Math.max(razmer.w, razmer.d) * 0.9 + 0.4, 64), new THREE.MeshBasicMaterial({ color: 0xefe1cf }));
+  pol.rotation.x = -Math.PI / 2; pol.position.y = -0.001; scene.add(pol);
+  const cel = new THREE.Vector3(0, razmer.h / 2, 0);
+  let ugolY = -0.55, ugolX = 0.12, dal = Math.max(razmer.w, razmer.h) * 2.1 + 0.6, sam = true, zhivo = true;
+  function kamera() {
+    camera.position.set(cel.x + dal * Math.sin(ugolY) * Math.cos(ugolX), cel.y + dal * Math.sin(ugolX), cel.z + dal * Math.cos(ugolY) * Math.cos(ugolX));
+    camera.lookAt(cel);
+  }
+  function razmerHolsta() {
+    const w = holst.clientWidth, h = holst.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+  const ukazateli = new Map();
+  let pinch = 0;
+  holst.onpointerdown = e => { sam = false; holst.setPointerCapture(e.pointerId); ukazateli.set(e.pointerId, [e.clientX, e.clientY]); };
+  holst.onpointermove = e => {
+    if (!ukazateli.has(e.pointerId)) return;
+    const [px, py] = ukazateli.get(e.pointerId);
+    ukazateli.set(e.pointerId, [e.clientX, e.clientY]);
+    if (ukazateli.size === 2) {
+      const [a, b] = [...ukazateli.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch) dal = Math.min(12, Math.max(0.8, dal * pinch / d));
+      pinch = d; return;
+    }
+    ugolY -= (e.clientX - px) * 0.008; ugolX = Math.min(0.9, Math.max(-0.15, ugolX + (e.clientY - py) * 0.006));
+  };
+  holst.onpointerup = holst.onpointercancel = e => { ukazateli.delete(e.pointerId); pinch = 0; };
+  holst.onwheel = e => { e.preventDefault(); sam = false; dal = Math.min(12, Math.max(0.8, dal * (1 + Math.sign(e.deltaY) * 0.08))); };
+  $("#fasadyKn").onclick = () => { fasady.visible = !fasady.visible; $("#fasadyKn").textContent = fasady.visible ? "Фасады: скрыть" : "Фасады: показать"; };
+  $("#speredi").onclick = () => { sam = false; ugolY = 0; ugolX = 0.05; };
+  window.addEventListener("resize", razmerHolsta);
+  razmerHolsta();
+  (function cikl() {
+    if (!zhivo) return;
+    if (sam) ugolY += 0.0035;
+    kamera(); renderer.render(scene, camera);
+    requestAnimationFrame(cikl);
+  })();
+  S.scena = { stop() { zhivo = false; window.removeEventListener("resize", razmerHolsta); renderer.dispose(); } };
+}
+
+function sobrat(i) {
+  const sp = i.spec, st = i.stil || {};
+  const W = sp.razm.w / 1000, H = sp.razm.h / 1000, D = sp.razm.d / 1000, T = 0.018, C = (sp.cokol || 0) / 1000;
+  const g = new THREE.Group(), fasady = new THREE.Group();
+  g.add(fasady);
+  const korpus = new THREE.MeshStandardMaterial({ color: st.ldsp ? 0xeadfce : 0xf1e9dd, roughness: 0.9 });
+  const fasad = new THREE.MeshStandardMaterial({ color: st.shpon ? 0xc29a6b : 0xf8f3ec, roughness: 0.55, transparent: true, opacity: 0.94 });
+  const steklo = new THREE.MeshStandardMaterial({ color: 0xcfe0e6, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.3 });
+  const linii = new THREE.LineBasicMaterial({ color: 0xb0703f, transparent: true, opacity: 0.9 });
+  function panel(w, h, d, x, y, z, mat, kuda) {
+    const geo = new THREE.BoxGeometry(Math.max(w, 0.002), Math.max(h, 0.002), Math.max(d, 0.002));
+    const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), linii));
+    (kuda || g).add(m); return m;
+  }
+  if (sp.tip === "dver") {
+    panel(W + 0.14, H + 0.07, 0.03, 0, (H + 0.07) / 2, -0.02, korpus);          // коробка с наличником
+    panel(W, H, D, 0, H / 2, 0.03, fasad, fasady);                                 // полотно
+    const ruchka = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.14, 16), new THREE.MeshStandardMaterial({ color: 0x8c8c8c, metalness: 0.7, roughness: 0.3 }));
+    ruchka.rotation.z = Math.PI / 2; ruchka.position.set(W / 2 - 0.09, 1.0, 0.03 + D / 2 + 0.03); fasady.add(ruchka);
+    return { gruppa: g, fasady, razmer: { w: W, h: H, d: D } };
+  }
+  panel(T, H, D, -W / 2 + T / 2, H / 2, 0, korpus); panel(T, H, D, W / 2 - T / 2, H / 2, 0, korpus);
+  panel(W - 2 * T, T, D, 0, H - T / 2, 0, korpus); panel(W - 2 * T, T, D, 0, C + T / 2, 0, korpus);
+  panel(W - 2 * T, H - C - 2 * T, 0.006, 0, (H + C) / 2, -D / 2 + 0.004, korpus);
+  if (C) panel(W - 2 * T, C, 0.016, 0, C / 2, D / 2 - 0.04, korpus);
+  const vnutr = W - 2 * T, niz0 = C + T, verh = H - T;
+  let x = -W / 2 + T;
+  const metal = new THREE.MeshStandardMaterial({ color: 0x9a9a9a, metalness: 0.6, roughness: 0.3 });
+  sp.sekcii.forEach((s, k) => {
+    const sw = vnutr * s.dolya, cx = x + sw / 2;
+    if (k > 0) panel(T, verh - niz0, D - 0.012, x, (verh + niz0) / 2, 0, korpus);
+    const skolko = t => s.nap.filter(n => n.tip === t).reduce((a, n) => a + n.n, 0);
+    let niz = niz0;
+    const yashchikov = Math.min(skolko("yashchik"), 6);
+    for (let j = 0; j < yashchikov; j++) { panel(sw - 0.012, 0.19, D - 0.05, cx, niz + 0.1, 0.012, fasad); niz += 0.2; }
+    if (s.fasad === "nisha") { x += sw; return; }
+    if (skolko("shtanga")) {
+      panel(sw - 0.004, T, D - 0.03, cx, verh - 0.28, 0, korpus);
+      const r = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, Math.max(sw - 0.03, 0.05), 16), metal);
+      r.rotation.z = Math.PI / 2; r.position.set(cx, verh - 0.34, 0); g.add(r);
+    } else {
+      const polok = Math.min(skolko("polka") || 3, 10);
+      for (let j = 1; j <= polok; j++) panel(sw - 0.004, T, D - 0.03, cx, niz + (verh - niz) * j / (polok + 1), 0, korpus);
+    }
+    if (s.fasad === "gluhoj" || s.fasad === "steklo") {
+      const stvorok = sw > 0.65 ? 2 : 1, fw = sw / stvorok, fniz = niz > niz0 + 0.01 ? niz : C;
+      for (let j = 0; j < stvorok; j++) panel(fw - 0.004, H - fniz - 0.004, T, x + fw * (j + 0.5), (H + fniz) / 2, D / 2 + T / 2, s.fasad === "steklo" ? steklo : fasad, fasady);
+    }
+    x += sw;
+  });
+  return { gruppa: g, fasady, razmer: { w: W, h: H, d: D } };
+}
+
+start();
+</script>
+</body>
+</html>
