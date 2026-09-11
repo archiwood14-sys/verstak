@@ -30,6 +30,21 @@
     "dmitriy"
    ]
   },
+  "4920c29e": {
+   "kommercheskaya": false,
+   "nazvanie": "Плющиха",
+   "obertki": {
+    "igor": "jddK1n/kZU0cp/zjwyhZ8kWntYXEiukeiUkmcEu0beH5fComEKDxTV1CJJKuVjPvPc85b4tqqT0sa/IR",
+    "mansur": "AwBh5GDPYE4N/fkwEk5dPjLlQchPSK2nixtZWAt15uaOSOFU9yC+JdqrVoXQUvY2MVsqBhpOLvz53+HX",
+    "yuliya": "U99QuDc7T8qwLMRvaO/WdtmtLlQp14eeXuwBMTkxrF5pBfWytJ4sIwVQNnDJMWeVGM4ivJBQZKI6JO8q"
+   },
+   "proekt": "Плющиха",
+   "tip": "gruppa",
+   "uchastniki": [
+    "yuliya",
+    "igor"
+   ]
+  },
   "4a3c985c": {
    "kommercheskaya": false,
    "nazvanie": "",
@@ -57,27 +72,6 @@
    "uchastniki": [
     "yuliya",
     "oleg"
-   ]
-  },
-  "54f0697e": {
-   "kommercheskaya": false,
-   "nazvanie": "Медное Озеро",
-   "obertki": {
-    "dmitriy": "fj5PpEe1unlmeeiKfRBZik6/J1w6L5+2pI0KrVOe7ZiODakfbJWlhSG09JC3l4AV408jQZpFOwi7KsmC",
-    "igor": "TTgQ/0QZ6wqQSKptlCj93MOFZqcRvulPLrLs32dpM1LWy03eIMQD8D7jSyceAT8DLHOPpAtmz88etEiU",
-    "mansur": "4PZ8qhkNeKX+3B/IBu+17RtAOxdQJZRKNbOOt2X522xUIbCg+5HNvboCVnVCc1ZKqJEwQ6OrZzCOoWGl",
-    "oleg": "Fi6mxO/ymzELvgW/P7WfBzE9f8DnOEdznIQjsf3/J0ocjLVs3RkVOOru0dgGkKyryWCcIeO3fkyFd8w+",
-    "olga": "ArfNOLn4Xibk7lyDUPEHWI6gSO8+1H17uxs6fPQUJGzU0pFK4MEVyJlB/7MDPC8sKEB+Qak8pxsWZltB",
-    "yuliya": "lk+3vx7nVvir23zy7t3SYxT8At366kbRRTpXYHIfDHmJtMApYodrTSaDeidoLz3NU5xpZDKgVu7iKAey"
-   },
-   "proekt": "Медное Озеро",
-   "tip": "gruppa",
-   "uchastniki": [
-    "yuliya",
-    "igor",
-    "oleg",
-    "dmitriy",
-    "olga"
    ]
   },
   "56c16d32": {
@@ -155,46 +149,19 @@
     "dmitriy"
    ]
   },
-  "885f4452": {
+  "9d3d2bb5": {
    "kommercheskaya": false,
    "nazvanie": "Захарьевская",
    "obertki": {
-    "dmitriy": "znL0dlYwZ6JWn+RBrTLIC5hpvPHkwPefPLBw8dgCMAdu8Sasg0Vgjwll6LONqje4nVouPBxGnihTOJM1",
-    "igor": "nW7X9mg2ZIEsQAZYL8+DLDdlF+9RiYs7K1+rB51OTzTI2dAe9b74bzO6bt0aKwZK1eNIUAzAS1quVfQ9",
-    "mansur": "kxaq24u7hrQ43UHwbahEDiyEw+rFXYmaeDAUOoYZPKM+RPFFNGLr0vZ/gXbaveKlkcT4sGzB4+WfQRaW",
-    "oleg": "NrIyWT1QADd010p2RovYFKT9kz6AR03omvAmo/uyvaU3cK1m+x9CTxRFQGXPSXvapZx8P8MMsZeNsBfX",
-    "olga": "cQM9DXPV1MNdnDDrFNynvePjmCnJIXiOYkQ1VYUyZAL+5lL/LfuMVUp/LzgNOyh7T12v507ojn/hvn4J",
-    "yuliya": "OkTy/n1P3tssVF4hTMrBHzaIaqwOk+KsHYz0NZFdcBBdbM+JMlqNBJ6joTmSw4XTXvECmqSzNWJ8VVaA"
+    "igor": "jdrZ2sNlYhmnwixmpB9w7pRN5KgnKJStpUhz04NqJkrxxTY1WppVm4pa10rzCfiAMZ9RlqRH9X4KU0r3",
+    "mansur": "Oc90+tnCFCJUfAYZej0qkTsXwmD3H7+9qCz02AvzBFwYwur8zlMzS/f5tdjakomva65SwQ4uSY2ASTBJ",
+    "yuliya": "D4+5zoQFSA1tIwHatIXNEp4Yw1KSIIUmmJzEci92uJbVJLQq1DnmDZSKBmFcAi9D4JQnpmdqHvvPhDMk"
    },
    "proekt": "Захарьевская",
    "tip": "gruppa",
    "uchastniki": [
     "yuliya",
-    "igor",
-    "oleg",
-    "dmitriy",
-    "olga"
-   ]
-  },
-  "92a37b32": {
-   "kommercheskaya": false,
-   "nazvanie": "Плющиха",
-   "obertki": {
-    "dmitriy": "0yt6J/uWUOTwwn39hNWOEXdYji5x7Khbm1NeKmVopMiE7+9L8qVx2baT6B0lrBopy5hOBbXBiE/MHf6z",
-    "igor": "rN8jnIIkPddFiwSSMbHZlYbkb+zFPZnFPdUMVOJcXU7gj8L6Oh8dmvcbBOIiHrUzIIz+VWgYePvcX7hr",
-    "mansur": "WEljp/zJ+7xLFVSLN5H7hcElIXGi06KIuPcLicPKr7xTI9c0Xi0lmzqplSXjOkgIn49RdEIKsWqatQNN",
-    "oleg": "zYjQbchlu2XafG4XWIrT1fo8YCN8s1OB1zrg61FUc4+34FCDMMehlSoF0BUfTBJPgyHWTT3efwjmruhY",
-    "olga": "xxhgahrPxL6mfmM4T2rhp5XbhXki9pScG1dla6xEj0AEOBz9oJtvnapk635XhU2fsVtCRjTR/53uVbqr",
-    "yuliya": "Jo27Zr2dvQJRSQtfRGApdTkneWY7f2Ktsh1RL2pc8RxSwEkkawR20rVIc7mwYhotJtWrFBWYBxqQANeY"
-   },
-   "proekt": "Плющиха",
-   "tip": "gruppa",
-   "uchastniki": [
-    "yuliya",
-    "igor",
-    "oleg",
-    "dmitriy",
-    "olga"
+    "igor"
    ]
   },
   "b77f22e3": {
@@ -226,6 +193,21 @@
     "igor"
    ]
   },
+  "be677daf": {
+   "kommercheskaya": false,
+   "nazvanie": "Медное Озеро",
+   "obertki": {
+    "igor": "m1vuF+sqHzrIKZp8ZjrtK0YPf3w+sQRuMtnOSdc17/D6B1KwrhBwTpx1oxsdvlzG9OshTUbXEG724Jo7",
+    "mansur": "pP1IGXat4/MqxmLGPr/GGMQ46fIXJqgzaF0jIh/Ij8rqC+cu0W+1DqtgXgfQqlOwzTnDlHh+4jUrFcur",
+    "yuliya": "J91GJ/EpX4ahMkvaWorgU9xEB1jWIOFSc9G/sco4ilm0wUw0nICcf4hLARffLYY1bnu84zlOwteXyrvN"
+   },
+   "proekt": "Медное Озеро",
+   "tip": "gruppa",
+   "uchastniki": [
+    "yuliya",
+    "igor"
+   ]
+  },
   "bfdfe648": {
    "kommercheskaya": false,
    "nazvanie": "",
@@ -239,6 +221,21 @@
    "uchastniki": [
     "yuliya",
     "dmitriy"
+   ]
+  },
+  "c7711776": {
+   "kommercheskaya": false,
+   "nazvanie": "Ильинка",
+   "obertki": {
+    "igor": "oXP99ZDBzfrCOld6QXj/U99txW4fjGbyQmnzdOy6q/Mrx0ItI9fqQITCfvNrxbzufcXF5ib5zmzqMTdd",
+    "mansur": "JfZyEzJ0kaAicQg8NSWrBm2qkNiY9QywKhe2cwyGE2ITZOHhE5FUKBfk5lzK8/cgQOHEp3+RA+1snpoD",
+    "yuliya": "Xeaed8vUtEZzMfLwEXFN2xpMEicQUzAdII+4uw21/nCpLi1KMx3dP4BxBLMIKCxu1/mZa6A9mZWxHfsK"
+   },
+   "proekt": "Ильинка",
+   "tip": "gruppa",
+   "uchastniki": [
+    "yuliya",
+    "igor"
    ]
   },
   "cd318161": {
@@ -282,27 +279,6 @@
    "proekt": "",
    "tip": "lichnyy",
    "uchastniki": [
-    "dmitriy",
-    "olga"
-   ]
-  },
-  "e9bea300": {
-   "kommercheskaya": false,
-   "nazvanie": "Ильинка",
-   "obertki": {
-    "dmitriy": "str+E+w2d4mr9O7arKzRdcncUTR3twJZOjQPwQp+LNwFMeXDtpLYiUgp9/SCkCYKlgmiPj0jYEMTuOva",
-    "igor": "+OvRBiNiyid4tNtKJAqKubucZyNapx8NDMrDIHvebCp8LUI3uYcdndbm1p2G9KyMlVQXqid9pCpORlrw",
-    "mansur": "qf1+OuyQVvVXrGIJ2wHFBZUzX4VW1LoxTHmiCe5JgUAmjv4KG9YKY4YAMA5fGKSTvAR6QDsC+mAYeqOu",
-    "oleg": "nHeWwIgZxysZ0EV7PldYcQKdwijZ/KogWFqijmXwXhaNzvs4ukxC5XO08Yke1aLPwNpdwzi1P01bo8O/",
-    "olga": "MbgJ7cSAFTNpz2mraeUSVsY4ne36/sSPNJYiZtE9ws4e8XLskre4MdaoRrSHqPuMgT2+3KmcCJfZ1R2X",
-    "yuliya": "okjJ4AQnuUBfkLkL8VG0jZpFKqWzTlRzpD5eX0u6dspACfcKJcDcOXd51yBfnleQzz2lGyMu+/yMrLO9"
-   },
-   "proekt": "Ильинка",
-   "tip": "gruppa",
-   "uchastniki": [
-    "yuliya",
-    "igor",
-    "oleg",
     "dmitriy",
     "olga"
    ]

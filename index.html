@@ -752,6 +752,30 @@
   .ch-vhod { max-width: 380px; margin: 40px auto; text-align: center; display: flex; flex-direction: column; gap: 12px; }
   .ch-vhod h2 { font-size: 30px; }
   .ch-vhod p { color: var(--muted); margin: 0; }
+  body.na-chate { overflow: hidden; }
+  body.na-chate footer, body.na-chate #fabBtn { display: none !important; }
+  body.na-chate main { padding-top: 10px; }
+  body.na-chate .ch-okno { height: calc(100dvh - var(--shapka-h, 76px) - 22px - env(safe-area-inset-bottom)); min-height: 360px; grid-template-rows: 100%; }
+  body.na-chate .ch-spisok { height: 100%; max-height: none; overflow-y: auto; overscroll-behavior: contain; }
+  body.na-chate .ch-chat { height: 100%; min-height: 0; overflow: hidden; }
+  body.na-chate .ch-lenta { flex: 1 1 auto; height: auto; min-height: 0; overscroll-behavior: contain; }
+  .ch-shapka, .ch-filtr, .ch-tema-vybor, .ch-vvod, .ch-chat > .ch-sost { flex-shrink: 0; }
+  .ch-profil { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px;
+    border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--muted); position: sticky; top: 0; background: #fff; z-index: 1; }
+  .ch-profil b { color: var(--ink); font-weight: 700; }
+  .ch-vyjti { background: none; border: 1px solid rgba(193,128,72,.45); color: var(--accent); border-radius: 999px; padding: 6px 14px;
+    font: 13px Arial, sans-serif; cursor: pointer; min-height: 34px; }
+  .ch-vyjti:hover { background: var(--accent); color: #fff; }
+  .ch-smotr-fon { position: fixed; inset: 0; z-index: 90; background: rgba(38,36,32,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .ch-smotr { background: #fff; border-radius: 16px; width: min(900px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  .ch-smotr-verh { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .ch-smotr-verh .btn { flex: 0 0 auto; padding: 9px 14px; }
+  .ch-smotr-imya { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+  .ch-smotr-imya small { font-weight: 400; color: var(--muted); margin-left: 8px; }
+  .ch-smotr-telo { overflow: auto; padding: 14px; min-height: 160px; }
+  .ch-smotr-telo video, .ch-smotr-telo audio { width: 100%; max-height: 70vh; }
+  .ch-smotr-tekst { white-space: pre-wrap; font: 14.5px/1.5 Arial, sans-serif; margin: 0; color: var(--ink); }
+  .ch-smotr-net { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; color: var(--muted); padding: 30px 10px; }
   .ch-soob.fakt { background: #fbf6f0; border-style: dashed; border-color: rgba(193,128,72,.45); }
   .ch-soob.fakt .ch-avtor { color: var(--muted); font-weight: 400; letter-spacing: .5px; }
   .ch-tema { font-size: 12px; opacity: .85; margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid rgba(193,128,72,.25); }
@@ -807,7 +831,7 @@
     <div class="sb-razdel sb-punkt" style="--i:3"><span>Объекты</span><i></i></div>
     <div id="sidebarObjects" class="sidebar-sub"></div>
     <div class="sb-niz sb-punkt" style="--i:9">
-      <button class="sb-smenit" id="sbSwitchRole">Сменить вход</button>
+      <button class="sb-smenit" id="sbSwitchRole">Выйти из профиля</button>
       <span class="sb-svezhest"><span class="fresh-dot" id="freshDot"></span><span id="freshness">…</span></span>
     </div>
   </nav>
@@ -1039,9 +1063,19 @@ let STATE = {
 // Настоящая история переходов — просьба 02.09.2026: "кнопка назад должна вести строго назад,
 // и если несколько раз нажать — переходить пока не пройдёт по всем нашим действиям".
 // Каждый переход — маленькая функция-замыкание, которая умеет заново себя отрисовать.
+// Экран мессенджера занимает окно целиком: страница не прокручивается, прокручиваются
+// только лента и список (Мансур, 11.09.2026: «поле ввода всегда видно»).
+function oboznachitEkran() {
+  const chat = !!(STATE.tekushchiy && STATE.tekushchiy.v === "chat");
+  document.body.classList.toggle("na-chate", chat);
+  const sh = document.querySelector("header.top");
+  if (sh) document.documentElement.style.setProperty("--shapka-h", sh.offsetHeight + "px");
+}
+window.addEventListener("resize", oboznachitEkran);
 function nav(thunk) {
   STATE.navStack.push(thunk);
   thunk();                                     // экран сам говорит, что он такое
+  oboznachitEkran();
   STATE.navOpisaniya.push(STATE.tekushchiy || { v: "home" });
   sohranit_mesto();
   // Шаг и в истории браузера — тогда жест «назад» на телефоне ведёт на тот же один шаг,
@@ -1084,6 +1118,7 @@ function vernutsya_gde_byl() {
   STATE.navStack = thunki;
   STATE.navOpisaniya = spisok;
   try { thunki[thunki.length - 1](); } catch (e) { return false; }
+  oboznachitEkran();
   updateBackBtn();
   return true;
 }
@@ -1093,6 +1128,7 @@ function vernutsya_gde_byl() {
 // с просмотром чертежа, письмом и меню.
 function zakrytVerhneeOkno() {
   if (RM_SM.fon) { rmSmZakryt(); return true; }
+  if (CH.smotrZakryt) { CH.smotrZakryt(); return true; }
   const pismo = document.querySelector(".rm-okno-fon");
   if (pismo) { pismo.remove(); return true; }
   const modal = document.getElementById("obligModalBackdrop");
@@ -1122,6 +1158,7 @@ function goBack() {
   STATE.navStack.pop();
   STATE.navOpisaniya.pop();
   STATE.navStack[STATE.navStack.length - 1]();
+  oboznachitEkran();
   sohranit_mesto();
   updateBackBtn();
 }
@@ -1784,7 +1821,11 @@ function chKnopkaDoma() {
   if (!chUid() && imya !== "Юлия" && imya !== "Мансур") return "";
   return `<button class="ch-doma" id="chDoma">Мессенджер<span class="ch-menu-schet" id="chDomaSchet" hidden></span></button>`;
 }
-document.addEventListener("click", e => { if (e.target.closest && e.target.closest("#chDoma")) nav(() => renderChat("")); });
+document.addEventListener("click", e => {
+  if (!e.target.closest) return;
+  if (e.target.closest("#chDoma")) nav(() => renderChat(""));
+  if (e.target.closest("#chVyjti")) vyjtiIzProfilya();
+});
 function chUid() { try { return localStorage.getItem("chat_uid") || ""; } catch (e) { return ""; } }
 function chKto(uid) {
   if (uid === "fakty") return "Факты реестра";   // их присылает Мак (razoslat_fakty.py)
@@ -1975,7 +2016,8 @@ function chRisovatSpisok() {
     ["Все переписки", id => k.chaty[id].tip === "lichnyy" && !k.chaty[id].uchastniki.includes(uid)],
     ["Всё по проектам", null],
   ];
-  let html = "";
+  let html = `<div class="ch-profil"><span>Вы вошли как <b>${escapeHtml(chKto(uid))}</b></span>
+    <button class="ch-vyjti" id="chVyjti">Выйти</button></div>`;
   for (const [nazv, podhodit] of gruppy) {
     if (!podhodit) { if (proekty && vladelec) html += `<div class="ch-razdel"><span>${nazv}</span><i></i></div>` + proekty; continue; }
     const ids = vse.filter(podhodit);
@@ -2002,7 +2044,7 @@ function chRisovatChat() {
   const chuzhoy = c.tip === "lichnyy" && !c.uchastniki.includes(chUid());
   el.innerHTML = `<div class="ch-shapka"><h2>${escapeHtml(chImya(cid))}</h2>
       <span class="ch-uch">${c.tip === "lichnyy" ? (chuzhoy ? "переписка сотрудников — видна владельцу" : "личный чат")
-        : escapeHtml(c.uchastniki.map(chKto).join(", ")) + (c.kommercheskaya ? " · коммерческое — только вам двоим" : " · сюда же приходят факты реестра")}</span></div>
+        : escapeHtml(c.uchastniki.map(chKto).join(", ")) + (c.kommercheskaya ? " · коммерческое — только вам двоим" : " · группа проекта")}</span></div>
     <div class="ch-lenta" id="chLenta"></div>
     <div class="ch-tema-vybor">
       <select id="chProekt" class="ch-vybor" aria-label="Проект"><option value="">Проект не выбран</option>${(CH.konfig.proekty || []).map(p => `<option>${escapeHtml(p)}</option>`).join("")}</select>
@@ -2141,12 +2183,87 @@ async function chOtkrytFajl(z) {
     rmSmotret({ fajly: [{ imya: f.imya, tip: /pdf/i.test(mime + f.imya) ? "pdf" : "img", mime, poluchit: () => chFajlBajty(z) }] }, 0);
     return;
   }
-  try {   // остальное — сразу скачать
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([await chFajlBajty(z)], { type: mime || "application/octet-stream" }));
-    a.download = f.imya;
-    document.body.appendChild(a); a.click(); a.remove();
-  } catch (e) { chSost("Файл не открылся: " + e.message); }
+  chSmotr(z);   // 11.09.2026: раньше всё, кроме PDF и фото, сразу скачивалось — теперь открывается здесь
+}
+function chVid(f) {
+  const m = f.mime || "", r = ((f.imya || "").split(".").pop() || "").toLowerCase();
+  if (/^video\//.test(m) || ["mp4", "mov", "webm", "m4v"].includes(r)) return "video";
+  if (/^audio\//.test(m) || ["mp3", "m4a", "wav", "ogg", "aac", "opus"].includes(r)) return "audio";
+  if (r === "rtf" || /rtf/.test(m)) return "rtf";
+  if (/^text\//.test(m) || ["txt", "csv", "md", "json", "log", "xml"].includes(r)) return "tekst";
+  return "";
+}
+// Простая выжимка текста из RTF — чтобы письмо из TextEdit/Word читалось прямо в приложении.
+// Служебные группы RTF (таблицы шрифтов и цветов, {\* …}) вырезаются целиком, с учётом
+// вложенных скобок — иначе в текст попадало «Helvetica-Light;».
+function chRtfUbratGruppy(t) {
+  const re = /\{\\(\*|fonttbl|colortbl|stylesheet|info|expandedcolortbl)/g;
+  let m;
+  while ((m = re.exec(t))) {
+    let glub = 0, i = m.index;
+    for (; i < t.length; i++) {
+      if (t[i] === "\\") { i++; continue; }
+      if (t[i] === "{") glub++;
+      else if (t[i] === "}" && --glub === 0) break;
+    }
+    t = t.slice(0, m.index) + t.slice(i + 1);
+    re.lastIndex = m.index;
+  }
+  return t;
+}
+function chRtfVTekst(rtf) {
+  const cp = (rtf.match(/\\ansicpg(\d+)/) || [])[1] || "1252";
+  // «\» в конце строки — так TextEdit записывает перенос строки
+  let t = chRtfUbratGruppy(rtf).replace(/\\\r?\n/g, "\n");
+  t = t.replace(/(?:\\'[0-9a-f]{2})+/gi, m => {
+    const b = new Uint8Array(m.match(/[0-9a-f]{2}/gi).map(h => parseInt(h, 16)));
+    try { return new TextDecoder("windows-" + cp).decode(b); } catch (e) { return new TextDecoder("windows-1252").decode(b); }
+  });
+  t = t.replace(/\\u(-?\d+) ?\??/g, (m, n) => String.fromCharCode((+n + 65536) % 65536))
+    .replace(/\\(par|line)\b ?/g, "\n").replace(/\\tab\b ?/g, "\t")
+    .replace(/\\[a-zA-Z]+-?\d* ?/g, "").replace(/\\([{}\\])/g, "$1").replace(/[{}]/g, "");
+  return t.replace(/\n{3,}/g, "\n\n").trim();
+}
+function chSkachat(url, imya) {
+  const a = document.createElement("a");
+  a.href = url; a.download = imya;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+async function chSmotr(z) {
+  const f = z.d.f;
+  let url = null;
+  const fon = document.createElement("div");
+  fon.className = "ch-smotr-fon";
+  fon.innerHTML = `<div class="ch-smotr"><div class="ch-smotr-verh">
+      <span class="ch-smotr-imya">${escapeHtml(f.imya)}<small>${chRazmer(f.razmer)}</small></span>
+      <button class="btn ghost" id="chSmSkachat" disabled>Скачать</button><button class="btn ghost" id="chSmZakryt">Закрыть</button></div>
+    <div class="ch-smotr-telo" id="chSmTelo"><div class="ch-pusto">Открываю…</div></div></div>`;
+  document.body.appendChild(fon);
+  const zakryt = () => { fon.remove(); CH.smotrZakryt = null; if (url) URL.revokeObjectURL(url); };
+  CH.smotrZakryt = zakryt;
+  fon.querySelector("#chSmZakryt").addEventListener("click", zakryt);
+  fon.addEventListener("click", e => { if (e.target === fon) zakryt(); });
+  const telo = fon.querySelector("#chSmTelo");
+  try {
+    const b = await chFajlBajty(z);
+    url = URL.createObjectURL(new Blob([b], { type: f.mime || "application/octet-stream" }));
+    const sk = fon.querySelector("#chSmSkachat");
+    sk.disabled = false;
+    sk.addEventListener("click", () => chSkachat(url, f.imya));
+    const vid = chVid(f);
+    if (vid === "video") telo.innerHTML = `<video controls playsinline src="${url}"></video>`;
+    else if (vid === "audio") telo.innerHTML = `<audio controls src="${url}"></audio>`;
+    else if (vid === "tekst" || vid === "rtf") {
+      const t = new TextDecoder().decode(b);
+      telo.innerHTML = `<pre class="ch-smotr-tekst"></pre>`;
+      telo.firstChild.textContent = vid === "rtf" ? chRtfVTekst(t) : t;
+    } else {
+      telo.innerHTML = `<div class="ch-smotr-net"><span class="ch-fajl-zn">${escapeHtml(chZnakTipa(f))}</span>
+        <p>Этот вид файла приложение пока не показывает. Нажмите «Скачать» — он откроется на устройстве.</p></div>`;
+    }
+  } catch (e) {
+    telo.innerHTML = `<div class="ch-pusto">Файл не открылся: ${escapeHtml(e.message)}</div>`;
+  }
 }
 function chSost(t) { const el = document.getElementById("chSost"); if (el) el.textContent = t; }
 
@@ -3866,13 +3983,19 @@ document.addEventListener("keydown", (e) => {
 document.getElementById("sbHome").addEventListener("click", () => nav(() => renderHome()));
 document.getElementById("sbMoiOtvety").addEventListener("click", () => nav(() => renderMoiOtvety()));
 document.getElementById("sbChat").addEventListener("click", () => nav(() => renderChat("")));
-document.getElementById("sbSwitchRole").addEventListener("click", () => {
+// Выйти из профиля — у всех: в меню и в шапке мессенджера (Мансур, 11.09.2026). Стираются
+// вход, личный ключ мессенджера и ключ рабочего места — следующий человек на этом устройстве
+// не увидит ничего чужого.
+function vyjtiIzProfilya() {
   localStorage.removeItem("verstak_gate_ok");
   localStorage.removeItem("verstak_role_name");
   localStorage.removeItem("verstak_role_dir");
   ["verstak_tolko_chat", "chat_uid", "chat_k", "chat_prochitano"].forEach(k => localStorage.removeItem(k));
+  ["rm_yulii_klyuch_mednoe"].forEach(k => localStorage.removeItem(k));
+  try { sessionStorage.removeItem(MESTO_KLYUCH); } catch (e) {}
   location.reload();
-});
+}
+document.getElementById("sbSwitchRole").addEventListener("click", vyjtiIzProfilya);
 
 function fillSidebar() {
   const el = document.getElementById("sidebarObjects");
