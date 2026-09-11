@@ -325,7 +325,7 @@
    "rol": "sotrudnik",
    "rol_imya": "Игорь Михайлович",
    "salt": "49yqHVyD4+CihTpdYUWdIQ==",
-   "tolko_chat": true
+   "tolko_chat": false
   },
   "mansur": {
    "dir": "",
@@ -368,5 +368,6 @@
    "tolko_chat": false
   }
  },
- "v": 1
+ "v": 1,
+ "vapid": "BGfX4XDYH2y3GQMjQMwt8Op0o41Xc2VdWHcSg3dv8JYRiTxrFsXfWaLIfXnQ6dWhqsAF_giWfR834DJTHV3iGgw"
 }

@@ -1,0 +1,15 @@
+{
+  "name": "Архивуд",
+  "short_name": "Архивуд",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FAF0E6",
+  "theme_color": "#FAF0E6",
+  "icons": [
+    { "src": "ikonki/ikonka-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "ikonki/ikonka-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "ikonki/ikonka-maska-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
