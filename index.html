@@ -752,6 +752,43 @@
   .ch-vhod { max-width: 380px; margin: 40px auto; text-align: center; display: flex; flex-direction: column; gap: 12px; }
   .ch-vhod h2 { font-size: 30px; }
   .ch-vhod p { color: var(--muted); margin: 0; }
+  /* «Назад» и «Меню» — тонко, в духе логотипа (Мансур, 11.09.2026: «грубо, большое, некрасиво») */
+  .shapka-knopka { border: none; background: transparent; padding: 6px 2px; min-height: 40px; gap: 10px;
+    font-size: 12px; letter-spacing: 4px; position: relative; }
+  .shapka-knopka::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: 7px; height: 1px; background: currentColor;
+    opacity: .55; transform: scaleX(0); transform-origin: left center; transition: transform .5s cubic-bezier(.19,1,.22,1); }
+  .shapka-knopka:hover, .shapka-knopka:focus-visible { background: transparent; border-color: transparent; color: #9c6333; }
+  .shapka-knopka:hover::after, .shapka-knopka:focus-visible::after { transform: scaleX(1); }
+  .shapka-knopka svg { width: 22px; height: 10px; }
+  .shapka-knopka svg path { stroke-width: 1; }
+  .menu-linii { width: 20px; gap: 5px; }
+  .menu-linii i { height: 1px; }
+  @media (max-width: 440px) { .shapka-knopka { letter-spacing: 2.5px; font-size: 11px; gap: 7px; padding: 6px 0; } }
+  /* «Выйти» — в самом низу меню */
+  .sb-niz { flex-direction: column; align-items: stretch; gap: 10px; border-top: 1px solid rgba(193,128,72,.2); padding-top: 16px; }
+  .sb-vyjti { background: none; border: none; padding: 8px 0; text-align: left; cursor: pointer; font-family: "Baskervville", serif;
+    font-size: 22px; color: var(--accent); transition: padding-left .4s cubic-bezier(.19,1,.22,1), color .3s ease; }
+  .sb-vyjti:hover { padding-left: 12px; color: #9c6333; }
+  .sb-svezhest { font-size: 12px; color: var(--muted); }
+  .ch-privet { font-family: "Baskervville", serif; font-size: 22px; color: var(--ink); padding: 16px 16px 4px; }
+  .ch-shapka { position: relative; }
+  .ch-nazad { display: none; }
+  @media (max-width: 899px) {
+    .ch-shapka { padding-left: 54px; }
+    .ch-nazad { display: flex; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px;
+      border: none; background: none; color: var(--accent); align-items: center; justify-content: center; cursor: pointer; }
+  }
+  .ch-vlozh { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 10px 0; background: #fff; border-top: 1px solid var(--line); flex-shrink: 0;
+    max-height: 30vh; overflow-y: auto; }
+  .ch-vlozh + .ch-tema-vybor { border-top: none; }
+  .ch-vl { display: inline-flex; align-items: center; gap: 8px; background: #f3e9df; border-radius: 10px; padding: 6px 6px 6px 8px; max-width: 100%; }
+  .ch-vl .ch-fajl-zn { width: 30px; height: 30px; }
+  .ch-vl-imya { min-width: 0; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+  .ch-vl-imya small { color: var(--muted); margin-left: 6px; }
+  .ch-vl-ubrat { width: 30px; height: 30px; border: none; background: none; color: var(--muted); border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; }
+  .ch-vl-ubrat:hover { background: #fff; color: var(--crit); }
+  .ch-vl-podskazka { align-self: center; font-size: 12px; color: var(--muted); }
   body.na-chate { overflow: hidden; }
   body.na-chate footer, body.na-chate #fabBtn { display: none !important; }
   body.na-chate main { padding-top: 10px; }
@@ -831,8 +868,8 @@
     <div class="sb-razdel sb-punkt" style="--i:3"><span>Объекты</span><i></i></div>
     <div id="sidebarObjects" class="sidebar-sub"></div>
     <div class="sb-niz sb-punkt" style="--i:9">
-      <button class="sb-smenit" id="sbSwitchRole">Выйти из профиля</button>
       <span class="sb-svezhest"><span class="fresh-dot" id="freshDot"></span><span id="freshness">…</span></span>
+      <button class="sb-vyjti" id="sbSwitchRole">Выйти</button>
     </div>
   </nav>
   <div class="shell">
@@ -1781,6 +1818,33 @@ async function renderIzdelieMO(code, it, rec) {
   rmMiniatyury(app);
 }
 
+/* ---------------- само обновление приложения (11.09.2026) ----------------
+   Мансур: «чтобы не обновлять приложение, а оно само постоянно обновлялось». Раз в минуту и
+   при возвращении в приложение сверяем номер версии на сайте; вышла новая — перезагружаемся,
+   как только человек ничего не набирает и не отправляет. */
+const VERSIYA = { nachalnaya: null, zhdyot: false };
+async function proveritVersiyu() {
+  try {
+    const r = await fetch("versiya.json?_=" + Date.now(), { cache: "no-store" });
+    if (r.ok) {
+      const v = (await r.json()).v;
+      if (!VERSIYA.nachalnaya) VERSIYA.nachalnaya = v;
+      else if (v !== VERSIYA.nachalnaya) VERSIYA.zhdyot = true;
+    }
+  } catch (e) {}
+  if (VERSIYA.zhdyot) obnovitKakTolkoMozhno();
+}
+function obnovitKakTolkoMozhno() {
+  const pole = document.getElementById("chPole");
+  const zanyat = (pole && pole.value.trim()) || (CH.vlozheniya && CH.vlozheniya.length)
+    || CH.otpravka.some(z => !z.oshibka && !z.otpravleno) || CH.smotrZakryt || RM_SM.fon
+    || document.querySelector(".rm-okno-fon, .sheet-backdrop:not(.hidden)");
+  if (!zanyat) location.reload();
+}
+setInterval(proveritVersiyu, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) proveritVersiyu(); });
+setTimeout(proveritVersiyu, 3000);
+
 /* ---------------- чат Архивуд (10.09.2026) ----------------
    Мансур: «мессенджер внутри нашего приложения… файл скинуть, открыть, скачать, написать
    сообщение, минимальная задержка… и чтобы сообщения обрабатывались — они тоже факт
@@ -1824,8 +1888,13 @@ function chKnopkaDoma() {
 document.addEventListener("click", e => {
   if (!e.target.closest) return;
   if (e.target.closest("#chDoma")) nav(() => renderChat(""));
-  if (e.target.closest("#chVyjti")) vyjtiIzProfilya();
+  if (e.target.closest("#chNazad")) chKSpisku();
 });
+function chKSpisku() {
+  const pred = STATE.navOpisaniya[STATE.navOpisaniya.length - 2];
+  if (pred && pred.v === "chat" && !pred.cid) nazadKnopkoy();
+  else nav(() => renderChat(""));
+}
 function chUid() { try { return localStorage.getItem("chat_uid") || ""; } catch (e) { return ""; } }
 function chKto(uid) {
   if (uid === "fakty") return "Факты реестра";   // их присылает Мак (razoslat_fakty.py)
@@ -1861,9 +1930,15 @@ async function chGotov() {
 }
 
 // Новые строки вкладки «Чат»: только то, чего ещё нет (offset — сколько уже прочитано).
-async function chPodtyanut() {
+// Одна подтяжка за раз: на телефоне две одновременные (таймер + отправка) читали одни и те же
+// строки, и сообщения удваивались (Мансур, 11.09.2026).
+function chPodtyanut() {
+  if (!CH.tyanu) CH.tyanu = chPodtyanutRaz().finally(() => { CH.tyanu = null; });
+  return CH.tyanu;
+}
+async function chPodtyanutRaz() {
   const tq = encodeURIComponent("select * offset " + CH.soob.length);
-  const url = `https://docs.google.com/spreadsheets/d/${REESTR_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(CH_LIST)}&tq=${tq}`;
+  const url = `https://docs.google.com/spreadsheets/d/${REESTR_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(CH_LIST)}&tq=${tq}&_=${Date.now()}`;   // уникальный адрес — телефон не отдаёт старое из кэша
   const r = await fetch(url, { cache: "no-store" });
   if (!r.ok) return 0;
   const rows = parseCSV(await r.text());
@@ -1904,7 +1979,7 @@ function chZnachok() {
   const dom = document.getElementById("chDomaSchet");
   if (dom) { dom.hidden = !n; dom.textContent = n; }
 }
-function chPlanirovat() {
+function chPlanirovat(zaderzhka) {
   clearTimeout(CH.tajmer);
   const aktiv = STATE.tekushchiy && STATE.tekushchiy.v === "chat" && !document.hidden;
   CH.tajmer = setTimeout(async () => {
@@ -1915,9 +1990,12 @@ function chPlanirovat() {
       }
     } catch (e) {}
     chPlanirovat();
-  }, aktiv ? 2500 : 30000);
+  }, zaderzhka !== undefined ? zaderzhka : aktiv ? 2000 : 30000);
 }
-document.addEventListener("visibilitychange", chPlanirovat);
+// вернулся в приложение (разблокировал телефон, переключился на вкладку) — сразу подтянуть
+document.addEventListener("visibilitychange", () => chPlanirovat(document.hidden ? undefined : 0));
+window.addEventListener("focus", () => chPlanirovat(0));
+window.addEventListener("online", () => chPlanirovat(0));
 
 function chImya(cid) {
   const c = CH.konfig.chaty[cid];
@@ -2016,8 +2094,9 @@ function chRisovatSpisok() {
     ["Все переписки", id => k.chaty[id].tip === "lichnyy" && !k.chaty[id].uchastniki.includes(uid)],
     ["Всё по проектам", null],
   ];
-  let html = `<div class="ch-profil"><span>Вы вошли как <b>${escapeHtml(chKto(uid))}</b></span>
-    <button class="ch-vyjti" id="chVyjti">Выйти</button></div>`;
+  const chas = new Date().getHours();
+  const privet = chas < 5 ? "Доброй ночи" : chas < 12 ? "Доброе утро" : chas < 18 ? "Добрый день" : "Добрый вечер";
+  let html = `<div class="ch-privet">${privet}, ${escapeHtml(chKto(uid))}</div>`;
   for (const [nazv, podhodit] of gruppy) {
     if (!podhodit) { if (proekty && vladelec) html += `<div class="ch-razdel"><span>${nazv}</span><i></i></div>` + proekty; continue; }
     const ids = vse.filter(podhodit);
@@ -2042,10 +2121,11 @@ function chRisovatChat() {
   const el = document.getElementById("chChat");
   const cid = CH.otkryt, c = CH.konfig.chaty[cid];
   const chuzhoy = c.tip === "lichnyy" && !c.uchastniki.includes(chUid());
-  el.innerHTML = `<div class="ch-shapka"><h2>${escapeHtml(chImya(cid))}</h2>
+  el.innerHTML = `<div class="ch-shapka"><button class="ch-nazad" id="chNazad" aria-label="К списку"><svg viewBox="0 0 24 12" width="22" height="11" aria-hidden="true"><path d="M23 6H1.6M6.6 1 1.6 6l5 5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button><h2>${escapeHtml(chImya(cid))}</h2>
       <span class="ch-uch">${c.tip === "lichnyy" ? (chuzhoy ? "переписка сотрудников — видна владельцу" : "личный чат")
         : escapeHtml(c.uchastniki.map(chKto).join(", ")) + (c.kommercheskaya ? " · коммерческое — только вам двоим" : " · группа проекта")}</span></div>
     <div class="ch-lenta" id="chLenta"></div>
+    <div class="ch-vlozh" id="chVlozh" hidden></div>
     <div class="ch-tema-vybor">
       <select id="chProekt" class="ch-vybor" aria-label="Проект"><option value="">Проект не выбран</option>${(CH.konfig.proekty || []).map(p => `<option>${escapeHtml(p)}</option>`).join("")}</select>
       <select id="chIzd" class="ch-vybor" aria-label="Изделие"><option value="">Изделие не выбрано</option></select>
@@ -2058,6 +2138,7 @@ function chRisovatChat() {
     </div>
     <div class="ch-sost" id="chSost"></div>`;
   const pole = document.getElementById("chPole");
+  CH.vlozheniya = [];
   const selP = document.getElementById("chProekt"), selI = document.getElementById("chIzd");
   selP.addEventListener("change", () => {
     selI.innerHTML = `<option value="">Изделие не выбрано</option>` + STATE.items.filter(i => i["Объект"] === selP.value)
@@ -2068,7 +2149,14 @@ function chRisovatChat() {
     selP.dispatchEvent(new Event("change"));
     selP.disabled = true;
   }
-  const otpravit = () => { const t = pole.value.trim(); if (!t) return; pole.value = ""; pole.style.height = ""; chOtpravit(t, null); };
+  const otpravit = () => {
+    const t = pole.value.trim(), fajly = CH.vlozheniya.splice(0);
+    if (!t && !fajly.length) return;
+    pole.value = ""; pole.style.height = "";
+    chRisovatVlozheniya();
+    if (!fajly.length) { chOtpravit(t, null); return; }
+    (async () => { for (let i = 0; i < fajly.length; i++) await chOtpravit(i === 0 ? t : "", fajly[i]); })();
+  };
   document.getElementById("chOtpr").addEventListener("click", otpravit);
   pole.addEventListener("keydown", e => {
     const palec = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
@@ -2077,14 +2165,14 @@ function chRisovatChat() {
   pole.addEventListener("input", () => { pole.style.height = "auto"; pole.style.height = Math.min(pole.scrollHeight, 140) + "px"; });
   const vybor = document.getElementById("chFajl");
   document.getElementById("chSkrepka").addEventListener("click", () => vybor.click());
-  vybor.addEventListener("change", () => { [...vybor.files].forEach(f => chOtpravit("", f)); vybor.value = ""; });
+  vybor.addEventListener("change", () => { chDobavitVlozheniya([...vybor.files]); vybor.value = ""; });
   chRisovatLentu(true);
 }
 
 function chRisovatProekt() {
   const el = document.getElementById("chChat"), pr = CH.proekt;
   const izd = STATE.items.filter(i => i["Объект"] === pr);
-  el.innerHTML = `<div class="ch-shapka"><h2>${escapeHtml(pr)}</h2>
+  el.innerHTML = `<div class="ch-shapka"><button class="ch-nazad" id="chNazad" aria-label="К списку"><svg viewBox="0 0 24 12" width="22" height="11" aria-hidden="true"><path d="M23 6H1.6M6.6 1 1.6 6l5 5" fill="none" stroke="currentColor" stroke-width="1"/></svg></button><h2>${escapeHtml(pr)}</h2>
       <span class="ch-uch">все сообщения по проекту: кто кому что передал</span></div>
     ${izd.length ? `<div class="ch-filtr"><button class="ch-chip aktiv" data-i="">Все изделия</button>${izd.map(i =>
       `<button class="ch-chip" data-i="${escapeHtml(i["Код"])}" title="${escapeHtml(i["Название"] || "")}">${escapeHtml(i["Код"])}</button>`).join("")}</div>` : ""}
@@ -2110,6 +2198,28 @@ function chTemaHtml(z) {
   const it = z.d.i ? STATE.items.find(i => normCode(i["Код"]) === normCode(z.d.i)) : null;
   const t = [CH.proekt ? "" : z.d.p, z.d.i ? z.d.i + (it ? " — " + it["Название"] : "") : ""].filter(Boolean).join(" · ");
   return t ? `<div class="ch-tema">${escapeHtml(t)}</div>` : "";
+}
+// Полка вложений (Мансур, 11.09.2026): выбранный файл не уходит сразу — можно выбрать
+// несколько, убрать лишнее и отправить, когда точно уверен.
+function chDobavitVlozheniya(spisok) {
+  for (const f of spisok) {
+    if (f.size > CH_PREDEL) { chSost(`«${f.name}» больше 25 МБ — такие пока не отправляются`); continue; }
+    CH.vlozheniya.push(f);
+  }
+  chRisovatVlozheniya();
+}
+function chRisovatVlozheniya() {
+  const el = document.getElementById("chVlozh");
+  if (!el) return;
+  el.hidden = !CH.vlozheniya.length;
+  el.innerHTML = CH.vlozheniya.map((f, i) => `<span class="ch-vl"><span class="ch-fajl-zn">${escapeHtml(chZnakTipa({ imya: f.name }))}</span>
+      <span class="ch-vl-imya">${escapeHtml(f.name)}<small>${chRazmer(f.size)}</small></span>
+      <button class="ch-vl-ubrat" data-i="${i}" aria-label="Убрать"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.3" fill="none"/></svg></button></span>`).join("")
+    + (CH.vlozheniya.length ? `<span class="ch-vl-podskazka">Проверьте и нажмите «Отправить»</span>` : "");
+  el.querySelectorAll(".ch-vl-ubrat").forEach(b => b.addEventListener("click", () => {
+    CH.vlozheniya.splice(+b.dataset.i, 1);
+    chRisovatVlozheniya();
+  }));
 }
 function chZnakTipa(f) {
   const r = (f.imya.split(".").pop() || "").toUpperCase();
@@ -2142,7 +2252,7 @@ function chRisovatLentu(vniz) {
     html += `<div class="ch-soob ${moe ? "ishod" : "vhod"}${z.kto === "fakty" ? " fakt" : ""}">
       ${chAvtorHtml(z, moe)}${chTemaHtml(z)}
       ${z.d.f ? chFajlHtml(z) : ""}${z.d.t ? `<div class="ch-tekst">${chTekst(z.d.t)}</div>` : ""}
-      <div class="ch-vr">${z.lokal ? (z.oshibka ? "не отправлено" : "отправляется…") : chVremya(z.d.w)}</div></div>`;
+      <div class="ch-vr">${z.lokal ? (z.oshibka ? "не отправлено" : z.otpravleno ? chVremya(z.d.w) : "отправляется…") : chVremya(z.d.w)}</div></div>`;
   }
   el.innerHTML = html || `<div class="ch-den">Сообщений пока нет — напишите первым</div>`;
   el.querySelectorAll(".ch-kod").forEach(b => b.addEventListener("click", () => nav(() => renderItem(b.dataset.kod))));
@@ -2293,6 +2403,7 @@ async function chOtpravit(tekst, fajl) {
     }
     const otv = await (await fetch(INBOX_URL, { method: "POST", body: JSON.stringify(telo) })).json();
     if (!otv.ok) throw new Error(otv.error || "мостик отказал");
+    z.otpravleno = true;
     chSost("");
     await chPodtyanut();
   } catch (e) {
@@ -3567,7 +3678,6 @@ function renderHome() {
   app.innerHTML = `
     <div class="item-detail-wrap home-wrap">
     ${roleBanner}
-    ${chKnopkaDoma()}
     <div class="item-head"><h1>Мои обязательства</h1></div>
     ${roleShortcut}
     ${statRow}
