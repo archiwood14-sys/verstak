@@ -815,6 +815,26 @@
   .ig-pilot-meta { font-size: 12.5px; color: var(--muted); }
   .ig-pilot-z { font-size: 13.5px; background: #fbf6f0; border-radius: 8px; padding: 6px 9px; }
   .rm-st.ok { background: #e8f3ec; color: #3d7a55; }
+  /* кнопки разделов — не похожи на карточки изделий (14.09.2026) */
+  .segs-obj, .ig-obj { justify-content: center; flex-wrap: wrap; overflow: visible; }
+  .segs-obj .seg { min-width: 160px; text-align: center; }
+  .razdely-kn { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 4px 0 20px; }
+  .razdel-kn.rm-plitka { position: relative; text-align: left; background: transparent; border: 1px solid rgba(193,128,72,.38); border-radius: 18px;
+    padding: 14px 16px 12px; cursor: pointer; font-family: inherit; color: var(--ink); min-height: 96px; box-shadow: none;
+    display: flex; flex-direction: column; justify-content: space-between; transition: background .3s ease, border-color .3s ease, transform .3s ease; }
+  .razdel-kn.rm-plitka:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .razdel-kn.rm-plitka b { display: block; font-family: "Baskervville", serif; font-weight: 400; font-size: 32px; line-height: 1; color: var(--ink); min-height: 32px; }
+  .razdel-kn.rm-plitka span { display: block; font-family: "Baskervville", serif; font-size: 12.5px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); line-height: 1.35; margin-top: 10px; }
+  .razdel-kn.rm-plitka.vazhno b { color: var(--crit); }
+  .razdel-kn.rm-plitka.vybran { background: var(--accent); border-color: var(--accent); box-shadow: none; }
+  .razdel-kn.rm-plitka.vybran b, .razdel-kn.rm-plitka.vybran span { color: #fff; }
+  .attn-setka { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+  .attn-setka .attn-card { width: auto; min-width: 0; max-width: none; flex: none; }
+  .attn-card.vnim-konstruktor { border-left: 3px solid var(--crit); }
+  .attn-card.vnim-pachka { border-left: 3px solid var(--accent); }
+  .attn-knopki { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .attn-knopki .btn { flex: 0 0 auto; padding: 9px 14px; font-size: 13.5px; }
   .zag-podrazdel { font-family: "Baskervville", serif; font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin: 22px 0 6px; }
   .obj-dok-link { border-color: rgba(193,128,72,.45); }
   .dok-poisk { margin: 14px 0 10px; }
@@ -1483,13 +1503,13 @@ let RM_PAPKA = RM_OBEKTY[RM_OBEKT];
 const RM_LS = "rm_yulii_klyuch_mednoe";
 // klyuch — ключ данных рабочего места; klyuchParol — ключ пароля Юлии (им шифруются письма
 // заказчику: отправитель на Маке принимает только их)
-const RM = { klyuch: null, klyuchParol: null, D: null, fajly: new Map(), vid: "izdeliya" };
+const RM = { klyuch: null, klyuchParol: null, D: null, fajly: new Map(), vid: "" };
 
 function rmEsli(obj) { return Object.prototype.hasOwnProperty.call(RM_OBEKTY, obj); }
 function rmVybrat(obj) {
   if (!rmEsli(obj) || obj === RM_OBEKT) return;
   RM_OBEKT = obj; RM_PAPKA = RM_OBEKTY[obj];
-  RM.D = null; RM.klyuch = null; RM.fajly = new Map(); RM.vid = "izdeliya";
+  RM.D = null; RM.klyuch = null; RM.fajly = new Map(); RM.vid = "";
 }
 
 /* Проектная ли запись. Проверено на всех записях Медного Озера 10.09.2026:
@@ -1642,30 +1662,42 @@ async function renderRabocheeMesto(app) {
   const P = RM.D.pachki || [];
   const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0 };
   P.forEach(p => { s[p.status] = (s[p.status] || 0) + 1; });
+  const vnim = rmVnimanie();
+  const vnimVsego = vnim.length + (STATE.attnList || []).length;
+  const obligN = (STATE.blocks["Б9_Обязательства"] || []).filter(r => r["Объект"] === RM_OBEKT && razbirat(r)).length;
   const PLITKI = [
+    ["vnimanie", "Требует внимания", vnimVsego, vnimVsego ? "vazhno" : ""],
     ["izdeliya", "Изделия", (RM.D.izdeliya || []).length],
     ["zhdet", "Ждут отправки заказчику", s.zhdet],
-    ["otpravlen", "На согласовании у заказчика", s.otpravlen],
-    ["korrektirovki", "Заказчик вернул с корректировками", s.korrektirovki],
-    ["arhiv", "Архив", ""],
+    ["otpravlen", "У заказчика на согласовании", s.otpravlen],
+    ["korrektirovki", "Вернулись с корректировками", s.korrektirovki],
+    ["arhiv", "Архив писем", ""],
+    ["oblig", "Мои обязательства", obligN],
+    ["dok", "Документы проекта", (RM.D.dokumenty || []).length],
+    ["zakazchik", "Страница заказчика", ""],
   ];
-  const plitki = PLITKI.map(([k, t, n]) =>
-    `<button class="rm-plitka ${k}${RM.vid === k ? " vybrana" : ""}" data-vid="${k}"><b>${n}</b><span>${t}</span></button>`).join("");
-
-  app.innerHTML = `    <div class="rm-shapka">
-      <h2>${escapeHtml(RM_OBEKT)} — чертежи и согласование с заказчиком</h2>
-      <a class="rm-ssylka" href="${escapeHtml(RM.D.stranica_zakazchika)}" target="_blank" rel="noopener">
-        Страница заказчика ↗</a>
-    </div>
-    <div class="rm-plitki">${plitki}</div>
+  app.innerHTML = `<div class="razdely-kn">${PLITKI.map(([k, t, n, dop]) => razdelKn(k, t, n, RM.vid, dop)).join("")}</div>
     <div id="rmSpisok"></div>`;
-  app.querySelectorAll(".rm-plitka").forEach(b => b.addEventListener("click", () => {
-    RM.vid = b.dataset.vid; renderRabocheeMesto(app);
+  app.querySelectorAll(".razdel-kn").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.razdel;
+    if (k === "oblig") return nav(() => renderObligations(RM_OBEKT));
+    if (k === "dok") return nav(() => renderDokumenty(RM_OBEKT));
+    if (k === "zakazchik") { if (RM.D.stranica_zakazchika) window.open(RM.D.stranica_zakazchika, "_blank", "noopener"); return; }
+    RM.vid = RM.vid === k ? "" : k;
+    renderRabocheeMesto(app);
   }));
 
   const spisok = document.getElementById("rmSpisok");
+  if (!RM.vid) return;
+  if (RM.vid === "vnimanie") return rmPokazatVnimanie(spisok, vnim);
   if (RM.vid === "arhiv") return rmArhiv(spisok);
-  if (RM.vid === "izdeliya") return rmSpisokIzdeliy(spisok);
+  if (RM.vid === "izdeliya") {
+    spisok.innerHTML = `<div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="Найти изделие по коду или названию" autocomplete="off"></div><div id="rmIzd"></div>`;
+    document.getElementById("search").addEventListener("input", e => filterGrid(e.target.value));
+    return rmSpisokIzdeliy(document.getElementById("rmIzd"));
+  }
   const vidno = P.filter(p => p.status === RM.vid);
   if (!vidno.length) {
     spisok.innerHTML = `<div class="rm-pusto">${RM.vid === "zhdet" ? "Все чертежи от конструктора уже у заказчика."
@@ -1750,6 +1782,67 @@ function rmMiniatyury(korni) {
    что с этим чертежом, есть ли по нему вопросы; нажав на карточку — переходит к этому
    чертежу, а на этой странице собрано всё, что есть по чертежу, включая сами чертежи,
    не пластом, а распределено: раскрыл — открылось». */
+/* «Требует внимания» у Юлии по объекту (14.09.2026). Мансур: «конструктор перепутала названия
+   изделий 15 и 16, а она даже не в курсе — нужно написать конструктору, чтобы исправить».
+   Сюда же — всё, что ждёт её действия: пилоты, которые ещё не у заказчика, возвраты с
+   корректировками, расхождения номера файла и списка изделий. */
+function rmVnimanie() {
+  const P = (RM.D && RM.D.pachki) || [], out = [], vzyato = new Set();
+  const nazv = k => rmNazvanie(k) || "";
+  for (const a of P) for (const b of P) {
+    if (a === b || vzyato.has(a.id) || vzyato.has(b.id) || a.kody.length !== 1 || b.kody.length !== 1) continue;
+    if (!(a.podskazki || []).includes(b.kody[0]) || !(b.podskazki || []).includes(a.kody[0])) continue;
+    vzyato.add(a.id); vzyato.add(b.id);
+    const [x, y] = [a.kody[0], b.kody[0]].sort((m, n) => (parseFloat(m.replace(/\D+/g, "")) || 0) - (parseFloat(n.replace(/\D+/g, "")) || 0));
+    out.push({ tip: "konstruktor", metka: "конструктор перепутал номера", kod: `${x} и ${y}`, pachka: a,
+      tekst: `В чертежах от ${rmDen(a.kogda)} похоже перепутаны ${x} и ${y}. ${[...a.zamechaniya, ...b.zamechaniya].join("; ")}. Нужно написать конструктору, чтобы поправила номера.`,
+      pismo: `Ольга, добрый день!\n\nПохоже, на чертежах перепутаны номера ${x} и ${y}:\n` +
+        `— «${a.zagolovok}» пришёл под номером ${a.kody[0]}, а по списку изделий это ${b.kody[0]} (${nazv(b.kody[0])});\n` +
+        `— «${b.zagolovok}» пришёл под номером ${b.kody[0]}, а по списку изделий это ${a.kody[0]} (${nazv(a.kody[0])}).\n\n` +
+        `По списку: ${x} — ${nazv(x)}; ${y} — ${nazv(y)}.\nПоправьте, пожалуйста, номера на чертежах и в названиях файлов, чтобы дальше не путаться.` });
+  }
+  for (const p of P) {
+    if (vzyato.has(p.id) || !(p.zamechaniya || []).length) continue;
+    const pohozhe = (p.podskazki || []).map(k => `${k} (${nazv(k)})`).join(", ");
+    out.push({ tip: "konstruktor", metka: "номер на чертеже не совпадает со списком", kod: p.kody.join(", "), pachka: p,
+      tekst: `«${p.zagolovok}», ${rmDen(p.kogda)}: ${p.zamechaniya.join("; ")}${pohozhe ? ". По описанию похоже на " + pohozhe : ""}.`,
+      pismo: `Ольга, добрый день!\n\nПо чертежу «${p.zagolovok}» от ${rmDen(p.kogda)} есть расхождение со списком изделий: ${p.zamechaniya.join("; ")}.` +
+        `${pohozhe ? "\nПо описанию это похоже на " + pohozhe + "." : ""}\n\nПроверьте, пожалуйста, номер изделия на чертеже и в названии файла.` });
+  }
+  P.filter(p => p.status === "korrektirovki").forEach(p => out.push({ tip: "pachka", metka: "заказчик вернул с корректировками", kod: p.kody.join(", "), pachka: p,
+    tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — передать корректировки конструктору.` }));
+  P.filter(p => p.status === "zhdet").forEach(p => out.push({ tip: "pachka", metka: "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
+    tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — прислан ${rmDen(p.kogda)}, заказчику ещё не отправлен.` }));
+  return out;
+}
+function rmPokazatVnimanie(el, vnim) {
+  const reestr = STATE.attnCardHtml || [];
+  if (!vnim.length && !reestr.length) { el.innerHTML = `<div class="rm-pusto">Сейчас ничего не требует внимания.</div>`; return; }
+  el.innerHTML = `<div class="attn-setka">${vnim.map((v, i) => `
+    <div class="attn-card vnim-${v.tip}">
+      <div class="attn-kind">${escapeHtml(v.metka)}</div>
+      ${v.kod ? `<div class="code">${escapeHtml(v.kod)}</div>` : ""}
+      <div class="txt">${escapeHtml(v.tekst)}</div>
+      <div class="attn-knopki">
+        ${v.pismo && RM.klyuchParol ? `<button class="btn primary" data-vnim-pismo="${i}">Написать конструктору</button>` : ""}
+        ${v.pachka && v.pachka.kody.length ? `<button class="btn ghost" data-vnim-otkryt="${i}">Открыть изделие</button>` : ""}
+      </div></div>`).join("")}${reestr.join("")}</div>`;
+  el.querySelectorAll("[data-vnim-pismo]").forEach(b => b.addEventListener("click", () => {
+    const v = vnim[+b.dataset.vnimPismo];
+    rmPismo(v.pachka, "olga");
+    const t = document.getElementById("rmTekst");
+    if (t) t.value = v.pismo;
+  }));
+  el.querySelectorAll("[data-vnim-otkryt]").forEach(b => b.addEventListener("click", () => {
+    const k = vnim[+b.dataset.vnimOtkryt].pachka.kody[0];
+    nav(() => renderItem(k));
+  }));
+  el.querySelectorAll(".attn-card[data-attn]").forEach(b => b.addEventListener("click", () => {
+    const item = (STATE.attnList || [])[+b.dataset.attn];
+    if (item) openRecordModal(item.r["Номер записи"], item.blok);
+  }));
+}
+
 function rmPachkiIzdeliya(kod) {
   return (RM.D && RM.D.pachki || []).filter(p => p.kody.includes(kod))
     .sort((a, b) => b.kogda.localeCompare(a.kogda));
@@ -1979,7 +2072,7 @@ async function uvVklyuchit() {
    то, что ему нужно, его обязательства и всё остальное». Разделы: Мой день, Пилоты, Монтаж,
    Изделия, Факты, Коммерция. У каждого факта — источник; данные из дизайн-проекта помечены
    «анализ проекта дизайнера» (Юлия: опираться на них как на факт нельзя). */
-const IG = { vid: "den", obj: "" };
+const IG = { vid: "", obj: "" };
 const IG_SLOVA = /Игор|монтаж/i;
 function igEsli() { try { return localStorage.getItem("verstak_role_name") === "Игорь Михайлович"; } catch (e) { return false; } }
 function igMoe(r) {
@@ -2104,7 +2197,24 @@ function igIzdeliya(rows) {
         ${s && s["Статус"] ? `<div class="rm-st ${igStatusPilota(s["Статус"])}">пилот: ${escapeHtml(s["Статус"])}</div>` : ""}</button>`;
     }).join("")}</div></section>`).join("");
 }
+// «Требует внимания» у Игоря Михайловича: то, что ждёт именно его
+function igVnimanie(D) {
+  const prosr = D.ya.filter(r => { const u = urgencyKey(r)[0]; return u === 0 || u === 4; });
+  const korr = (IG.pachki || []).filter(p => p.status === "korrektirovki" && (!IG.obj || p.obekt === IG.obj));
+  return { prosr, voprosy: D.voprosy, problemy: D.problemy, korr, vsego: prosr.length + D.voprosy.length + D.problemy.length + korr.length };
+}
 function igTelo(D) {
+  if (!IG.vid) return "";
+  if (IG.vid === "vnimanie") {
+    const v = igVnimanie(D);
+    if (!v.vsego) return `<div class="empty-hint">Сейчас ничего не требует вашего внимания.</div>`;
+    return (v.prosr.length ? igRazdel("Мои обязательства: просрочено или давно без движения", v.prosr, "Б9_Обязательства") : "")
+      + (v.voprosy.length ? igRazdel("Вопросы ко мне", v.voprosy, "Б8_Открытые_вопросы") : "")
+      + (v.korr.length ? `<section class="blk"><div class="hd"><h2>Пилоты: заказчик вернул с корректировками</h2><span class="count">${v.korr.length}</span></div><div class="ig-piloty">${v.korr.map(p =>
+          `<div class="ig-pilot"><div class="ig-pilot-verh">${p.kody.map(c => `<button class="ig-kod" data-code="${escapeHtml(c)}">${escapeHtml(c)}</button>`).join(" ")}<span class="rm-st korr">корректировки</span></div>
+           <div class="ig-pilot-nm">${escapeHtml(p.nazvaniya.filter(Boolean).join("; ") || p.zagolovok)}</div></div>`).join("")}</div></section>` : "")
+      + (v.problemy.length ? igRazdel("Проблемы на объекте по монтажу", v.problemy, "Б10_Проблемы", "", true) : "");
+  }
   if (IG.vid === "piloty") return igPiloty(D.piloty);   // сверху — пилоты от конструктора, ниже — таблица согласования
   if (IG.vid === "montazh") return igRazdel("События: замеры, отгрузки, монтаж", D.sobytiya, "Б15_События", "Событий по монтажу пока нет.", true)
     + igRazdel("Проблемы на объекте", D.problemy, "Б10_Проблемы", "Проблем по монтажу не записано.", true)
@@ -2124,18 +2234,18 @@ function renderIgor() {
   const D = igDannye();
   const chas = new Date().getHours();
   const privet = chas < 5 ? "Доброй ночи" : chas < 12 ? "Доброе утро" : chas < 18 ? "Добрый день" : "Добрый вечер";
-  const plitki = [["den", "Мой день", D.ya.length + D.mne.length + D.voprosy.length], ["piloty", "Пилоты", D.piloty.length + (IG.pachki || []).filter(p => !IG.obj || p.obekt === IG.obj).length],
+  const vnimI = igVnimanie(D);
+  const plitki = [["vnimanie", "Требует внимания", vnimI.vsego], ["den", "Мой день", D.ya.length + D.mne.length + D.voprosy.length], ["piloty", "Пилоты", D.piloty.length + (IG.pachki || []).filter(p => !IG.obj || p.obekt === IG.obj).length],
     ["montazh", "Монтаж", D.sobytiya.length + D.problemy.length + D.rashozhdeniya.length], ["izdeliya", "Изделия", D.izdeliya.length],
     ["fakty", "Факты", D.resheniya.length + D.problemyVse.length + D.riski.length + D.zhdyom.length], ["kommerciya", "Коммерция", D.dengi.length]];
   app.innerHTML = `<div class="item-detail-wrap home-wrap ig">
     <div class="ig-privet">${privet}, Игорь Михайлович</div>
     <div class="segs ig-obj">${["", ...STATE.objectNames].map(o =>
       `<button class="seg${IG.obj === o ? " active" : ""}" data-obj="${escapeHtml(o)}">${o ? escapeHtml(o) : "Все объекты"}</button>`).join("")}</div>
-    <div class="ig-plitki">${plitki.map(([k, t, n]) =>
-      `<button class="rm-plitka${IG.vid === k ? " vybrana" : ""}" data-vid="${k}"><b>${n}</b><span>${t}</span></button>`).join("")}</div>
+    <div class="razdely-kn ig-plitki">${plitki.map(([k, t, n]) => razdelKn(k, t, n, IG.vid, k === "vnimanie" && n ? "vazhno" : "")).join("")}</div>
     <div id="igTelo">${igTelo(D)}</div></div>`;
   app.querySelectorAll(".ig-obj .seg").forEach(b => b.addEventListener("click", () => { IG.obj = b.dataset.obj; renderIgor(); }));
-  app.querySelectorAll(".ig-plitki .rm-plitka").forEach(b => b.addEventListener("click", () => { IG.vid = b.dataset.vid; renderIgor(); }));
+  app.querySelectorAll(".ig-plitki .razdel-kn").forEach(b => b.addEventListener("click", () => { IG.vid = IG.vid === b.dataset.vid ? "" : b.dataset.vid; renderIgor(); }));
   app.querySelectorAll(".ig-izd, .ig-kod").forEach(b => b.addEventListener("click", () => nav(() => renderItem(b.dataset.code))));
   wireCards(app);
 }
@@ -3181,45 +3291,63 @@ function renderDashboard() {
     </button>`;
   }).join("");
 
-  app.innerHTML = `
-    <div class="segs">${segs}</div>
-    <div class="search-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input id="search" type="text" placeholder="Найти изделие по коду или названию" autocomplete="off">
-    </div>
-    <div class="obj-links-row">
-      <button class="obj-fin-link" id="objObligLink">Мои обязательства</button>
-      ${rmEsli(STATE.activeObj) ? '<button class="obj-fin-link obj-dok-link" id="objDokLink">Документы проекта</button>' : '<button class="obj-fin-link" id="objFinLink">Финансы и документы</button>'}
-    </div>
-    ${attention}
-    ${rmEsli(STATE.activeObj) ? '<div id="rmMesto"></div>' : `<section class="blk"><div class="hd"><h2>Изделия</h2><span class="count">${items.length}</span></div>
+  // 14.09.2026 Мансур: «на экране в начале не будет кроме этих кнопок ничего, как только
+  // пользователь выбрал — только после этого что-то появилось»; кнопки разделов не должны
+  // выглядеть как карточки изделий; объекты — по центру.
+  STATE.attnCardHtml = STATE.attnList.map(attnCard);
+  const rabochee = rmEsli(STATE.activeObj);
+  STATE.dashVid = STATE.dashVid || {};
+  const vid = STATE.dashVid[STATE.activeObj] || "";
+  let telo = "";
+  if (vid === "vnimanie") {
+    telo = attnTotal ? `<div class="attn-setka">${STATE.attnCardHtml.join("")}</div>` : `<div class="empty-hint">Сейчас ничего не требует внимания.</div>`;
+  } else if (vid === "izdeliya") {
+    telo = `<div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="text" placeholder="Найти изделие по коду или названию" autocomplete="off"></div>
       <div class="item-grid">${cards || ""}</div>
-      ${items.length ? "" : '<div class="empty-hint">В этом объекте пока нет изделий в справочнике.</div>'}
-    </section>`}
-  `;
+      ${items.length ? "" : '<div class="empty-hint">В этом объекте пока нет изделий в справочнике.</div>'}`;
+  }
+  app.innerHTML = `<div class="segs segs-obj">${segs}</div>` + (rabochee ? `<div id="rmMesto"></div>` : `
+    <div class="razdely-kn">
+      ${razdelKn("vnimanie", "Требует внимания", attnTotal, vid, attnTotal ? "vazhno" : "")}
+      ${razdelKn("izdeliya", "Изделия", items.length, vid)}
+      ${razdelKn("oblig", "Мои обязательства", (STATE.blocks["Б9_Обязательства"] || []).filter(r => r["Объект"] === STATE.activeObj && razbirat(r)).length, vid)}
+      ${razdelKn("fin", "Финансы и документы", "", vid)}
+    </div>
+    <div id="dashTelo">${telo}</div>`);
 
-  const objFinLink = document.getElementById("objFinLink");
-  if (objFinLink) objFinLink.addEventListener("click", () => nav(() => renderObjectFinance(STATE.activeObj)));
-  const objDokLink = document.getElementById("objDokLink");
-  if (objDokLink) objDokLink.addEventListener("click", () => nav(() => renderDokumenty(STATE.activeObj)));
-  const objObligLink = document.getElementById("objObligLink");
-  if (objObligLink) objObligLink.addEventListener("click", () => nav(() => renderObligations(STATE.activeObj)));
-  app.querySelectorAll(".seg").forEach(el => el.addEventListener("click", () => nav(() => { STATE.activeObj = el.dataset.obj; renderDashboard(); })));
+  app.querySelectorAll(".segs-obj .seg").forEach(el => el.addEventListener("click", () => nav(() => { STATE.activeObj = el.dataset.obj; renderDashboard(); })));
+  app.querySelectorAll(".razdel-kn").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.razdel;
+    if (k === "oblig") return nav(() => renderObligations(STATE.activeObj));
+    if (k === "fin") return nav(() => renderObjectFinance(STATE.activeObj));
+    STATE.dashVid[STATE.activeObj] = STATE.dashVid[STATE.activeObj] === k ? "" : k;
+    renderDashboard();
+  }));
   app.querySelectorAll(".item-card").forEach(el => el.addEventListener("click", () => nav(() => renderItem(el.dataset.code))));
-  app.querySelectorAll(".attn-card").forEach(el => el.addEventListener("click", () => {
+  app.querySelectorAll(".attn-card[data-attn]").forEach(el => el.addEventListener("click", () => {
     const item = STATE.attnList[parseInt(el.dataset.attn, 10)];
     if (item) openRecordModal(item.r["Номер записи"], item.blok);
   }));
 
-  if (rmEsli(STATE.activeObj)) { rmVybrat(STATE.activeObj); renderRabocheeMesto(document.getElementById("rmMesto")); }
+  if (rabochee) { rmVybrat(STATE.activeObj); renderRabocheeMesto(document.getElementById("rmMesto")); }
   const search = document.getElementById("search");
-  search.addEventListener("input", () => filterGrid(search.value));
-  search.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      const codes = extractCodes(search.value, STATE.codeIndexSet);
-      if (codes.length) nav(() => renderItem(codes[0]));
-    }
-  });
+  if (search) {
+    search.addEventListener("input", () => filterGrid(search.value));
+    search.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        const codes = extractCodes(search.value, STATE.codeIndexSet);
+        if (codes.length) nav(() => renderItem(codes[0]));
+      }
+    });
+  }
+}
+
+// Кнопка раздела: крупная цифра и подпись — не похожа на карточку изделия
+function razdelKn(k, nazv, n, vid, dop) {
+  return `<button class="razdel-kn rm-plitka ${dop || ""}${vid === k ? " vybran vybrana" : ""}" data-razdel="${k}" data-vid="${k}">
+    <b>${n === "" || n === undefined ? "" : n}</b><span>${escapeHtml(nazv)}</span></button>`;
 }
 
 function filterGrid(q) {
