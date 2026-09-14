@@ -1675,6 +1675,7 @@ async function renderRabocheeMesto(app) {
     return;
   }
 
+  rmOtpravkiPrimenit();
   const P = RM.D.pachki || [];
   const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0 };
   P.forEach(p => { s[p.status] = (s[p.status] || 0) + 1; });
@@ -1752,7 +1753,9 @@ function rmKartochka(p) {
       (p.podskazki && p.podskazki.length ? ` · по описанию похоже на <b>${escapeHtml(p.podskazki.join(", "))}</b>` : "") +
       `. Проверьте код, прежде чем отправлять.</div>` : "";
   let knopki = "";
-  if (p.status === "zhdet") {
+  if (p.vOcheredi) {
+    knopki = `<span class="rm-tusklo">Письмо ${escapeHtml(p.vOcheredi)} отправляется…</span>`;
+  } else if (p.status === "zhdet") {
     knopki = `<button class="btn primary" data-pismo="${escapeHtml(p.id)}">Подготовить письмо заказчику</button>`;
   } else if (p.status === "otpravlen") {
     knopki = `<button class="btn ghost" data-pismo="${escapeHtml(p.id)}">Отправить повторно</button>
@@ -1803,20 +1806,21 @@ function rmMiniatyury(korni) {
    Сюда же — всё, что ждёт её действия: пилоты, которые ещё не у заказчика, возвраты с
    корректировками, расхождения номера файла и списка изделий. */
 function rmVnimanie() {
+  rmOtpravkiPrimenit();
   const P = (RM.D && RM.D.pachki) || [], out = [], vzyato = new Set();
   const nazv = k => rmNazvanie(k) || "";
+  // 14.09.2026: ИМ15/ИМ16 оказались перепутаны в НАШЕМ списке изделий, а не у конструктора.
+  // Поэтому никого не обвиняем и письма Ольге не предлагаем — сначала сверить список изделий и переписку.
   for (const a of P) for (const b of P) {
     if (a === b || vzyato.has(a.id) || vzyato.has(b.id) || a.kody.length !== 1 || b.kody.length !== 1) continue;
     if (!(a.podskazki || []).includes(b.kody[0]) || !(b.podskazki || []).includes(a.kody[0])) continue;
     vzyato.add(a.id); vzyato.add(b.id);
     const [x, y] = [a.kody[0], b.kody[0]].sort((m, n) => (parseFloat(m.replace(/\D+/g, "")) || 0) - (parseFloat(n.replace(/\D+/g, "")) || 0));
-    out.push({ tip: "konstruktor", metka: "конструктор перепутал номера", kod: `${x} и ${y}`, pachka: a,
-      tekst: `В чертежах от ${rmDen(a.kogda)} похоже перепутаны ${x} и ${y}. ${[...a.zamechaniya, ...b.zamechaniya].join("; ")}. Нужно написать конструктору, чтобы поправила номера.`,
-      pismo: `Ольга, добрый день!\n\nПохоже, на чертежах перепутаны номера ${x} и ${y}:\n` +
-        `— «${a.zagolovok}» пришёл под номером ${a.kody[0]}, а по списку изделий это ${b.kody[0]} (${nazv(b.kody[0])});\n` +
-        `— «${b.zagolovok}» пришёл под номером ${b.kody[0]}, а по списку изделий это ${a.kody[0]} (${nazv(a.kody[0])}).\n\n` +
-        `По списку: ${x} — ${nazv(x)}; ${y} — ${nazv(y)}.\nПоправьте, пожалуйста, номера на чертежах и в названиях файлов, чтобы дальше не путаться.` });
+    out.push({ tip: "konstruktor", metka: "номера не сходятся со списком изделий", kod: `${x} и ${y}`, pachka: a,
+      tekst: `Названия чертежей ${x} и ${y} наоборот тому, что в нашем списке изделий: ${[...a.zamechaniya, ...b.zamechaniya].join("; ")}. Сверьте список изделий и переписку с конструктором — ошибка может быть в списке.` });
   }
+  P.filter(p => !p.kody.length && p.status === "zhdet").forEach(p => { vzyato.add(p.id); out.push({ tip: "pachka", metka: "пилот без номера изделия", kod: "", pachka: p,
+    tekst: `«${p.zagolovok}», ${rmDen(p.kogda)} — конструктор не указала номер. При отправке заказчику выберите, какое это изделие.` }); });
   for (const p of P) {
     if (vzyato.has(p.id) || !(p.zamechaniya || []).length) continue;
     const pohozhe = (p.podskazki || []).map(k => `${k} (${nazv(k)})`).join(", ");
@@ -1827,7 +1831,7 @@ function rmVnimanie() {
   }
   P.filter(p => p.status === "korrektirovki").forEach(p => out.push({ tip: "pachka", metka: "заказчик вернул с корректировками", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — передать корректировки конструктору.` }));
-  P.filter(p => p.status === "zhdet").forEach(p => out.push({ tip: "pachka", metka: "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
+  P.filter(p => p.status === "zhdet" && !vzyato.has(p.id)).forEach(p => out.push({ tip: "pachka", metka: p.vOcheredi ? "письмо отправляется" : "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — прислан ${rmDen(p.kogda)}, заказчику ещё не отправлен.` }));
   return out;
 }
@@ -1841,8 +1845,10 @@ function rmPokazatVnimanie(el, vnim) {
       <div class="txt">${escapeHtml(v.tekst)}</div>
       <div class="attn-knopki">
         ${v.pismo && RM.klyuchParol ? `<button class="btn primary" data-vnim-pismo="${i}">Написать конструктору</button>` : ""}
+        ${v.pachka && !v.pachka.kody.length && v.pachka.status === "zhdet" && !v.pachka.vOcheredi && RM.klyuchParol ? `<button class="btn primary" data-vnim-zak="${i}">Указать изделие и отправить заказчику</button>` : ""}
         ${v.pachka && v.pachka.kody.length ? `<button class="btn ghost" data-vnim-otkryt="${i}">Открыть изделие</button>` : ""}
       </div></div>`).join("")}${reestr.join("")}</div>`;
+  el.querySelectorAll("[data-vnim-zak]").forEach(b => b.addEventListener("click", () => rmPismo(vnim[+b.dataset.vnimZak].pachka, "zakazchik")));
   el.querySelectorAll("[data-vnim-pismo]").forEach(b => b.addEventListener("click", () => {
     const v = vnim[+b.dataset.vnimPismo];
     rmPismo(v.pachka, "olga");
@@ -1860,6 +1866,7 @@ function rmPokazatVnimanie(el, vnim) {
 }
 
 function rmPachkiIzdeliya(kod) {
+  rmOtpravkiPrimenit();
   return (RM.D && RM.D.pachki || []).filter(p => p.kody.includes(kod))
     .sort((a, b) => b.kogda.localeCompare(a.kogda));
 }
@@ -1990,7 +1997,8 @@ async function renderIzdelieMO(code, it, rec) {
   const faylyPerepiski = rec["Б6_Файлы"] || [];
 
   let knopki = "";
-  if (posl && posl.status === "zhdet") knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}">Подготовить письмо заказчику</button>`;
+  if (posl && posl.vOcheredi) knopki = `<span class="rm-tusklo">Письмо ${escapeHtml(posl.vOcheredi)} отправляется…</span>`;
+  else if (posl && posl.status === "zhdet") knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}">Подготовить письмо заказчику</button>`;
   else if (posl && posl.status === "otpravlen") knopki = `<button class="btn ghost" data-pismo="${escapeHtml(posl.id)}">Отправить повторно</button>
     <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(posl.id)}">Заказчик вернул с корректировками</button>`;
   else if (posl) knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}" data-kuda="olga">Передать корректировки конструктору</button>
@@ -3142,9 +3150,12 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- письмо ---------------- */
-function rmShablon(p, kuda) {
-  const stroki = p.kody.map(k => `${k} — ${rmNazvanie(k)}`).filter(s => !s.endsWith("— "));
-  const izd = stroki.length ? stroki.join("\n") : p.zagolovok;
+function rmIzdStroki(p, kody) {
+  const stroki = (kody || p.kody).map(k => `${k} — ${rmNazvanie(k)}`).filter(s => !s.endsWith("— "));
+  return stroki.length ? stroki.join("\n") : p.zagolovok;
+}
+function rmShablon(p, kuda, kody) {
+  const izd = rmIzdStroki(p, kody);
   const voprosy = [];
   (p.voprosy || []).forEach(g => {
     if (g.gruppa) voprosy.push(g.gruppa);
@@ -3164,13 +3175,20 @@ function rmPismo(p, kuda) {
     `<option value="${escapeHtml(g.klyuch)}"${g.klyuch === kuda ? " selected" : ""}>${escapeHtml(g.nazvanie)}</option>`).join("");
   const fajly = p.fajly.filter(f => !f.net_fajla).map((f, i) =>
     `<label class="rm-galka"><input type="checkbox" data-i="${i}" checked> ${escapeHtml(f.imya)}</label>`).join("");
+  // 14.09.2026: пилот без номера (дверь в гостевую) — Юлия сама указывает, какое это изделие
+  const bezKoda = !p.kody.length;
+  const izdOpc = bezKoda ? (RM.D.izdeliya || []).slice()
+    .sort((a, b) => (/двер/i.test(p.zagolovok) ? (b.kod.startsWith("Д") - a.kod.startsWith("Д")) : 0))
+    .map(i => `<option value="${escapeHtml(i.kod)}">${escapeHtml(i.kod + " — " + i.nazvanie + (i.gde ? " · " + i.gde : ""))}</option>`).join("") : "";
   const fon = document.createElement("div");
   fon.className = "rm-okno-fon";
   fon.innerHTML = `<div class="rm-okno">
-    <h3>Письмо ${p.kody.length ? "по " + escapeHtml(p.kody.join(", ")) : ""}</h3>
+    <h3>Письмо ${p.kody.length ? "по " + escapeHtml(p.kody.join(", ")) : "· " + escapeHtml(p.zagolovok)}</h3>
+    ${bezKoda ? `<label class="rm-metka">Какое это изделие — конструктор номер не указала</label>
+    <select id="rmIzdKod" class="rm-pole"><option value="">— выберите изделие —</option>${izdOpc}</select>` : ""}
     <label class="rm-metka">Куда</label>
     <select id="rmKuda" class="rm-pole">${gruppy}</select>
-    <label class="rm-metka">Текст — можно править и дописывать свои вопросы</label>
+    <label class="rm-metka">${bezKoda ? "Текст — напишите от себя, что это за изделие и что по нему важно" : "Текст — можно править и дописывать свои вопросы"}</label>
     <textarea id="rmTekst" class="rm-pole" rows="14"></textarea>
     <label class="rm-metka">Файлы</label>
     <div class="rm-galki">${fajly}</div>
@@ -3184,8 +3202,18 @@ function rmPismo(p, kuda) {
   </div>`;
   document.body.appendChild(fon);
   const tekst = document.getElementById("rmTekst");
-  tekst.value = rmShablon(p, kuda);
-  document.getElementById("rmKuda").addEventListener("change", e => { tekst.value = rmShablon(p, e.target.value); });
+  const vybor = () => { const s = document.getElementById("rmIzdKod"); return s && s.value ? [s.value] : null; };
+  let bylShablon = rmShablon(p, kuda, vybor());
+  tekst.value = bylShablon;
+  const obnovitShablon = () => {
+    const nov = rmShablon(p, document.getElementById("rmKuda").value, vybor());
+    // своё, что Юлия уже дописала, не затираем — меняем только строку с изделием
+    tekst.value = tekst.value === bylShablon ? nov : tekst.value.replace(rmIzdStroki(p, bylKody), rmIzdStroki(p, vybor()));
+    bylShablon = nov; bylKody = vybor();
+  };
+  let bylKody = vybor();
+  document.getElementById("rmKuda").addEventListener("change", obnovitShablon);
+  if (bezKoda) document.getElementById("rmIzdKod").addEventListener("change", obnovitShablon);
   document.getElementById("rmOtmena").addEventListener("click", () => fon.remove());
   document.getElementById("rmOtpravit").addEventListener("click", async (e) => {
     const knopka = e.target;
@@ -3193,13 +3221,16 @@ function rmPismo(p, kuda) {
     const kudaNazv = sel.options[sel.selectedIndex].text;
     const vybrano = [...fon.querySelectorAll(".rm-galka input:checked")]
       .map(x => p.fajly.filter(f => !f.net_fajla)[+x.dataset.i]);
+    const kody = vybor() || p.kody;
+    if (bezKoda && !vybor()) { alert("Выберите, какое это изделие."); return; }
     if (!tekst.value.trim()) { alert("Текст письма пустой."); return; }
+    if (rmOtpravki()[p.id] && rmOtpravki()[p.id].sost === "ochered") { alert("Письмо по этому чертежу уже отправляется."); return; }
     if (!confirm(`Отправить от имени Юлии в «${kudaNazv}»?\nФайлов: ${vybrano.length}`)) return;
     knopka.disabled = true;
     const sost = document.getElementById("rmOknoSost");
     sost.textContent = "Ставлю в очередь…";
     try {
-      const zadanie = { v: 1, obekt: RM_OBEKT, kuda: sel.value, pachka: p.id, izdeliya: p.kody,
+      const zadanie = { v: 1, obekt: RM_OBEKT, kuda: sel.value, pachka: p.id, izdeliya: kody,
         tekst: tekst.value, fajly: vybrano.map(f => ({ id: f.id, imya: f.imya })),
         sozdano: new Date().toISOString().slice(0, 16).replace("T", " ") };
       const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
@@ -3208,8 +3239,14 @@ function rmPismo(p, kuda) {
                       "Задание (зашифровано)": await rmZashifrovat(JSON.stringify(zadanie)) } }) });
       const d = await res.json();
       if (!d.ok) throw new Error(d.error || "мостик отказал");
-      sost.textContent = `В очереди (${d.id}). Отправитель на Маке заберёт письмо в течение минуты…`;
-      rmSledit(d.id, sost, () => fon.remove());
+      if (bezKoda) {        // слово Юлии: к какому изделию эта пачка — дальше её видят все сборщики
+        p.kody = kody;
+        fetch(INBOX_URL, { method: "POST", body: JSON.stringify({ type: "stroka", list: "Чертежи_привязка", prefiksID: "ЧП",
+          znacheniya: { "Объект": RM_OBEKT, "Пачка": p.id, "Изделия": kody.join(", "), "Кто": rmKto() } }) }).catch(() => {});
+      }
+      if (sel.value === "zakazchik") rmOtpravkaZapomnit(p.id, { id: d.id, sost: "ochered", t: Date.now() });
+      sost.textContent = `В очереди (${d.id}). Отправляется — обычно 15–30 секунд…`;
+      rmSledit(d.id, sost, p.id, sel.value === "zakazchik");
     } catch (err) {
       sost.textContent = "Не получилось: " + err.message;
       knopka.disabled = false;
@@ -3217,21 +3254,64 @@ function rmPismo(p, kuda) {
   });
 }
 
+/* Отправленное заказчику (14.09.2026). Мансур: «то, что отправили, сразу должно у заказчика появиться,
+   а у нас в разделе отправки исчезнуть». Пока сборщики не пересобрали рабочее место, приложение само
+   помнит: письмо в очереди — кнопки отправки нет (иначе второе такое же письмо, как с ИМ1+ИМ2),
+   отправлено — чертёж уже «у заказчика». Когда пришли свежие данные, память по чертежу стирается. */
+const RM_OTPR_LS = "rm_otpravki";
+function rmOtpravki() { try { return JSON.parse(localStorage.getItem(RM_OTPR_LS) || "{}"); } catch (e) { return {}; } }
+function rmOtpravkaZapomnit(pid, zap) {
+  const vse = rmOtpravki();
+  if (zap) vse[pid] = zap; else delete vse[pid];
+  try { localStorage.setItem(RM_OTPR_LS, JSON.stringify(vse)); } catch (e) {}
+}
+const RM_SLEDIM = new Set();
+function rmOtpravkiPrimenit() {
+  if (!RM.D || !RM.D.pachki) return;
+  const vse = rmOtpravki();
+  for (const p of RM.D.pachki) {
+    const z = vse[p.id];
+    delete p.vOcheredi;
+    if (!z) continue;
+    if (p._bylStatus === undefined) p._bylStatus = p.status;
+    if (p._bylStatus !== "zhdet") { rmOtpravkaZapomnit(p.id, null); continue; }   // сборщики уже знают
+    if (z.sost === "otpravleno") { p.status = "otpravlen"; p.u_zakazchika = z.kogda || new Date().toISOString().slice(0, 10); continue; }
+    if (Date.now() - z.t > 20 * 60000) { rmOtpravkaZapomnit(p.id, null); continue; }
+    p.vOcheredi = z.id;
+    if (!RM_SLEDIM.has(z.id)) rmSledit(z.id, null, p.id, true);
+  }
+}
+function rmPerersovat() {
+  const s = document.getElementById("rmSpisok");
+  if (s && s.parentElement) renderRabocheeMesto(s.parentElement);
+}
+
 /* Следим за письмом по очереди, пока отправитель не отметит результат */
-async function rmSledit(id, el, gotovo) {
-  for (let i = 0; i < 24; i++) {
-    await new Promise(r => setTimeout(r, 10000));
+async function rmSledit(id, el, pid, zakazchiku) {
+  if (RM_SLEDIM.has(id)) return;
+  RM_SLEDIM.add(id);
+  const napisat = t => { if (el) el.textContent = t; };
+  for (let i = 0; i < 100; i++) {
+    await new Promise(r => setTimeout(r, i < 40 ? 3000 : 10000));
     try {
       const stroka = (await fetchTab(REESTR_ID, "Отправка_Телеграм")).find(r => r["ID"] === id);
       if (!stroka) continue;
       const st = stroka["Статус"] || "";
       if (st === "в очереди") continue;
-      el.textContent = st === "отправлено" ? `Отправлено ${stroka["Когда отправлено"]}. Записано в архив.`
-        : `${st}${stroka["Ошибка"] ? " — " + stroka["Ошибка"] : ""}`;
+      RM_SLEDIM.delete(id);
+      if (st === "отправлено") {
+        if (pid && zakazchiku) rmOtpravkaZapomnit(pid, { id, sost: "otpravleno", t: Date.now(), kogda: (stroka["Когда отправлено"] || "").slice(0, 10) });
+        napisat(`Отправлено ${stroka["Когда отправлено"]}. Чертёж перенесён в «У заказчика на согласовании».`);
+      } else {
+        if (pid) rmOtpravkaZapomnit(pid, null);
+        napisat(`${st}${stroka["Ошибка"] ? " — " + stroka["Ошибка"] : ""}`);
+      }
+      rmPerersovat();
       return;
     } catch (e) {}
   }
-  el.textContent = `Письмо ${id} ещё в очереди. Посмотрите статус в архиве позже.`;
+  RM_SLEDIM.delete(id);
+  napisat(`Письмо ${id} ещё в очереди. Посмотрите статус в архиве позже.`);
 }
 
 /* ---------------- отметки ---------------- */
