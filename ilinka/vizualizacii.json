@@ -1,5 +1,5 @@
 {
- "obnovleno": "2026-09-14 13:26",
+ "obnovleno": "2026-09-14 14:55",
  "vsego_stranic": 72,
  "privyazano_chelovekom": 0,
  "po_izdeliyam": {
@@ -25,7 +25,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-48.jpg",
@@ -48,7 +49,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ2"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-63.jpg",
@@ -71,7 +73,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-64.jpg",
@@ -94,7 +97,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-67.jpg",
@@ -117,7 +121,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ2"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-70.jpg",
@@ -140,7 +145,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-02.jpg",
@@ -163,7 +169,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-04.jpg",
@@ -186,7 +193,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-11.jpg",
@@ -207,7 +215,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ1"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-13.jpg",
@@ -228,7 +237,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ1"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-34.jpg",
@@ -251,7 +261,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ7"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-41.jpg",
@@ -276,7 +287,8 @@
      "ИИ1",
      "ИИ3",
      "ИИ7"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-45.jpg",
@@ -301,7 +313,8 @@
      "ИИ1",
      "ИИ2",
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-49.jpg",
@@ -326,7 +339,8 @@
      "ИИ1",
      "ИИ2",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-65.jpg",
@@ -349,7 +363,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-71.jpg",
@@ -372,7 +387,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ9": [
@@ -397,7 +413,8 @@
     "kody_modeli": [
      "ИИ10",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-59.jpg",
@@ -420,7 +437,8 @@
     "kody_modeli": [
      "ИИ9",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-66.jpg",
@@ -443,7 +461,8 @@
     "kody_modeli": [
      "ИИ9",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-02.jpg",
@@ -466,7 +485,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-04.jpg",
@@ -489,7 +509,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-71.jpg",
@@ -512,7 +533,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ3": [
@@ -535,7 +557,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-42.jpg",
@@ -556,7 +579,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-44.jpg",
@@ -577,7 +601,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-56.jpg",
@@ -598,7 +623,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-03.jpg",
@@ -619,7 +645,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-09.jpg",
@@ -640,7 +667,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-17.jpg",
@@ -661,7 +689,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-21.jpg",
@@ -682,7 +711,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-22.jpg",
@@ -703,7 +733,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-25.jpg",
@@ -726,7 +757,8 @@
     "kody_modeli": [
      "ИИ3",
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-26.jpg",
@@ -747,7 +779,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-41.jpg",
@@ -772,7 +805,8 @@
      "ИИ1",
      "ИИ3",
      "ИИ7"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-45.jpg",
@@ -797,7 +831,8 @@
      "ИИ1",
      "ИИ2",
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-55.jpg",
@@ -818,7 +853,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-68.jpg",
@@ -839,7 +875,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ3"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ4": [
@@ -862,7 +899,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-12.jpg",
@@ -883,7 +921,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-18.jpg",
@@ -904,7 +943,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-19.jpg",
@@ -925,7 +965,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-24.jpg",
@@ -946,7 +987,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-27.jpg",
@@ -967,7 +1009,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-29.jpg",
@@ -988,7 +1031,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-36.jpg",
@@ -1009,7 +1053,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-52.jpg",
@@ -1030,7 +1075,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ4"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-25.jpg",
@@ -1053,7 +1099,8 @@
     "kody_modeli": [
      "ИИ3",
      "ИИ4"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ2": [
@@ -1078,7 +1125,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ2"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-67.jpg",
@@ -1101,7 +1149,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ2"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-07.jpg",
@@ -1124,7 +1173,8 @@
     "kody_modeli": [
      "ИИ2",
      "ИНД-6"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-45.jpg",
@@ -1149,7 +1199,8 @@
      "ИИ1",
      "ИИ2",
      "ИИ3"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-49.jpg",
@@ -1174,7 +1225,8 @@
      "ИИ1",
      "ИИ2",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИНД-6": [
@@ -1197,7 +1249,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИНД-6"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-35.jpg",
@@ -1218,7 +1271,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИНД-6"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-37.jpg",
@@ -1239,7 +1293,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИНД-6"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-07.jpg",
@@ -1262,7 +1317,8 @@
     "kody_modeli": [
      "ИИ2",
      "ИНД-6"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ11": [
@@ -1287,7 +1343,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-63.jpg",
@@ -1310,7 +1367,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-64.jpg",
@@ -1333,7 +1391,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-70.jpg",
@@ -1356,7 +1415,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ11"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ10": [
@@ -1381,7 +1441,8 @@
     "kody_modeli": [
      "ИИ10",
      "ИИ9"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-31.jpg",
@@ -1404,7 +1465,8 @@
     "kody_modeli": [
      "ИИ8",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-59.jpg",
@@ -1427,7 +1489,8 @@
     "kody_modeli": [
      "ИИ9",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-66.jpg",
@@ -1450,7 +1513,8 @@
     "kody_modeli": [
      "ИИ9",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-49.jpg",
@@ -1475,7 +1539,8 @@
      "ИИ1",
      "ИИ2",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-53.jpg",
@@ -1498,7 +1563,8 @@
     "kody_modeli": [
      "ИИ5",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-65.jpg",
@@ -1521,7 +1587,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ8": [
@@ -1544,7 +1611,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-15.jpg",
@@ -1565,7 +1633,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-16.jpg",
@@ -1586,7 +1655,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-30.jpg",
@@ -1607,7 +1677,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-31.jpg",
@@ -1630,7 +1701,8 @@
     "kody_modeli": [
      "ИИ8",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-38.jpg",
@@ -1651,7 +1723,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-50.jpg",
@@ -1672,7 +1745,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-51.jpg",
@@ -1693,7 +1767,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-58.jpg",
@@ -1714,7 +1789,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-62.jpg",
@@ -1735,7 +1811,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-69.jpg",
@@ -1756,7 +1833,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-72.jpg",
@@ -1777,7 +1855,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ8"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ12": [
@@ -1800,7 +1879,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-57.jpg",
@@ -1821,7 +1901,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-61.jpg",
@@ -1842,7 +1923,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-20.jpg",
@@ -1863,7 +1945,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-23.jpg",
@@ -1884,7 +1967,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-39.jpg",
@@ -1905,7 +1989,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-43.jpg",
@@ -1926,7 +2011,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-46.jpg",
@@ -1947,7 +2033,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-54.jpg",
@@ -1968,7 +2055,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-60.jpg",
@@ -1989,7 +2077,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ12"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ7": [
@@ -2014,7 +2103,8 @@
     "kody_modeli": [
      "ИИ1",
      "ИИ7"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-41.jpg",
@@ -2039,7 +2129,8 @@
      "ИИ1",
      "ИИ3",
      "ИИ7"
-    ]
+    ],
+    "musor": false
    }
   ],
   "ИИ5": [
@@ -2062,7 +2153,8 @@
     "kto_privyazal": "модель",
     "kody_modeli": [
      "ИИ5"
-    ]
+    ],
+    "musor": false
    },
    {
     "fajl": "viz-53.jpg",
@@ -2085,7 +2177,8 @@
     "kody_modeli": [
      "ИИ5",
      "ИИ10"
-    ]
+    ],
+    "musor": false
    }
   ]
  },
@@ -2105,7 +2198,8 @@
    "spornoe": "",
    "kody": [],
    "kto_privyazal": "модель",
-   "kody_modeli": []
+   "kody_modeli": [],
+   "musor": false
   },
   {
    "fajl": "viz-02.jpg",
@@ -2128,7 +2222,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ9"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-03.jpg",
@@ -2149,7 +2244,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-04.jpg",
@@ -2172,7 +2268,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ9"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-05.jpg",
@@ -2193,7 +2290,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-06.jpg",
@@ -2210,7 +2308,8 @@
    "spornoe": "",
    "kody": [],
    "kto_privyazal": "модель",
-   "kody_modeli": []
+   "kody_modeli": [],
+   "musor": false
   },
   {
    "fajl": "viz-07.jpg",
@@ -2233,7 +2332,8 @@
    "kody_modeli": [
     "ИИ2",
     "ИНД-6"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-08.jpg",
@@ -2256,7 +2356,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ11"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-09.jpg",
@@ -2277,7 +2378,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-10.jpg",
@@ -2300,7 +2402,8 @@
    "kody_modeli": [
     "ИИ10",
     "ИИ9"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-11.jpg",
@@ -2321,7 +2424,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ1"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-12.jpg",
@@ -2342,7 +2446,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-13.jpg",
@@ -2363,7 +2468,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ1"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-14.jpg",
@@ -2384,7 +2490,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-15.jpg",
@@ -2405,7 +2512,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-16.jpg",
@@ -2426,7 +2534,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-17.jpg",
@@ -2447,7 +2556,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-18.jpg",
@@ -2468,7 +2578,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-19.jpg",
@@ -2489,7 +2600,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-20.jpg",
@@ -2510,7 +2622,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-21.jpg",
@@ -2531,7 +2644,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-22.jpg",
@@ -2552,7 +2666,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-23.jpg",
@@ -2573,7 +2688,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-24.jpg",
@@ -2594,7 +2710,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-25.jpg",
@@ -2617,7 +2734,8 @@
    "kody_modeli": [
     "ИИ3",
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-26.jpg",
@@ -2638,7 +2756,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-27.jpg",
@@ -2659,7 +2778,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-28.jpg",
@@ -2676,7 +2796,8 @@
    "spornoe": "",
    "kody": [],
    "kto_privyazal": "модель",
-   "kody_modeli": []
+   "kody_modeli": [],
+   "musor": false
   },
   {
    "fajl": "viz-29.jpg",
@@ -2697,7 +2818,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-30.jpg",
@@ -2718,7 +2840,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-31.jpg",
@@ -2741,7 +2864,8 @@
    "kody_modeli": [
     "ИИ8",
     "ИИ10"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-32.jpg",
@@ -2762,7 +2886,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-33.jpg",
@@ -2783,7 +2908,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИНД-6"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-34.jpg",
@@ -2806,7 +2932,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ7"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-35.jpg",
@@ -2827,7 +2954,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИНД-6"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-36.jpg",
@@ -2848,7 +2976,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-37.jpg",
@@ -2869,7 +2998,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИНД-6"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-38.jpg",
@@ -2890,7 +3020,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-39.jpg",
@@ -2911,7 +3042,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-40.jpg",
@@ -2932,7 +3064,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-41.jpg",
@@ -2957,7 +3090,8 @@
     "ИИ1",
     "ИИ3",
     "ИИ7"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-42.jpg",
@@ -2978,7 +3112,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-43.jpg",
@@ -2999,7 +3134,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-44.jpg",
@@ -3020,7 +3156,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-45.jpg",
@@ -3045,7 +3182,8 @@
     "ИИ1",
     "ИИ2",
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-46.jpg",
@@ -3066,7 +3204,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-47.jpg",
@@ -3087,7 +3226,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ5"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-48.jpg",
@@ -3110,7 +3250,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ2"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-49.jpg",
@@ -3135,7 +3276,8 @@
     "ИИ1",
     "ИИ2",
     "ИИ10"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-50.jpg",
@@ -3156,7 +3298,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-51.jpg",
@@ -3177,7 +3320,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-52.jpg",
@@ -3198,7 +3342,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ4"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-53.jpg",
@@ -3221,7 +3366,8 @@
    "kody_modeli": [
     "ИИ5",
     "ИИ10"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-54.jpg",
@@ -3242,7 +3388,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-55.jpg",
@@ -3263,7 +3410,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-56.jpg",
@@ -3284,7 +3432,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-57.jpg",
@@ -3305,7 +3454,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-58.jpg",
@@ -3326,7 +3476,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-59.jpg",
@@ -3349,7 +3500,8 @@
    "kody_modeli": [
     "ИИ9",
     "ИИ10"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-60.jpg",
@@ -3370,7 +3522,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-61.jpg",
@@ -3391,7 +3544,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ12"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-62.jpg",
@@ -3412,7 +3566,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-63.jpg",
@@ -3435,7 +3590,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ11"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-64.jpg",
@@ -3458,7 +3614,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ11"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-65.jpg",
@@ -3481,7 +3638,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ10"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-66.jpg",
@@ -3504,7 +3662,8 @@
    "kody_modeli": [
     "ИИ9",
     "ИИ10"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-67.jpg",
@@ -3527,7 +3686,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ2"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-68.jpg",
@@ -3548,7 +3708,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ3"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-69.jpg",
@@ -3569,7 +3730,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-70.jpg",
@@ -3592,7 +3754,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ11"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-71.jpg",
@@ -3615,7 +3778,8 @@
    "kody_modeli": [
     "ИИ1",
     "ИИ9"
-   ]
+   ],
+   "musor": false
   },
   {
    "fajl": "viz-72.jpg",
@@ -3636,7 +3800,8 @@
    "kto_privyazal": "модель",
    "kody_modeli": [
     "ИИ8"
-   ]
+   ],
+   "musor": false
   }
  ]
 }
