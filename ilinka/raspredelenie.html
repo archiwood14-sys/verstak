@@ -42,7 +42,8 @@
   .progress { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .polosa { flex: 1; min-width: 200px; height: 8px; background: #f0e4d6; border-radius: 99px; overflow: hidden; }
   .polosa i { display: block; height: 100%; background: var(--akcent); border-radius: 99px; transition: width .5s; }
-  .progress b { font-family: "Baskervville", serif; font-weight: 400; font-size: 24px; }
+  .progress b { font-family: Arial, sans-serif; font-weight: 600; font-size: 24px; }
+  body { font-variant-numeric: lining-nums; }
   .filtry { display: flex; gap: 7px; flex-wrap: wrap; margin: 12px 0; }
   .f { border: 1px solid rgba(193,128,72,.4); background: #fff; color: var(--akcent); border-radius: 999px; padding: 7px 13px; font: 13.5px Arial, sans-serif; cursor: pointer; min-height: 36px; }
   .f.vybr { background: var(--akcent); color: #fff; border-color: var(--akcent); }
@@ -78,6 +79,14 @@
   .lupa-telo { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 0 10px 14px; }
   .lupa-telo img { max-width: 100%; border-radius: 8px; background: #fff; }
   .lupa-telo img.krupno { max-width: none; width: 200%; }
+  .lupa-listy { display: flex; gap: 5px; overflow-x: auto; padding: 0 14px 10px; }
+  .lupa-listy .tonk { min-width: 38px; padding: 6px 8px; }
+  .lupa-listy .tonk.tek { background: #c18048; border-color: #c18048; }
+  .lupa-telo.lenta { display: block; position: relative; }
+  .list-lenty { max-width: 1200px; margin: 0 auto 16px; }
+  .list-lenty img { width: 100%; max-width: none; display: block; border-radius: 8px; background: #fff; }
+  .lupa-telo.lenta.krupno .list-lenty { max-width: none; width: 180%; }
+  .list-podp { color: #e9dfd5; font-size: 13px; margin: 4px 0 6px; }
   .tonk { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 8px 14px; font: 13px Arial, sans-serif; cursor: pointer; }
   .pusto { color: var(--tusklo); padding: 40px 10px; text-align: center; }
 </style>
@@ -370,21 +379,29 @@ async function sohranit(s, el) {
   knopka.disabled = false;
 }
 
+// 14.09.2026 Мансур: документ со многими листами — весь на одной ленте: прокручивать,
+// а кнопками с номерами быстро переходить к нужному листу
 function lupa(spisok, n, zag) {
   const f = document.createElement("div");
   f.className = "lupa";
-  const pokazat = () => {
-    f.innerHTML = `<div class="lupa-verh"><span>${esc(zag)} · ${n + 1} из ${spisok.length}</span><span>
-      <button class="tonk" data-d="-1">Назад</button> <button class="tonk" data-d="1">Дальше</button> <button class="tonk" data-k="1">Крупнее</button> <button class="tonk" data-z="1">Закрыть</button></span></div>
-      <div class="lupa-telo"><img src="${esc(spisok[n])}" alt=""></div>`;
-    f.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { n = (n + +b.dataset.d + spisok.length) % spisok.length; pokazat(); });
-    f.querySelector("[data-k]").onclick = () => f.querySelector(".lupa-telo img").classList.toggle("krupno");
-    f.querySelector("[data-z]").onclick = () => { f.remove(); document.removeEventListener("keydown", klav); };
-  };
-  const klav = e => { if (e.key === "Escape") { f.remove(); document.removeEventListener("keydown", klav); } if (e.key === "ArrowRight") { n = (n + 1) % spisok.length; pokazat(); } if (e.key === "ArrowLeft") { n = (n - 1 + spisok.length) % spisok.length; pokazat(); } };
-  document.addEventListener("keydown", klav);
-  pokazat();
+  const mnogo = spisok.length > 1;
+  f.innerHTML = `<div class="lupa-verh"><span>${esc(zag)}${mnogo ? " · " + spisok.length + " листов" : ""}</span><span>
+      <button class="tonk" data-k="1">Крупнее</button> <button class="tonk" data-z="1">Закрыть</button></span></div>
+    ${mnogo ? `<div class="lupa-listy">${spisok.map((_, i) => `<button class="tonk" data-l="${i}">${i + 1}</button>`).join("")}</div>` : ""}
+    <div class="lupa-telo lenta">${spisok.map((src, i) => `<div class="list-lenty" data-n="${i}">
+      ${mnogo ? `<div class="list-podp">Лист ${i + 1} из ${spisok.length}</div>` : ""}<img loading="lazy" src="${esc(src)}" alt=""></div>`).join("")}</div>`;
   document.body.appendChild(f);
+  const telo = f.querySelector(".lupa-telo");
+  const k = i => { const el = telo.querySelector(`[data-n="${i}"]`); if (el) telo.scrollTop = el.offsetTop - 6; };
+  const tekushchiy = () => { let t = 0; telo.querySelectorAll("[data-n]").forEach(el => { if (el.offsetTop - 80 <= telo.scrollTop) t = +el.dataset.n; }); return t; };
+  f.querySelectorAll("[data-l]").forEach(b => b.onclick = () => k(+b.dataset.l));
+  telo.onscroll = () => { const t = tekushchiy(); f.querySelectorAll("[data-l]").forEach(b => b.classList.toggle("tek", +b.dataset.l === t)); };
+  f.querySelector("[data-k]").onclick = () => telo.classList.toggle("krupno");
+  const zakryt = () => { f.remove(); document.removeEventListener("keydown", klav); };
+  f.querySelector("[data-z]").onclick = zakryt;
+  const klav = e => { if (e.key === "Escape") zakryt(); if (e.key === "ArrowRight") k(Math.min(spisok.length - 1, tekushchiy() + 1)); if (e.key === "ArrowLeft") k(Math.max(0, tekushchiy() - 1)); };
+  document.addEventListener("keydown", klav);
+  setTimeout(() => k(n), 30);
 }
 
 start();

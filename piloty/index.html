@@ -157,14 +157,18 @@ var VIDY = {};        /* код изделия -> список страниц а
 var PAPKA = "../ilinka/vizual/";
 var SEYCHAS = { spisok: [], nomer: 0 };
 
+// подпись — помещение и сторона, как распределила Юлия (14.09.2026)
+function podpisVida(v){
+  return [v.pomeshchenie, v.storona && v.storona !== "не указана" ? "сторона " + v.storona : ""].filter(Boolean).join(" · ") || "вид";
+}
 function vidyHtml(kod){
-  var spisok = VIDY[kod] || [];
+  var spisok = (VIDY[kod] || []).filter(function(v){ return !v.musor; });
   if(!spisok.length) return "";
   var plitki = spisok.map(function(v, i){
-    return '<button class="vid' + (v.spornoe ? ' spornyy' : '') + '" ' +
+    return '<button class="vid" ' +
            'onclick="pokazat(\'' + ekran(kod) + '\',' + i + ')">' +
            '<img loading="lazy" src="' + PAPKA + ekran(v.fajl) + '" alt="">' +
-           '<span class="podpis-vida">' + ekran(v.rakurs || v.pomeshchenie || "вид") + '</span>' +
+           '<span class="podpis-vida">' + ekran(podpisVida(v)) + '</span>' +
            '</button>';
   }).join("");
   return '<div class="vidy"><div class="vidy-shapka">Как выглядит — ' +
@@ -174,7 +178,7 @@ function vidyHtml(kod){
 }
 
 function pokazat(kod, nomer){
-  SEYCHAS.spisok = VIDY[kod] || [];
+  SEYCHAS.spisok = (VIDY[kod] || []).filter(function(v){ return !v.musor; });
   SEYCHAS.nomer = nomer;
   SEYCHAS.kod = kod;
   narisovatVid();
@@ -190,12 +194,11 @@ function narisovatVid(){
   skachat.href = put;
   skachat.setAttribute("download", SEYCHAS.kod + "-" + v.fajl);
   document.getElementById("sm-zagolovok").textContent =
-      SEYCHAS.kod + " · " + (v.pomeshchenie || "") + (v.rakurs ? " · " + v.rakurs : "");
+      SEYCHAS.kod + " · " + podpisVida(v);
   document.getElementById("sm-schet").textContent =
       (SEYCHAS.nomer + 1) + " из " + SEYCHAS.spisok.length;
-  document.getElementById("sm-opisanie").textContent = v.chto_vidno || "";
-  document.getElementById("sm-predupr").textContent = v.spornoe
-      ? "⚠ Привязка этой картинки к изделию под вопросом — проверяем." : "";
+  document.getElementById("sm-opisanie").textContent = "";   // описание модели заказчику не показываем
+  document.getElementById("sm-predupr").textContent = "";
 }
 
 function listat(kuda){

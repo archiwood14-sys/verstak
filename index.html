@@ -50,6 +50,9 @@
   }
   .mono { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-variant-numeric: tabular-nums; }
   a { color: var(--accent); }
+  /* 14.09.2026 Мансур: «почему цифры такие идиотские?» — у Baskervville «старинные» цифры,
+     прыгающие по высоте. Везде, где шрифт это умеет, — ровные; крупные числа — Arial. */
+  body, h1, h2, h3, .seg, .razdel-kn span, .sb-zag, .sidebar-link, .sidebar-obj-link { font-variant-numeric: lining-nums tabular-nums; }
   h1, h2, h3 { text-wrap: balance; font-family: "Baskervville", serif; font-weight: 400; margin: 0; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
@@ -571,6 +574,10 @@
   .rm-analiz-blok { margin-top:8px; }
   .rm-analiz-z { font-size: calc(12.5px * var(--shrift)); font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; }
   .rm-analiz ul { margin:2px 0 0; padding-left:18px; }
+  .rm-viz { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px; }
+  .rm-viz-k { background:#fff; border:1px solid var(--line); border-radius:12px; padding:6px; cursor:zoom-in; text-align:left; font-family:inherit; color:inherit; }
+  .rm-viz-k img { width:100%; aspect-ratio:1.41; object-fit:cover; border-radius:8px; display:block; background:#f3e9df; }
+  .rm-viz-k small { display:block; font-size: calc(12.5px * var(--shrift)); color:var(--muted); padding:5px 2px 1px; }
   .rm-zapis { font-size: calc(14.5px * var(--shrift)); padding:6px 0; border-bottom:1px solid var(--line); }
   .rm-shapka { display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; margin:14px 0 12px; }
   .rm-shapka h2 { margin:0; font-size: calc(19px * var(--shrift)); flex:1; min-width:240px; }
@@ -604,7 +611,11 @@
   .rm-smotr button, .rm-smotr a { background:rgba(255,255,255,.13); color:#fff; border:0; border-radius:9px;
                                   padding:9px 14px; font:inherit; font-size: calc(15px * var(--shrift)); cursor:pointer; text-decoration:none; }
   .rm-smotr .rm-smotr-skachat { background:var(--accent); }
-  .rm-smotr-polotno { flex:1; overflow:auto; -webkit-overflow-scrolling:touch; text-align:center; padding:12px 0; }
+  .rm-smotr-listy { display:flex; gap:5px; align-items:center; overflow-x:auto; padding:0 12px 8px; color:#cfc7ba; font-size: calc(13px * var(--shrift)); }
+  .rm-smotr-listy button { min-width:36px; padding:6px 8px !important; }
+  .rm-smotr-listy button.tek { background: var(--accent) !important; }
+  .rm-list-podp { color:#cfc7ba; font-size: calc(12.5px * var(--shrift)); margin: 4px auto 6px; }
+  .rm-smotr-polotno { position:relative; flex:1; overflow:auto; -webkit-overflow-scrolling:touch; text-align:center; padding:12px 0; }
   .rm-smotr-polotno canvas, .rm-smotr-polotno img { display:block; margin:0 auto 12px; background:#fff; max-width:none; }
   .rm-smotr-zagr { color:#cfc7ba; padding:40px 12px; }
   .rm-fajl.net { padding:10px; color:var(--muted); font-size: calc(13px * var(--shrift)); cursor:default; }
@@ -826,7 +837,7 @@
     padding: 14px 16px 12px; cursor: pointer; font-family: inherit; color: var(--ink); min-height: 96px; box-shadow: none;
     display: flex; flex-direction: column; justify-content: space-between; transition: background .3s ease, border-color .3s ease, transform .3s ease; }
   .razdel-kn.rm-plitka:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .razdel-kn.rm-plitka b { display: block; font-family: "Baskervville", serif; font-weight: 400; font-size: calc(32px * var(--shrift)); line-height: 1; color: var(--ink); min-height: 32px; }
+  .razdel-kn.rm-plitka b { display: block; font-family: Arial, "Helvetica Neue", sans-serif; font-weight: 600; letter-spacing: -.5px; font-size: calc(32px * var(--shrift)); line-height: 1; color: var(--ink); min-height: 32px; }
   .razdel-kn.rm-plitka span { display: block; font-family: "Baskervville", serif; font-size: calc(12.5px * var(--shrift)); letter-spacing: 2px; text-transform: uppercase;
     color: var(--accent); line-height: 1.35; margin-top: 10px; }
   .razdel-kn.rm-plitka.vazhno b { color: var(--crit); }
@@ -838,6 +849,8 @@
   .attn-card.vnim-pachka { border-left: 3px solid var(--accent); }
   .attn-knopki { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
   .attn-knopki .btn { flex: 0 0 auto; padding: 9px 14px; font-size: calc(13.5px * var(--shrift)); }
+  .dom-privet { text-align: center; margin: 6px 0 16px; }
+  .dom-zag { text-align: center; margin: 4px 0 10px; }
   .zag-podrazdel { font-family: "Baskervville", serif; font-size: calc(13px * var(--shrift)); letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin: 22px 0 6px; }
   .obj-dok-link { border-color: rgba(193,128,72,.45); }
   .dok-poisk { margin: 14px 0 10px; }
@@ -1934,6 +1947,28 @@ function rmZapisiHtml(rec) {
   return { html: v, vsego };
 }
 
+// Визуализации изделия — по распределению Юлии (страница распределения → privyazat_vizualizacii.py)
+const RM_VIZ_PAPKI = { "Медное Озеро": "mednoe/", "Ильинка": "ilinka/" };
+const RM_VIZ = {};
+async function rmVizualizacii(obj, kod) {
+  const papka = RM_VIZ_PAPKI[obj];
+  if (!papka) return [];
+  if (!RM_VIZ[obj]) {
+    try { RM_VIZ[obj] = await (await fetch(papka + "vizualizacii.json?" + Date.now())).json(); } catch (e) { RM_VIZ[obj] = {}; }
+  }
+  return ((RM_VIZ[obj].po_izdeliyam || {})[kod] || []).filter(v => !v.musor)
+    .map(v => Object.assign({ url: papka + "vizual/" + v.fajl }, v));
+}
+function rmVizHtml(vizy) {
+  return `<div class="rm-viz">${vizy.map((v, i) => `<button class="rm-viz-k" data-viz="${i}">
+    <img loading="lazy" src="${escapeHtml(v.url)}" alt="">
+    <small>${escapeHtml([v.pomeshchenie || rmNapechatano(v), v.storona && v.storona !== "не указана" ? "сторона " + v.storona : ""].filter(Boolean).join(" · ") || "страница " + v.stranica)}</small></button>`).join("")}</div>`;
+}
+// помещение не выбрано — название, напечатанное на странице альбома («ХОЛЛ» → «Холл»)
+function rmNapechatano(v) {
+  const m = String(v.chto_vidno || "").match(/напечатано: «([^»]+)»/);
+  return m && !/ПРОЕКТ/.test(m[1]) ? m[1].charAt(0) + m[1].slice(1).toLowerCase() : "";
+}
 function rmRazdel(zagolovok, schet, soderzhimoe, otkryt) {
   return `<details class="acc rm-razdel"${otkryt ? " open" : ""}>
     <summary>${zagolovok}${schet !== null ? ` <span class="cnt">${schet}</span>` : ""}<span class="chev">▸</span></summary>
@@ -1980,6 +2015,8 @@ async function renderIzdelieMO(code, it, rec) {
       vopr ? `<div class="rm-voprosy">${rmVoprosyHtml(posl)}</div>` : `<div class="rm-tusklo">Открытых вопросов нет.</div>`, vopr > 0);
     razdely += rmRazdel("Что на чертеже", null, rmChtoNaChertezheHtml(posl), false);
   }
+  const vizy = await rmVizualizacii(RM_OBEKT, kod);
+  if (vizy.length) razdely += rmRazdel("Визуализации", vizy.length, rmVizHtml(vizy), true);
   razdely += rmRazdel("Из переписки: обязательства, вопросы, решения", zapisi.vsego,
     zapisi.vsego ? zapisi.html : `<div class="rm-tusklo">Записей по этому изделию нет.</div>`, false);
   if (faylyPerepiski.length) {
@@ -2004,6 +2041,9 @@ async function renderIzdelieMO(code, it, rec) {
     rmPismo(pachki.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
   app.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
     rmOtmetit(pachki.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
+  app.querySelectorAll("[data-viz]").forEach(el => el.addEventListener("click", () =>
+    rmSmotret({ fajly: vizy.map(v => ({ imya: `${kod} · ${v.pomeshchenie || "визуализация"}`, tip: "kartinka", mime: "image/jpeg",
+      poluchit: async () => (await fetch(v.url)).arrayBuffer() })) }, +el.dataset.viz)));
   rmTolkoYuliya(app);   // письма и отметки — только у Юлии
   rmMiniatyury(app);
 }
@@ -2972,6 +3012,7 @@ function rmSmotret(p, nomer) {
   fon.className = "rm-smotr";
   fon.innerHTML = `<div class="rm-smotr-verh"><span class="rm-smotr-imya" id="rmSmImya"></span>
       <span id="rmSmSchet"></span><button id="rmSmZakryt">Закрыть</button></div>
+    <div class="rm-smotr-listy" id="rmSmListy" hidden></div>
     <div class="rm-smotr-polotno" id="rmSmPolotno"></div>
     <div class="rm-smotr-niz">
       <button id="rmSmNazad">← Файл</button><button id="rmSmVpered">Файл →</button>
@@ -2998,6 +3039,7 @@ async function rmSmPokazat() {
   document.getElementById("rmSmSchet").textContent = (RM_SM.nomer + 1) + " из " + RM_SM.spisok.length;
   polotno.innerHTML = `<div class="rm-smotr-zagr">Открываю…</div>`;
   RM_SM.pdf = null; RM_SM.masshtab = 1;
+  const listyBar = document.getElementById("rmSmListy"); if (listyBar) { listyBar.hidden = true; listyBar.innerHTML = ""; }
   if (RM_SM.url) { URL.revokeObjectURL(RM_SM.url); RM_SM.url = null; }
   try {
     const b = f.poluchit ? await f.poluchit() : await rmFajl(f.bin);
@@ -3022,9 +3064,31 @@ async function rmSmRisovatPdf() {
   const polotno = document.getElementById("rmSmPolotno");
   const dpr = window.devicePixelRatio || 1;
   polotno.innerHTML = "";
-  for (let n = 1; n <= RM_SM.pdf.numPages; n++) {
+  // 14.09.2026 Мансур: многостраничный документ — весь на одной ленте: листать прокруткой,
+  // а кнопками — быстро перейти к любому листу
+  const vsego = RM_SM.pdf.numPages;
+  const listy = document.getElementById("rmSmListy");
+  if (listy) {
+    listy.hidden = vsego < 2;
+    listy.innerHTML = vsego < 2 ? "" : `<span>Листы:</span>` + Array.from({ length: vsego }, (_, i) => `<button data-list="${i + 1}">${i + 1}</button>`).join("");
+    listy.querySelectorAll("[data-list]").forEach(b => b.onclick = () => {
+      const el = polotno.querySelector(`[data-list-n="${b.dataset.list}"]`);
+      if (el) polotno.scrollTo({ top: el.offsetTop - 6, behavior: "smooth" });
+    });
+    polotno.onscroll = () => {
+      let tek = 1;
+      polotno.querySelectorAll("[data-list-n]").forEach(el => { if (el.offsetTop - 60 <= polotno.scrollTop) tek = +el.dataset.listN; });
+      listy.querySelectorAll("[data-list]").forEach(b => b.classList.toggle("tek", +b.dataset.list === tek));
+    };
+  }
+  for (let n = 1; n <= vsego; n++) {
     const str = await RM_SM.pdf.getPage(n);
     const vp = str.getViewport({ scale: RM_SM.masshtab });
+    if (vsego > 1) {
+      const podp = document.createElement("div");
+      podp.className = "rm-list-podp"; podp.dataset.listN = n; podp.textContent = `Лист ${n} из ${vsego}`;
+      polotno.appendChild(podp);
+    }
     const c = document.createElement("canvas");
     c.width = Math.floor(vp.width * dpr); c.height = Math.floor(vp.height * dpr);
     c.style.width = Math.floor(vp.width) + "px"; c.style.height = Math.floor(vp.height) + "px";
@@ -4189,60 +4253,52 @@ function renderHome() {
 
   const prosrocheno = vse.filter(r => urgencyKey(r)[0] === 0 && !pohozheOtvecheno(r)).length;
 
-  const statRow = `<div class="stat-row">
-    <div class="stat-tile" data-view="all"><div class="stat-num">${vse.length}</div><div class="stat-lbl">обязательств всего</div></div>
-    <div class="stat-tile ${prosrocheno ? "crit" : ""}" data-view="overdue"><div class="stat-num">${prosrocheno}</div><div class="stat-lbl">просрочено</div></div>
-    <div class="stat-tile" data-view="questions"><div class="stat-num">${voprosy.length}</div><div class="stat-lbl">открытых вопросов</div></div>
-    <div class="stat-tile ${naPodtverzhdenie.length ? "warn" : ""}" data-view="confirm"><div class="stat-num">${naPodtverzhdenie.length}</div><div class="stat-lbl">похоже, уже отвечено</div></div>
-    <div class="stat-tile" data-view="decisions"><div class="stat-num">${(STATE.blocks["Б7_Решения"] || []).length}</div><div class="stat-lbl">решений в реестре</div></div>
-  </div>`;
-
-  const cards = NAPRAVLENIYA_PORYADOK.map(([kod, label]) => {
-    const rows = vse.filter(r => (r["Направление"] || "неясно") === kod)
-      .sort((a, b) => { const ka = urgencyKey(a), kb = urgencyKey(b); return ka[0] !== kb[0] ? ka[0] - kb[0] : ka[1].localeCompare(kb[1]); });
-    const hasUrgent = rows.some(r => urgencyKey(r)[0] === 0);
-    const preview = rows.slice(0, 3).map(r => {
-      const txt = (r["Что"] || "").trim();
-      return `<div class="widget-preview-item">${escapeHtml(txt.length > 64 ? txt.slice(0, 64) + "…" : txt)}</div>`;
-    }).join("");
-    return `<button class="widget-card ${hasUrgent ? "urgent" : ""}" data-napr="${escapeHtml(kod)}">
-      <div class="widget-head"><span>${escapeHtml(label)}</span><span class="cnt">${rows.length}</span></div>
-      <div class="widget-body">${preview || '<div class="widget-empty">пусто</div>'}</div>
-      ${rows.length ? `<div class="widget-more">Смотреть все →</div>` : ""}
-    </button>`;
-  }).join("");
-
-  const objLinks = STATE.objectNames.length
-    ? `<div class="home-obj-row">${STATE.objectNames.map(n =>
-        `<button class="obj-fin-link home-obj-btn" data-obj="${escapeHtml(n)}">${escapeHtml(n) + (rmEsli(n) ? " — изделия и согласование" : " — изделия")}</button>`).join("")}</div>`
-    : "";
-
+  // 14.09.2026 Мансур: «главная страница должна быть как страница объекта… кнопки кнопками,
+  // а карточки карточками». Сверху объекты, ниже кнопки разделов; карточки — только после выбора.
+  const chas = new Date().getHours();
+  const privet = chas < 5 ? "Доброй ночи" : chas < 12 ? "Доброе утро" : chas < 18 ? "Добрый день" : "Добрый вечер";
   const roleName = localStorage.getItem("verstak_role_name") || "";
-  const roleDir = localStorage.getItem("verstak_role_dir") || "";
-  const roleDirLabel = roleDir ? (NAPRAVLENIYA_PORYADOK.find(([k]) => k === roleDir) || [roleDir, roleDir])[1] : "";
-  const roleBanner = `<div class="home-greeting">Рабочий стол Юлии</div>`;
-  const roleShortcut = roleDir ? `<button class="btn ghost" id="roleShortcutBtn" style="margin:2px 0 18px">→ Моё направление: ${escapeHtml(roleDirLabel)}</button>` : "";
-
+  const imyaR = roleName === "Юлия" ? "Юлия Евгеньевна" : roleName;
+  const vnimanieVse = [].concat(...STATE.objectNames.map(o => sobratVnimanie(o)));
+  const napr = NAPRAVLENIYA_PORYADOK.map(([kod, label]) => [kod, label, vse.filter(r => (r["Направление"] || "неясно") === kod)
+    .sort((a, b) => { const ka = urgencyKey(a), kb = urgencyKey(b); return ka[0] !== kb[0] ? ka[0] - kb[0] : ka[1].localeCompare(kb[1]); })]);
+  const razdely = [
+    ["vnimanie", "Требует внимания", vnimanieVse.length, vnimanieVse.length ? "vazhno" : ""],
+    ["all", "Обязательства", vse.length],
+    ["overdue", "Просрочено", prosrocheno, prosrocheno ? "vazhno" : ""],
+    ["questions", "Открытые вопросы", voprosy.length],
+    ["confirm", "Похоже, уже отвечено", naPodtverzhdenie.length],
+    ["decisions", "Решения", (STATE.blocks["Б7_Решения"] || []).length],
+  ];
+  const vid = STATE.homeVid || "";
+  let telo = "";
+  if (vid === "vnimanie") {
+    telo = vnimanieVse.length ? `<div class="oblig-card-grid">${vnimanieVse.map(x => recCard(x.r, x.blok, true)).join("")}</div>`
+      : `<div class="empty-hint">Сейчас ничего не требует внимания.</div>`;
+  } else if (vid.startsWith("napr:")) {
+    const n = napr.find(x => "napr:" + x[0] === vid);
+    telo = cardGrid(n ? n[2] : [], "Б9_Обязательства", true);
+  } else if (vid) {
+    const [rows, blok] = spisokPoVidu(vid);
+    telo = cardGrid(rows, blok, true);
+  }
   app.innerHTML = `
     <div class="item-detail-wrap home-wrap">
-    ${roleBanner}
-    <div class="item-head"><h1>Мои обязательства</h1></div>
-    ${roleShortcut}
-    ${statRow}
-    <div class="home-sect-lbl">По направлениям</div>
-    <div class="widget-grid">${cards}</div>
-    <div class="home-sect-lbl">Изделия по объектам</div>
-    ${objLinks}
-    </div>
-  `;
-  const roleShortcutBtn = document.getElementById("roleShortcutBtn");
-  if (roleShortcutBtn) roleShortcutBtn.addEventListener("click", () => nav(() => renderObligDirection(roleDir)));
-  app.querySelectorAll(".widget-card").forEach(el => el.addEventListener("click", () => nav(() => renderObligDirection(el.dataset.napr))));
-  app.querySelectorAll(".home-obj-btn").forEach(el => el.addEventListener("click", () => nav(() => {
+    <div class="ig-privet dom-privet">${privet}${imyaR ? ", " + escapeHtml(imyaR) : ""}</div>
+    <div class="segs segs-obj">${STATE.objectNames.map(n => `<div class="seg" data-obj="${escapeHtml(n)}">${escapeHtml(n)}</div>`).join("")}</div>
+    <div class="razdely-kn">${razdely.map(([k, t, n, d]) => razdelKn(k, t, n, vid, d)).join("")}</div>
+    <div class="zag-podrazdel dom-zag">Обязательства по направлениям</div>
+    <div class="razdely-kn">${napr.map(([k, t, rows]) => razdelKn("napr:" + k, t, rows.length, vid, rows.some(r => urgencyKey(r)[0] === 0) ? "vazhno" : "")).join("")}</div>
+    <div id="homeTelo">${telo}</div>
+    </div>`;
+  app.querySelectorAll(".segs-obj .seg").forEach(el => el.addEventListener("click", () => nav(() => {
     STATE.activeObj = el.dataset.obj; renderDashboard();
   })));
-  app.querySelectorAll(".stat-tile").forEach(el => el.addEventListener("click", () =>
-    nav(() => pokazatSpisok(el.dataset.view))));
+  app.querySelectorAll(".razdel-kn").forEach(b => b.addEventListener("click", () => {
+    STATE.homeVid = STATE.homeVid === b.dataset.razdel ? "" : b.dataset.razdel;
+    renderHome();
+  }));
+  wireCards(app);
 }
 
 // Пять списков с плиток главной, собранные в одном месте: так их можно и открыть по
