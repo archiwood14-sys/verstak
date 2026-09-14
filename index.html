@@ -621,6 +621,12 @@
   .rm-fajl.net { padding:10px; color:var(--muted); font-size: calc(13px * var(--shrift)); cursor:default; }
   .rm-voprosy { margin-top:11px; background:#fbf6ee; border-radius:11px; padding:10px 13px; font-size: calc(14.5px * var(--shrift)); }
   .rm-voprosy h4 { margin:0 0 5px; font-size: calc(14px * var(--shrift)); color:#8a5f1c; }
+  .rm-otvety { margin-top:11px; background:#eef6f0; border-radius:11px; padding:10px 13px; font-size: calc(14.5px * var(--shrift)); }
+  .rm-otvety h4 { margin:0 0 5px; font-size: calc(14px * var(--shrift)); color:#2f7d4f; }
+  .rm-otvet-paket + .rm-otvet-paket { margin-top:10px; padding-top:8px; border-top:1px solid #d5e7da; }
+  .rm-otvet { margin:6px 0; }
+  .rm-otvet-v { color:var(--muted); font-size: calc(13px * var(--shrift)); }
+  .rm-otvety a { color:#2f7d4f; word-break:break-all; }
   .rm-voprosy ol { margin:0; padding-left:20px; }
   .rm-gruppa { font-size: calc(13px * var(--shrift)); font-weight:700; color:var(--muted); margin-top:6px; }
   .rm-knopki { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
@@ -1722,6 +1728,7 @@ async function renderRabocheeMesto(app) {
     return;
   }
   spisok.innerHTML = vidno.map(rmKartochka).join("");
+  rmOtvetyPrivyazat(spisok, P);
   rmTolkoYuliya(spisok);
   spisok.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () =>
     rmSmotret(P.find(p => p.id === el.dataset.pachka), +el.dataset.i)));
@@ -1773,6 +1780,7 @@ function rmKartochka(p) {
     ${vnutr}
     <div class="rm-fajly">${fajly}</div>
     ${voprosy ? `<div class="rm-voprosy"><h4>Вопросы конструктора по чертежу</h4>${voprosy}</div>` : ""}
+    ${rmOtvetyHtml(p)}
     <div class="rm-knopki">${knopki}</div>
     <div class="rm-sost" data-sost="${escapeHtml(p.id)}"></div>
   </section>`;
@@ -1829,6 +1837,12 @@ function rmVnimanie() {
       pismo: `Ольга, добрый день!\n\nПо чертежу «${p.zagolovok}» от ${rmDen(p.kogda)} есть расхождение со списком изделий: ${p.zamechaniya.join("; ")}.` +
         `${pohozhe ? "\nПо описанию это похоже на " + pohozhe + "." : ""}\n\nПроверьте, пожалуйста, номер изделия на чертеже и в названии файла.` });
   }
+  // 14.09.2026: заказчик ответил со своей страницы — пока не открыли изделие
+  const vidno = rmOtvetyVidel();
+  P.forEach(p => (p.otvety_zakazchika || []).filter(z => !vidno.includes(z.id)).forEach(z => out.push({ tip: "pachka",
+    metka: "заказчик ответил на вопросы", kod: p.kody.join(", "), pachka: p,
+    tekst: `${rmDen(z.kogda)} в ${z.kogda.slice(11, 16)}: ответов ${z.otvety.length}${z.kommentariy ? ", комментарий к чертежу" : ""}` +
+      `${z.otvety.concat([{ fajly: z.fajly_kommentariya }]).reduce((n, o) => n + o.fajly.length, 0) ? ", файлы" : ""}. Рассмотреть и передать конструктору, что нужно.` })));
   P.filter(p => p.status === "korrektirovki").forEach(p => out.push({ tip: "pachka", metka: "заказчик вернул с корректировками", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — передать корректировки конструктору.` }));
   P.filter(p => p.status === "zhdet" && !vzyato.has(p.id)).forEach(p => out.push({ tip: "pachka", metka: p.vOcheredi ? "письмо отправляется" : "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
@@ -1910,6 +1924,38 @@ function rmFajlyHtml(p) {
     : `<button class="rm-fajl" data-fajl="${escapeHtml(f.bin)}" data-pachka="${escapeHtml(p.id)}" data-i="${i}">
          ${f.mini ? `<img data-mini="${escapeHtml(f.mini)}" alt="">` : `<span class="rm-zagl">${f.tip === "pdf" ? "PDF" : "файл"}</span>`}
          <small><b>${f.tip === "pdf" ? "Чертёж" : "Вид"}</b> · ${escapeHtml(f.imya)}</small></button>`).join("")}</div>`;
+}
+
+/* Ответы заказчика со страницы согласования (14.09.2026): на какой вопрос, что ответил, его файлы и ссылки */
+function rmOtvetyHtml(p) {
+  const Z = (p && p.otvety_zakazchika) || [];
+  if (!Z.length) return "";
+  p._otvFajly = [];
+  const fajlKn = f => {
+    if (f.net_fajla || !f.bin) return `<span class="rm-tusklo">${escapeHtml(f.imya)} (файла нет)</span>`;
+    const i = p._otvFajly.push(f) - 1;
+    return `<button class="rm-fajl" data-otvf="${escapeHtml(p.id)}" data-i="${i}">
+      ${f.mini ? `<img data-mini="${escapeHtml(f.mini)}" alt="">` : `<span class="rm-zagl">${f.tip === "pdf" ? "PDF" : "файл"}</span>`}
+      <small><b>Файл заказчика</b> · ${escapeHtml(f.imya)}</small></button>`;
+  };
+  const tekst = t => escapeHtml(t || "").replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`).replace(/\n/g, "<br>");
+  return `<div class="rm-otvety"><h4>Ответы заказчика</h4>` + Z.slice().reverse().map(z =>
+    `<div class="rm-otvet-paket"><div class="rm-tusklo">${rmDen(z.kogda)} в ${escapeHtml(z.kogda.slice(11, 16))}</div>` +
+    z.otvety.map(o => `<div class="rm-otvet"><div class="rm-otvet-v">${o.gruppa ? escapeHtml(o.gruppa) + " · " : ""}Вопрос: ${escapeHtml(o.vopros)}</div>
+      <div>${tekst(o.otvet) || '<span class="rm-tusklo">без текста</span>'}</div>${o.fajly.length ? `<div class="rm-fajly">${o.fajly.map(fajlKn).join("")}</div>` : ""}</div>`).join("") +
+    (z.kommentariy || z.fajly_kommentariya.length ? `<div class="rm-otvet"><div class="rm-otvet-v">Комментарий к чертежу</div><div>${tekst(z.kommentariy)}</div>
+      ${z.fajly_kommentariya.length ? `<div class="rm-fajly">${z.fajly_kommentariya.map(fajlKn).join("")}</div>` : ""}</div>` : "") + `</div>`).join("") + `</div>`;
+}
+function rmOtvetyPrivyazat(el, P) {
+  el.querySelectorAll("[data-otvf]").forEach(b => b.addEventListener("click", () => {
+    const p = P.find(x => x.id === b.dataset.otvf);
+    if (p) rmSmotret({ fajly: p._otvFajly }, +b.dataset.i);
+  }));
+}
+function rmOtvetyVidel(id) {
+  let v = []; try { v = JSON.parse(localStorage.getItem("rm_otv_vidno") || "[]"); } catch (e) {}
+  if (id === undefined) return v;
+  if (!v.includes(id)) { v.push(id); try { localStorage.setItem("rm_otv_vidno", JSON.stringify(v.slice(-500))); } catch (e) {} }
 }
 
 function rmVoprosyHtml(p) {
@@ -2021,6 +2067,12 @@ async function renderIzdelieMO(code, it, rec) {
     const vopr = rmChisloVoprosov(posl);
     razdely += rmRazdel("Открытые вопросы по чертежу", vopr,
       vopr ? `<div class="rm-voprosy">${rmVoprosyHtml(posl)}</div>` : `<div class="rm-tusklo">Открытых вопросов нет.</div>`, vopr > 0);
+    const sOtvetami = pachki.filter(p => (p.otvety_zakazchika || []).length);
+    if (sOtvetami.length) {
+      razdely += rmRazdel("Ответы заказчика", sOtvetami.reduce((n, p) => n + p.otvety_zakazchika.length, 0),
+        sOtvetami.map(p => (sOtvetami.length > 1 ? `<div class="rm-gruppa">Чертёж от ${rmDen(p.kogda)}</div>` : "") + rmOtvetyHtml(p)).join(""), true);
+      sOtvetami.forEach(p => p.otvety_zakazchika.forEach(z => rmOtvetyVidel(z.id)));
+    }
     razdely += rmRazdel("Что на чертеже", null, rmChtoNaChertezheHtml(posl), false);
   }
   const vizy = await rmVizualizacii(RM_OBEKT, kod);
@@ -2052,6 +2104,7 @@ async function renderIzdelieMO(code, it, rec) {
   app.querySelectorAll("[data-viz]").forEach(el => el.addEventListener("click", () =>
     rmSmotret({ fajly: vizy.map(v => ({ imya: `${kod} · ${v.pomeshchenie || "визуализация"}`, tip: "kartinka", mime: "image/jpeg",
       poluchit: async () => (await fetch(v.url)).arrayBuffer() })) }, +el.dataset.viz)));
+  rmOtvetyPrivyazat(app, pachki);
   rmTolkoYuliya(app);   // письма и отметки — только у Юлии
   rmMiniatyury(app);
 }
