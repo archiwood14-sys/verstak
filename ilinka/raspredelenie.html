@@ -113,6 +113,7 @@
       <b>Г</b><span>оставшаяся стена</span>
       <b>Общий вид</b><span>видно две стены и больше, или помещение целиком</span>
       <b>Деталь</b><span>крупный план изделия, узла или материала</span>
+      <b>Не знаю</b><span>сторону можно не выбирать — сохранится как «не указана», добавите позже</span>
     </div>
   </details>
 
@@ -139,7 +140,8 @@ const REESTR = "1knWGXV91BYbMhMmwd_G1adOYv2krRUAjH6Y6ZxzzlvU";
 const LIST = "Визуализации_привязка";
 let OBEKT = "Ильинка";   // берётся из razbor.json — одна страница на все объекты
 const STORONY = ["А", "Б", "В", "Г", "Общий вид", "Деталь"];
-const MUSOR = "в мусор";   // страница не нужна: не распределяется и не попадает в изделия
+const MUSOR = "в мусор";
+const BEZ_STORONY = "не указана";   // 14.09.2026 Мансур: сохранять можно и без стороны — Юлия не всегда знает сторону   // страница не нужна: не распределяется и не попадает в изделия
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const S = { v: null, r: null, pom: [], izd: [], filtrPom: "", filtrSost: "ne", lupaSpisok: [], lupaN: 0 };
 
@@ -287,7 +289,7 @@ function kartochka(s, n) {
         ${esc((s.chto_vidno || "").slice(0, 240))}</div>`}
       <div class="pole-zag">Помещение</div>
       <select data-pole="pom"><option value="">— не помещение (обложка, материалы, общий план) —</option>${S.pom.map(p => `<option${p === s._pom ? " selected" : ""}>${esc(p)}</option>`).join("")}</select>
-      <div class="pole-zag">Сторона</div>
+      <div class="pole-zag">Сторона — если знаете${s._st === BEZ_STORONY ? " · сейчас не указана" : ""}</div>
       <div class="chipy">${STORONY.map(x => `<button class="ch${s._st === x ? " on" : ""}" data-st="${esc(x)}">${esc(x)}</button>`).join("")}</div>
       <div class="pole-zag">Изделия на этой странице — отметьте все, что видно (двери, плинтус тоже)</div>
       ${svoi.length ? `<div class="pod-zag">этого помещения</div><div class="chipy" data-gruppa="svoi">${svoi.map(i => chipIzd(s, i)).join("")}</div>` : ""}
@@ -348,18 +350,18 @@ async function vMusor(s, vybrosit) {
 async function sohranit(s, el) {
   el = document.getElementById("s-" + s.fajl) || el;
   const knopka = el.querySelector(".sohr"), sost = el.querySelector("[data-sost-str]");
-  if (!s._st) { sost.className = "sost"; sost.textContent = "Выберите сторону — без неё страница не считается распределённой."; return; }
   knopka.disabled = true; sost.className = "sost"; sost.textContent = "Сохраняю…";
   const kto = document.getElementById("kto").value;
   try {
     const otv = await (await fetch(MOSTIK, { method: "POST", body: JSON.stringify({ type: "stroka", list: LIST, prefiksID: "ВИЗ",
-      klyuchPovtora: { "Страница": s.fajl, "Сторона": s._st, "Изделия": s._kody.join(", ") },
-      znacheniya: { "Страница": s.fajl, "Лист альбома": String(s.stranica), "Помещение": s._pom, "Сторона": s._st, "Изделия": s._kody.join(", "),
+      klyuchPovtora: { "Страница": s.fajl, "Сторона": s._st || BEZ_STORONY, "Изделия": s._kody.join(", ") },
+      znacheniya: { "Страница": s.fajl, "Лист альбома": String(s.stranica), "Помещение": s._pom, "Сторона": s._st || BEZ_STORONY, "Изделия": s._kody.join(", "),
         "Было у модели": (s.kody_modeli || []).join(", "), "Комментарий": s._kom, "Кто поправил": kto,
         "Когда": new Date().toISOString().slice(0, 16).replace("T", " "), "Объект": OBEKT } }) })).json();
     if (!otv.ok) throw new Error(otv.error || "не принято");
+    if (!s._st) s._st = BEZ_STORONY;
     s._gotova = true; s._kto = kto; s.kto_privyazal = "человек";
-    sost.className = "sost ok"; sost.textContent = "Сохранено. Робот больше не переназначит эту страницу сам.";
+    sost.className = "sost ok"; sost.textContent = s._st === BEZ_STORONY ? "Сохранено без стороны — её можно добавить позже." : "Сохранено.";
     el.classList.add("gotova");
     const st = S.v.stranicy, gotovo = st.filter(x => x._gotova).length;
     document.getElementById("gotovo").textContent = gotovo;
