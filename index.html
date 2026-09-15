@@ -627,6 +627,8 @@
   .rm-otvet { margin:6px 0; }
   .rm-otvet-v { color:var(--muted); font-size: calc(13px * var(--shrift)); }
   .rm-otvety a { color:#2f7d4f; word-break:break-all; }
+  .rm-otvet-bylo { font-size: calc(13px * var(--shrift)); color:var(--muted); border-left:2px solid #d5e7da; padding-left:8px; }
+  .rm-otvet-st { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px; }
   .rm-voprosy ol { margin:0; padding-left:20px; }
   .rm-gruppa { font-size: calc(13px * var(--shrift)); font-weight:700; color:var(--muted); margin-top:6px; }
   .rm-knopki { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
@@ -1631,7 +1633,7 @@ async function rmAvtoVhod() {
 }
 // письма заказчику и отметки статусов — только у Юлии (есть ключ её пароля)
 function rmTolkoYuliya(el) {
-  if (!RM.klyuchParol) el.querySelectorAll("[data-pismo], [data-status]").forEach(b => b.remove());
+  if (!RM.klyuchParol) el.querySelectorAll("[data-pismo], [data-status], [data-prinyat]").forEach(b => b.remove());
 }
 
 async function rmFajl(bin) {
@@ -1839,10 +1841,10 @@ function rmVnimanie() {
   }
   // 14.09.2026: заказчик ответил со своей страницы — пока не открыли изделие
   const vidno = rmOtvetyVidel();
-  P.forEach(p => (p.otvety_zakazchika || []).filter(z => !vidno.includes(z.id)).forEach(z => out.push({ tip: "pachka",
+  P.forEach(p => (p.otvety_zakazchika || []).filter(z => !vidno.includes(z.id) && z.otvety.some(o => !o.zamenen)).forEach(z => out.push({ tip: "pachka",
     metka: "заказчик ответил на вопросы", kod: p.kody.join(", "), pachka: p,
-    tekst: `${rmDen(z.kogda)} в ${z.kogda.slice(11, 16)}: ответов ${z.otvety.length}${z.kommentariy ? ", комментарий к чертежу" : ""}` +
-      `${z.otvety.concat([{ fajly: z.fajly_kommentariya }]).reduce((n, o) => n + o.fajly.length, 0) ? ", файлы" : ""}. Рассмотреть и передать конструктору, что нужно.` })));
+    tekst: `${rmDen(z.kogda)} в ${z.kogda.slice(11, 16)}: ${z.otvety.some(o => o.bylo) ? "исправил ответ" : "ответов " + z.otvety.length}` +
+      `${z.otvety.some(o => o.fajly.length) ? ", есть файлы" : ""}. Рассмотреть, отметить «Принято в работу» и передать конструктору, что нужно.` })));
   P.filter(p => p.status === "korrektirovki").forEach(p => out.push({ tip: "pachka", metka: "заказчик вернул с корректировками", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — передать корректировки конструктору.` }));
   P.filter(p => p.status === "zhdet" && !vzyato.has(p.id)).forEach(p => out.push({ tip: "pachka", metka: p.vOcheredi ? "письмо отправляется" : "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
@@ -1931,6 +1933,7 @@ function rmOtvetyHtml(p) {
   const Z = (p && p.otvety_zakazchika) || [];
   if (!Z.length) return "";
   p._otvFajly = [];
+  const prinyatoLokalno = rmOtvetyPrinyato();
   const fajlKn = f => {
     if (f.net_fajla || !f.bin) return `<span class="rm-tusklo">${escapeHtml(f.imya)} (файла нет)</span>`;
     const i = p._otvFajly.push(f) - 1;
@@ -1939,14 +1942,50 @@ function rmOtvetyHtml(p) {
       <small><b>Файл заказчика</b> · ${escapeHtml(f.imya)}</small></button>`;
   };
   const tekst = t => escapeHtml(t || "").replace(/https?:\/\/[^\s<]+/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`).replace(/\n/g, "<br>");
-  return `<div class="rm-otvety"><h4>Ответы заказчика</h4>` + Z.slice().reverse().map(z =>
-    `<div class="rm-otvet-paket"><div class="rm-tusklo">${rmDen(z.kogda)} в ${escapeHtml(z.kogda.slice(11, 16))}</div>` +
-    z.otvety.map(o => `<div class="rm-otvet"><div class="rm-otvet-v">${o.gruppa ? escapeHtml(o.gruppa) + " · " : ""}Вопрос: ${escapeHtml(o.vopros)}</div>
-      <div>${tekst(o.otvet) || '<span class="rm-tusklo">без текста</span>'}</div>${o.fajly.length ? `<div class="rm-fajly">${o.fajly.map(fajlKn).join("")}</div>` : ""}</div>`).join("") +
-    (z.kommentariy || z.fajly_kommentariya.length ? `<div class="rm-otvet"><div class="rm-otvet-v">Комментарий к чертежу</div><div>${tekst(z.kommentariy)}</div>
-      ${z.fajly_kommentariya.length ? `<div class="rm-fajly">${z.fajly_kommentariya.map(fajlKn).join("")}</div>` : ""}</div>` : "") + `</div>`).join("") + `</div>`;
+  const pakety = Z.slice().reverse().map(z => {
+    const vidimye = z.otvety.filter(o => !o.zamenen);       // заменённые исправлением — внутри нового как «было»
+    if (!vidimye.length) return "";
+    return `<div class="rm-otvet-paket"><div class="rm-tusklo">${rmDen(z.kogda)} в ${escapeHtml(z.kogda.slice(11, 16))}</div>` +
+      vidimye.map(o => {
+        const pr = o.prinyato || prinyatoLokalno[o.klyuch] || "";
+        return `<div class="rm-otvet"><div class="rm-otvet-v">${o.gi === -1 ? "Комментарий к чертежу" : (o.gruppa ? escapeHtml(o.gruppa) + " · " : "") + "Вопрос: " + escapeHtml(o.vopros)}</div>
+          <div>${tekst(o.otvet) || '<span class="rm-tusklo">без текста</span>'}</div>
+          ${o.bylo ? `<div class="rm-otvet-bylo">Исправлено заказчиком. Было: ${tekst(o.bylo)}</div>` : ""}
+          ${o.dopolnenie ? `<div class="rm-tusklo">Дополнение к уже принятому ответу</div>` : ""}
+          ${o.fajly.length ? `<div class="rm-fajly">${o.fajly.map(fajlKn).join("")}</div>` : ""}
+          <div class="rm-otvet-st">${pr ? `<span class="rm-st zak">принято в работу ${rmDen(pr)}</span>`
+            : `<span class="rm-st zhdet">ждёт «принято»: заказчик пока может исправить</span>
+               ${o.klyuch ? `<button class="btn ghost" data-prinyat="${escapeHtml(o.klyuch)}">Принято в работу</button>` : ""}`}</div></div>`;
+      }).join("") + `</div>`;
+  }).join("");
+  return `<div class="rm-otvety"><h4>Ответы заказчика</h4>${pakety}</div>`;
+}
+/* «Принято в работу» (15.09.2026, Мансур: «пускай Юлия подтверждает, что принято в работу»).
+   После отметки заказчик свой ответ исправить не может — только дополнить. */
+function rmOtvetyPrinyato(k, data) {
+  let v = {}; try { v = JSON.parse(localStorage.getItem("rm_otv_prinyato") || "{}"); } catch (e) {}
+  if (k === undefined) return v;
+  v[k] = data; try { localStorage.setItem("rm_otv_prinyato", JSON.stringify(v)); } catch (e) {}
+}
+async function rmPrinyatOtvet(klyuch, knopka) {
+  if (!confirm("Отметить ответ заказчика «принято в работу»? После этого заказчик не сможет его исправить.")) return;
+  knopka.disabled = true;
+  try {
+    const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Ответы_заказчика_статус", prefiksID: "ОС",
+      znacheniya: { "Ответ": klyuch, "Статус": "принято в работу", "Кто": rmKto() } }) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || "мостик отказал");
+    rmOtvetyPrinyato(klyuch, new Date().toISOString().slice(0, 10));
+    const st = knopka.closest(".rm-otvet-st");
+    if (st) st.innerHTML = `<span class="rm-st zak">принято в работу ${rmDen(new Date().toISOString().slice(0, 10))}</span>`;
+  } catch (e) {
+    knopka.disabled = false;
+    alert("Не получилось отметить: " + e.message);
+  }
 }
 function rmOtvetyPrivyazat(el, P) {
+  el.querySelectorAll("[data-prinyat]").forEach(b => b.addEventListener("click", () => rmPrinyatOtvet(b.dataset.prinyat, b)));
   el.querySelectorAll("[data-otvf]").forEach(b => b.addEventListener("click", () => {
     const p = P.find(x => x.id === b.dataset.otvf);
     if (p) rmSmotret({ fajly: p._otvFajly }, +b.dataset.i);
