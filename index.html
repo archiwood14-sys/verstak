@@ -919,6 +919,50 @@
   .ch-doma .ch-menu-schet { background: #fff; color: var(--accent); }
   /* пространство «только мессенджер» — всё остальное приложение скрыто */
   .tolko-chat #sbMoiOtvety, .tolko-chat .sb-razdel, .tolko-chat #sidebarObjects, .tolko-chat #fabBtn { display: none !important; }
+
+  /* пространство производства (18.09.2026) */
+  .pr { display:flex; flex-direction:column; gap:16px; max-width:1100px; margin:0 auto; }
+  .pr h1 { margin:0; font-family:Baskervville, Georgia, serif; font-weight:400; font-size: calc(30px * var(--shrift)); text-wrap:balance; }
+  .pr h2 { margin:0; font-size: calc(17px * var(--shrift)); }
+  .pr-zag { display:flex; flex-direction:column; gap:4px; }
+  .pr-nad { font-size: calc(12px * var(--shrift)); letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:700; }
+  .pr-tusklo { margin:0; color:var(--muted); font-size: calc(14.5px * var(--shrift)); }
+  .pr-blok { display:flex; flex-direction:column; gap:10px; padding:16px 18px; }
+  .pr-blok-bez { display:flex; flex-direction:column; gap:10px; }
+  .pr-vazhno { border:1px solid var(--accent); }
+  .pr-ryad { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+  .pr-metka { font-size: calc(12px * var(--shrift)); font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  .pr-metka.nov { background:#fbe7da; color:#b0552a; } .pr-metka.ok { background:#e6f1ea; color:#2f7a4c; }
+  .pr-metka.rab { background:#e9eef7; color:#35568a; } .pr-metka.zhd { background:var(--surface-2); color:var(--muted); }
+  .pr-novoe { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line); padding-top:10px; }
+  .pr-novoe:first-of-type { border-top:0; padding-top:0; }
+  .pr-plitka { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px; text-align:left; cursor:pointer;
+               display:flex; flex-direction:column; gap:6px; align-items:flex-start; font:inherit; color:inherit; }
+  .pr-plitka:hover, .pr-karta:hover { border-color:var(--accent); }
+  .pr-kod { font-family:Baskervville, Georgia, serif; font-size: calc(24px * var(--shrift)); }
+  .pr-setka { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap:12px; }
+  .pr-karta { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:0; overflow:hidden; cursor:pointer;
+              text-align:left; display:flex; flex-direction:column; font:inherit; color:inherit; }
+  .pr-kartinka { aspect-ratio:16/10; max-width:100%; background:var(--surface-2); display:grid; place-items:center; color:var(--muted); overflow:hidden; }
+  .pr-kartinka img { width:100%; height:100%; object-fit:cover; }
+  .pr-karta-telo { padding:12px 14px; display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
+  .pr-vidy { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap:10px; }
+  .pr-vid { aspect-ratio:4/3; max-width:100%; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface-2); cursor:pointer; padding:0; color:var(--muted); }
+  .pr-vid img { width:100%; height:100%; object-fit:cover; }
+  .pr-chertezh { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .pr-ch-imya { flex:1; min-width:200px; display:flex; flex-direction:column; }
+  .pr-ch-imya small { color:var(--muted); font-size: calc(12.5px * var(--shrift)); word-break:break-word; }
+  .pr-tabl { overflow-x:auto; }
+  .pr-tabl table { width:100%; border-collapse:collapse; }
+  .pr-tabl th, .pr-tabl td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); }
+  .pr-tabl th { font-size: calc(12px * var(--shrift)); color:var(--muted); letter-spacing:.05em; text-transform:uppercase; }
+  .pr-perekl { display:inline-flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .pr-perekl button { border:0; background:var(--surface); padding:8px 12px; cursor:pointer; font:inherit; color:inherit; }
+  .pr-perekl button[aria-pressed="true"] { background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .pr-chasy { width:76px; border:1px solid var(--line); border-radius:9px; padding:8px; background:var(--surface); text-align:center; font:inherit; color:inherit; }
+  .pr-chasy:disabled { opacity:.35; }
+  .pr-zn { position:fixed; inset:0; background:rgba(20,16,12,.55); z-index:120; display:grid; place-items:center; padding:16px; }
+  .pr-zn-okno { background:var(--surface); border-radius:18px; padding:22px; max-width:440px; display:flex; flex-direction:column; gap:12px; }
 </style>
 
 <div class="gate-backdrop hidden" id="gateBackdrop">
@@ -952,6 +996,7 @@
     <button class="sidebar-link sb-punkt" id="sbHome" style="--i:0">Главная</button>
     <button class="sidebar-link sb-punkt" id="sbMoiOtvety" style="--i:1">Мои ответы</button>
     <button class="sidebar-link sb-punkt" id="sbIgor" style="--i:2" hidden>Пространство Игоря</button>
+    <button class="sidebar-link sb-punkt" id="sbProizv" style="--i:2" hidden>Пространство производства</button>
     <button class="sidebar-link sb-punkt" id="sbChat" style="--i:2">Мессенджер <span class="ch-menu-schet" id="chMenuSchet" hidden></span></button>
     <div class="sb-razdel sb-punkt" style="--i:3"><span>Объекты</span><i></i></div>
     <div id="sidebarObjects" class="sidebar-sub"></div>
@@ -1234,6 +1279,7 @@ function po_opisaniyu(op) {
   if (op.v === "chat") return () => renderChat(op.cid || "");
   if (op.v === "igor") return () => renderIgor();
   if (op.v === "dok") return () => renderDokumenty(op.obj);
+  if (op.v === "pr") return () => renderPr(op.e, op.k);
   return null;
 }
 
@@ -4409,6 +4455,7 @@ function renderObligations(objFilter) {
 
 /* ---------------- главная страница: без объекта ---------------- */
 function renderHome() {
+  if (prEsliOleg()) { renderPr("home"); return; }   // 18.09.2026: у Олега главная — производство
   if (chTolkoChat()) { renderChat(""); return; }
   if (igEsli()) { renderIgor(); return; }
   STATE.tekushchiy = { v: "home" };
@@ -4845,6 +4892,7 @@ document.getElementById("globalBackBtn").addEventListener("click", nazadKnopkoy)
 function openMenu() {
   let imya = ""; try { imya = localStorage.getItem("verstak_role_name") || ""; } catch (e) {}
   document.getElementById("sbIgor").hidden = imya !== "Мансур";
+  document.getElementById("sbProizv").hidden = !(prMozhet() && !prEsliOleg());
   uvObnovitKnopku();
   document.querySelectorAll(".sidebar-obj-link").forEach(b =>
     b.classList.toggle("active", STATE.tekushchiy && STATE.tekushchiy.v === "dash" && b.dataset.obj === STATE.activeObj));
@@ -4873,10 +4921,275 @@ document.getElementById("sbHome").addEventListener("click", () => nav(() => rend
 document.getElementById("sbMoiOtvety").addEventListener("click", () => nav(() => renderMoiOtvety()));
 document.getElementById("sbChat").addEventListener("click", () => nav(() => renderChat("")));
 document.getElementById("sbIgor").addEventListener("click", () => nav(() => renderIgor()));
+document.getElementById("sbProizv").addEventListener("click", () => nav(() => renderPr("home")));
 document.getElementById("sbUved").addEventListener("click", () => uvVklyuchit());
 // Выйти из профиля — у всех: в меню и в шапке мессенджера (Мансур, 11.09.2026). Стираются
 // вход, личный ключ мессенджера и ключ рабочего места — следующий человек на этом устройстве
 // не увидит ничего чужого.
+/* ---------------- пространство производства (18.09.2026) ----------------
+   Мансур: «им полюбому нужны чертежи, визуализации, все нужные данные об изделии… кучу кнопок и запутанной
+   системы не нужно — плавно показать и отдать на пользование… у производства должно быть заполнение
+   посещаемости» (начальник производства: был/не был, сколько отработал). «Вход один — Олег, у него уже есть
+   пространство в мессенджере, туда и нужно всё остальное. Объект пока что только Плющиха».
+   Данные собирает sozdat_prostranstvo_proizvodstva.py, всё зашифровано; открывается личным ключом
+   мессенджера (Олег, Юлия, Игорь Михайлович, Мансур). */
+const PR_PAPKA = "chertezhi/plushiha-p/";
+const PR = { klyuch: null, D: null, fajly: new Map(), posesh: null };
+const PR_SVEZHIE_DNEY = 10;
+function prEsliOleg() { return chUid() === "oleg"; }
+function prMozhet() { return ["oleg", "yuliya", "igor", "mansur"].includes(chUid()); }
+async function prZagruzit() {
+  if (PR.D) return true;
+  let k = ""; try { k = localStorage.getItem("chat_k") || ""; } catch (e) {}
+  if (!k || !prMozhet()) return false;
+  const meta = await (await fetch(PR_PAPKA + "meta.json?" + Date.now())).json();
+  const lk = await crypto.subtle.importKey("raw", Uint8Array.from(atob(k), c => c.charCodeAt(0)), "AES-GCM", false, ["decrypt"]);
+  PR.klyuch = await rmRazvernut(lk, meta.obertki[chUid()]);
+  const shifr = new Uint8Array(await (await fetch(PR_PAPKA + "spisok.bin?" + Date.now())).arrayBuffer());
+  PR.D = JSON.parse(new TextDecoder().decode(await chRasshifr(PR.klyuch, shifr)));
+  return true;
+}
+async function prFajl(bin) {
+  if (PR.fajly.has(bin)) return PR.fajly.get(bin);
+  const r = await fetch(PR_PAPKA + "f/" + bin);
+  if (!r.ok) throw new Error("файл не найден");
+  const b = (await chRasshifr(PR.klyuch, new Uint8Array(await r.arrayBuffer()))).buffer;
+  PR.fajly.set(bin, b);
+  return b;
+}
+async function prZashifrovat(tekst) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, PR.klyuch, new TextEncoder().encode(tekst)));
+  const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12);
+  let s = ""; out.forEach(b => { s += String.fromCharCode(b); });
+  return btoa(s);
+}
+function prSegodnya() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function prOznakomlen(id) {
+  let v = []; try { v = JSON.parse(localStorage.getItem("pr_oznakomlen") || "[]"); } catch (e) {}
+  if (id === undefined) return v;
+  if (!v.includes(id)) { v.push(id); try { localStorage.setItem("pr_oznakomlen", JSON.stringify(v.slice(-1000))); } catch (e) {} }
+}
+// «новое» — рабочий чертёж последних дней, который ещё не открывали
+function prNovye() {
+  const granica = new Date(Date.now() - PR_SVEZHIE_DNEY * 86400000).toISOString().slice(0, 10);
+  const vid = prOznakomlen(), out = [];
+  PR.D.kartochki.forEach((k, ki) => k.rabochka.forEach(f => {
+    if (f.bin && f.kogda.slice(0, 10) >= granica && !vid.includes(f.id)) out.push({ k, ki, f });
+  }));
+  return out;
+}
+function prNazvanieKarty(k) { return k.nazvaniya.join(", "); }
+
+async function renderPr(ekran, ki) {
+  ekran = ekran || "home";
+  STATE.tekushchiy = { v: "pr", e: ekran, k: ki };
+  const app = document.getElementById("app");
+  if (!PR.D) app.innerHTML = `<div class="empty-hint">Открываю…</div>`;
+  let ok = false;
+  try { ok = await prZagruzit(); } catch (e) {}
+  if (!STATE.tekushchiy || STATE.tekushchiy.v !== "pr") return;
+  if (!ok) { app.innerHTML = `<div class="empty-hint">Пространство производства не открылось. Войдите в приложение своим паролем мессенджера.</div>`; return; }
+  if (ekran === "obekt") return prObekt(app);
+  if (ekran === "izd") return prIzdelie(app, +ki);
+  if (ekran === "posesh") return prPosesh(app);
+  return prGlavnaya(app);
+}
+
+function prGlavnaya(app) {
+  const nov = prNovye(), D = PR.D;
+  const imya = prEsliOleg() ? "Олег" : "";
+  const sPosesh = PR.posesh && PR.posesh.d === prSegodnya();
+  const bylo = sPosesh ? PR.posesh.l.filter(x => x.b).length : 0;
+  app.innerHTML = `<div class="pr">
+    <div class="pr-zag"><h1>Добрый день${imya ? ", " + imya : ""}</h1><p class="pr-tusklo">${rmDen(prSegodnya())} · производство${prEsliOleg() ? "" : " · вы видите то же, что Олег"}</p></div>
+    <section class="blk pr-blok pr-vazhno"><div class="pr-ryad"><h2>Посещаемость за сегодня</h2>
+      <span class="pr-metka ${sPosesh ? "ok" : "nov"}">${sPosesh ? "заполнено" : "не заполнено"}</span></div>
+      <p class="pr-tusklo">${sPosesh ? `На работе ${bylo} из ${PR.posesh.l.length}. Можно поправить до конца дня.` : "Отметьте, кто сегодня на работе и сколько часов отработал."}</p>
+      <div><button class="btn primary" data-pr="posesh">${sPosesh ? "Открыть" : "Отметить"}</button></div></section>
+    <section class="blk pr-blok"><h2>Что нового</h2>
+      ${nov.length ? nov.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.podpis)}</b> ${escapeHtml(prNazvanieKarty(x.k))}
+          <div class="pr-tusklo">новый рабочий чертёж: ${escapeHtml(x.f.vid)}, ${rmDen(x.f.kogda)}</div></div>
+          <button class="btn ghost" data-pr-izd="${x.ki}">Посмотреть</button></div>`).join("")
+        : `<p class="pr-tusklo">Новых рабочих чертежей нет — всё, что пришло за последние дни, вы уже открыли.</p>`}</section>
+    <section class="pr-blok-bez"><h2>Объект в работе</h2>
+      <button class="pr-plitka" data-pr="obekt"><span class="pr-kod">${escapeHtml(D.obekt)}</span>
+        <span class="pr-tusklo">изделий: ${D.kartochki.length} · с рабочими чертежами: ${D.kartochki.filter(k => k.rabochka.length).length}</span>
+        ${nov.length ? `<span class="pr-metka nov">новое: ${nov.length}</span>` : ""}</button></section>
+    <section class="blk pr-blok"><h2>Сообщения</h2><p class="pr-tusklo">Переписки с Юлией Евгеньевной и Игорем Михайловичем — как и раньше.</p>
+      <div><button class="btn ghost" data-pr="chat">Открыть сообщения</button></div></section>
+  </div>`;
+  prPrivyazat(app);
+  if (PR.posesh === null) prZagruzitPosesh().then(() => { if (STATE.tekushchiy && STATE.tekushchiy.v === "pr" && STATE.tekushchiy.e === "home") prGlavnaya(app); });
+  prZnakomstvo();
+}
+
+function prObekt(app) {
+  const D = PR.D, nov = prNovye();
+  app.innerHTML = `<div class="pr">
+    <div class="pr-zag"><h1>${escapeHtml(D.obekt)}</h1><p class="pr-tusklo">Изделия объекта. Нажмите на изделие — там вид, рабочие чертежи и всё по нему.</p></div>
+    <div class="pr-setka">${D.kartochki.map((k, ki) => {
+      const n = nov.filter(x => x.ki === ki).length;
+      const kart = (k.pilot && k.pilot.fajly.find(f => f.mini)) || k.rabochka.find(f => f.mini);
+      const st = n ? ["nov", "новый чертёж"] : k.rabochka.length ? ["rab", "рабочие чертежи есть"] : ["zhd", "ждёт рабочих чертежей"];
+      return `<button class="pr-karta" data-pr-izd="${ki}">
+        <span class="pr-kartinka">${kart ? `<img data-pr-mini="${escapeHtml(kart.mini)}" alt="">` : `<span>${escapeHtml(k.podpis)}</span>`}</span>
+        <span class="pr-karta-telo"><span><b>${escapeHtml(k.podpis)}</b> ${escapeHtml(prNazvanieKarty(k))}</span>
+        <span class="pr-metka ${st[0]}">${st[1]}</span></span></button>`;
+    }).join("")}</div>
+    ${D.bez_koda.length ? `<section class="blk pr-blok"><h2>Рабочие чертежи без номера изделия</h2>
+      <p class="pr-tusklo">Конструктор не указал, к какому изделию они относятся. Уточняйте у Юлии Евгеньевны.</p>
+      ${prChertezhiHtml(D.bez_koda.flatMap(g => g.fajly), "bk")}</section>` : ""}
+  </div>`;
+  prPrivyazat(app);
+}
+
+function prChertezhiHtml(spisok, gruppa) {
+  const nov = prNovye().map(x => x.f.id);
+  return spisok.filter(f => !f.net_fajla).map((f, i) => `<div class="pr-chertezh">
+      <div class="pr-ch-imya"><b>${escapeHtml(f.vid ? f.vid[0].toUpperCase() + f.vid.slice(1) : f.imya)}</b>
+        <small>${escapeHtml(f.imya)} · ${rmDen(f.kogda || "")}${f.kto ? " · " + escapeHtml(f.kto) : ""}</small></div>
+      ${nov.includes(f.id) ? `<span class="pr-metka nov">новый</span>` : ""}
+      <button class="btn ${nov.includes(f.id) ? "primary" : "ghost"}" data-pr-otkr="${gruppa}:${i}">${nov.includes(f.id) ? "Открыть и ознакомиться" : "Открыть"}</button>
+    </div>`).join("");
+}
+
+function prIzdelie(app, ki) {
+  const k = PR.D.kartochki[ki];
+  if (!k) return prObekt(app);
+  const vidy = k.pilot ? k.pilot.fajly.filter(f => !f.net_fajla) : [];
+  app.innerHTML = `<div class="pr">
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}</span><h1>${escapeHtml(k.podpis)} · ${escapeHtml(prNazvanieKarty(k))}</h1>
+      ${k.gde ? `<p class="pr-tusklo">${escapeHtml(k.gde)}</p>` : ""}</div>
+    <section class="blk pr-blok"><h2>Как выглядит</h2>
+      ${vidy.length ? `<div class="pr-vidy">${vidy.map((f, i) => `<button class="pr-vid" data-pr-otkr="vid:${i}">
+          ${f.mini ? `<img data-pr-mini="${escapeHtml(f.mini)}" alt="">` : `<span>${f.tip === "pdf" ? "PDF" : "вид"}</span>`}</button>`).join("")}</div>
+        <p class="pr-tusklo">Согласованный пилот от ${rmDen(k.pilot.kogda)} — для понимания вида. Изготавливать по рабочим чертежам ниже.</p>`
+        : `<p class="pr-tusklo">Пилота по этому изделию пока нет.</p>`}</section>
+    <section class="blk pr-blok"><h2>Рабочие чертежи</h2>
+      ${k.rabochka.length ? prChertezhiHtml(k.rabochka, "rab") + `<p class="pr-tusklo">Здесь только действующие чертежи — прежние версии убраны, чтобы не делать по старому.</p>`
+        : `<p class="pr-tusklo">Рабочих чертежей пока нет. Как только конструктор пришлёт — они появятся здесь и в «Что нового».</p>`}</section>
+    <section class="blk pr-blok"><h2>Вопрос по изделию</h2>
+      <p class="pr-tusklo">Что-то непонятно — напишите Юлии Евгеньевне, ответ придёт в сообщения.</p>
+      <div><button class="btn ghost" data-pr-vopros="${ki}">Задать вопрос</button></div></section>
+  </div>`;
+  prPrivyazat(app, k);
+}
+
+function prPrivyazat(app, k) {
+  app.querySelectorAll("[data-pr]").forEach(b => b.addEventListener("click", () => {
+    const e = b.dataset.pr;
+    if (e === "chat") return nav(() => renderChat(""));
+    nav(() => renderPr(e));
+  }));
+  app.querySelectorAll("[data-pr-izd]").forEach(b => b.addEventListener("click", () => nav(() => renderPr("izd", +b.dataset.prIzd))));
+  app.querySelectorAll("[data-pr-otkr]").forEach(b => b.addEventListener("click", () => {
+    const [gr, i] = b.dataset.prOtkr.split(":");
+    const spisok = (gr === "vid" ? k.pilot.fajly : gr === "rab" ? k.rabochka : PR.D.bez_koda.flatMap(g => g.fajly)).filter(f => !f.net_fajla);
+    const f = spisok[+i];
+    if (gr !== "vid" && !prOznakomlen().includes(f.id)) {
+      prOznakomlen(f.id);
+      prZashifrovat(JSON.stringify({ f: f.id, imya: f.imya, w: Date.now() })).then(sh => fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+        type: "stroka", list: "Производство_отметки", prefiksID: "ПО", znacheniya: { "Кто": chUid(), "Шифр": sh } }) })).catch(() => {});
+      setTimeout(() => renderPr(STATE.tekushchiy.e, STATE.tekushchiy.k), 300);
+    }
+    rmSmotret({ fajly: spisok.map(x => ({ imya: x.imya, tip: x.tip === "pdf" ? "pdf" : "img", mime: x.tip === "pdf" ? "application/pdf" : "image/jpeg",
+      poluchit: () => prFajl(x.bin) })) }, +i);
+  }));
+  app.querySelectorAll("[data-pr-vopros]").forEach(b => b.addEventListener("click", () => {
+    const kk = PR.D.kartochki[+b.dataset.prVopros];
+    if (!PR.D.chat_s_yuliey || !prEsliOleg()) { alert("Вопрос по изделию задаёт Олег — из своего пространства."); return; }
+    nav(() => renderChat(PR.D.chat_s_yuliey));
+    let n = 0;
+    const zhdat = setInterval(() => {
+      const pole = document.getElementById("chPole");
+      if (pole || ++n > 40) { clearInterval(zhdat); if (pole && !pole.value) { pole.value = `${PR.D.obekt}, ${kk.podpis} ${prNazvanieKarty(kk)}: `; pole.focus(); } }
+    }, 150);
+  }));
+  const zagr = async img => { try { img.src = URL.createObjectURL(new Blob([await prFajl(img.dataset.prMini)], { type: "image/jpeg" })); } catch (e) {} };
+  app.querySelectorAll("img[data-pr-mini]").forEach(zagr);
+}
+
+/* посещаемость: заполняет начальник производства; зашифровано, вкладка «Посещаемость» */
+async function prZagruzitPosesh() {
+  PR.posesh = false;
+  try {
+    const stroki = (await fetchTab(REESTR_ID, "Посещаемость")) || [];
+    const segodnya = prSegodnya();
+    for (const r of stroki.slice().reverse()) {
+      if (!r["Шифр"]) continue;
+      try {
+        const u = Uint8Array.from(atob(r["Шифр"]), c => c.charCodeAt(0));
+        const d = JSON.parse(new TextDecoder().decode(await chRasshifr(PR.klyuch, u)));
+        if (d.d === segodnya) { PR.posesh = d; return; }
+      } catch (e) {}
+    }
+  } catch (e) {}
+}
+async function prPosesh(app) {
+  if (PR.posesh === null) { app.innerHTML = `<div class="empty-hint">Открываю…</div>`; await prZagruzitPosesh(); }
+  const bylo = PR.posesh && PR.posesh.d === prSegodnya() ? PR.posesh.l : null;
+  const S = PR.D.lyudi.map(n => { const x = bylo && bylo.find(y => y.n === n); return x ? { n, b: x.b, h: x.h } : { n, b: true, h: 8 }; });
+  const mozhno = prEsliOleg();
+  const itog = () => { const na = S.filter(x => x.b); return `На работе ${na.length} из ${S.length} · всего часов: ${na.reduce((s, x) => s + (+x.h || 0), 0)}`; };
+  app.innerHTML = `<div class="pr">
+    <div class="pr-zag"><h1>Посещаемость</h1><p class="pr-tusklo">${rmDen(prSegodnya())}. ${mozhno ? "Отметьте, кто на работе и сколько часов отработал." : "Заполняет Олег, начальник производства."}${bylo ? " Сегодня уже сохранено — можно поправить." : ""}</p></div>
+    <section class="blk pr-blok"><div class="pr-tabl"><table><thead><tr><th>Кто</th><th>Сегодня</th><th>Часов</th></tr></thead><tbody>
+      ${S.map((x, i) => `<tr><td>${escapeHtml(x.n)}</td>
+        <td><span class="pr-perekl"><button id="prB${i}" aria-pressed="${x.b}" data-byl="${i}"${mozhno ? "" : " disabled"}>был</button><button id="prN${i}" aria-pressed="${!x.b}" data-nebyl="${i}"${mozhno ? "" : " disabled"}>не был</button></span></td>
+        <td><input class="pr-chasy" id="prCh${i}" type="number" inputmode="decimal" min="0" max="16" step="0.5" value="${x.b ? x.h : 0}" data-chasy="${i}"${x.b && mozhno ? "" : " disabled"}></td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="pr-tusklo" id="prItog">${itog()}</p>
+    ${mozhno ? `<div class="pr-ryad"><button class="btn primary" id="prSohranit">Сохранить</button><span class="pr-tusklo" id="prSost"></span></div>` : ""}</section></div>`;
+  const perersovat = () => { S.forEach((x, i) => {
+    document.getElementById("prB" + i).setAttribute("aria-pressed", x.b); document.getElementById("prN" + i).setAttribute("aria-pressed", !x.b);
+    const ch = document.getElementById("prCh" + i); ch.disabled = !x.b || !mozhno; ch.value = x.b ? x.h : 0; });
+    document.getElementById("prItog").textContent = itog(); };
+  app.querySelectorAll("[data-byl]").forEach(b => b.addEventListener("click", () => { const x = S[+b.dataset.byl]; x.b = true; if (!+x.h) x.h = 8; perersovat(); }));
+  app.querySelectorAll("[data-nebyl]").forEach(b => b.addEventListener("click", () => { S[+b.dataset.nebyl].b = false; perersovat(); }));
+  app.querySelectorAll("[data-chasy]").forEach(inp => inp.addEventListener("input", () => { S[+inp.dataset.chasy].h = inp.value; document.getElementById("prItog").textContent = itog(); }));
+  const kn = document.getElementById("prSohranit");
+  if (kn) kn.addEventListener("click", async () => {
+    kn.disabled = true;
+    const sost = document.getElementById("prSost");
+    sost.textContent = "Сохраняю…";
+    try {
+      const zapis = { d: prSegodnya(), ob: PR.D.ob, l: S.map(x => ({ n: x.n, b: x.b, h: x.b ? +x.h || 0 : 0 })), w: Date.now() };
+      const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({ type: "stroka", list: "Посещаемость", prefiksID: "ПС",
+        znacheniya: { "Кто": chUid(), "Шифр": await prZashifrovat(JSON.stringify(zapis)) } }) });
+      const d = await res.json();
+      if (!d.ok) throw new Error(d.error || "не принято");
+      PR.posesh = zapis;
+      sost.textContent = "Сохранено.";
+      setTimeout(() => nazadKnopkoy(), 700);
+    } catch (e) { sost.textContent = "Не сохранилось: " + e.message + ". Попробуйте ещё раз."; kn.disabled = false; }
+  });
+}
+
+/* знакомство при первом входе — три подсказки, один раз */
+function prZnakomstvo() {
+  let bylo = false; try { bylo = localStorage.getItem("pr_znakomstvo") === "1"; } catch (e) {}
+  if (bylo || !prEsliOleg() || document.querySelector(".pr-zn")) return;
+  const SHAGI = [
+    ["Олег, здесь теперь не только сообщения", "Добавилось всё, что нужно производству по объекту: рабочие чертежи, как выглядит изделие и посещаемость. Цен и переписки с заказчиком здесь нет. Сообщения — на прежнем месте."],
+    ["Каждый день", "Наверху — посещаемость: кто на работе и сколько часов. Под ней — «Что нового»: свежие рабочие чертежи, которые нужно посмотреть."],
+    ["По изделию", "Нажмите на объект, потом на изделие — на одной странице вид, рабочие чертежи и вопрос Юлии Евгеньевне, если что-то непонятно."]
+  ];
+  let n = 0;
+  const fon = document.createElement("div");
+  fon.className = "pr-zn";
+  document.body.appendChild(fon);
+  const pokazat = () => {
+    if (n >= SHAGI.length) { fon.remove(); try { localStorage.setItem("pr_znakomstvo", "1"); } catch (e) {} return; }
+    fon.innerHTML = `<div class="pr-zn-okno"><span class="pr-nad">Знакомство · ${n + 1} из ${SHAGI.length}</span><h2>${SHAGI[n][0]}</h2><p class="pr-tusklo">${SHAGI[n][1]}</p>
+      <div class="pr-ryad"><button class="btn primary" id="prZnDalee">${n < SHAGI.length - 1 ? "Дальше" : "Начать работу"}</button>
+      ${n < SHAGI.length - 1 ? `<button class="btn ghost" id="prZnPropustit">Пропустить</button>` : ""}</div></div>`;
+    document.getElementById("prZnDalee").onclick = () => { n++; pokazat(); };
+    const p = document.getElementById("prZnPropustit"); if (p) p.onclick = () => { n = SHAGI.length; pokazat(); };
+  };
+  pokazat();
+}
+
 function vyjtiIzProfilya() {
   localStorage.removeItem("verstak_gate_ok");
   localStorage.removeItem("verstak_role_name");
