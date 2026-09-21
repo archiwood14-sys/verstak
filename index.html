@@ -840,14 +840,15 @@
   /* кнопки разделов — не похожи на карточки изделий (14.09.2026) */
   .segs-obj, .ig-obj { justify-content: center; flex-wrap: wrap; overflow: visible; }
   .segs-obj .seg { min-width: 160px; text-align: center; }
-  .razdely-kn { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 4px 0 20px; }
+  .razdely-kn { display: grid; grid-template-columns: repeat(auto-fit, minmax(172px, 1fr)); gap: 10px; margin: 4px 0 20px; }
   .razdel-kn.rm-plitka { position: relative; text-align: left; background: transparent; border: 1px solid rgba(193,128,72,.38); border-radius: 18px;
-    padding: 14px 16px 12px; cursor: pointer; font-family: inherit; color: var(--ink); min-height: 96px; box-shadow: none;
+    padding: 14px 16px 12px; cursor: pointer; font-family: inherit; color: var(--ink); min-height: 96px; box-shadow: none; min-width: 0; overflow: hidden;
     display: flex; flex-direction: column; justify-content: space-between; transition: background .3s ease, border-color .3s ease, transform .3s ease; }
   .razdel-kn.rm-plitka:hover { border-color: var(--accent); transform: translateY(-2px); }
   .razdel-kn.rm-plitka b { display: block; font-family: Arial, "Helvetica Neue", sans-serif; font-weight: 600; letter-spacing: -.5px; font-size: calc(32px * var(--shrift)); line-height: 1; color: var(--ink); min-height: 32px; }
-  .razdel-kn.rm-plitka span { display: block; font-family: "Baskervville", serif; font-size: calc(12.5px * var(--shrift)); letter-spacing: 2px; text-transform: uppercase;
-    color: var(--accent); line-height: 1.35; margin-top: 10px; }
+  /* 21.09.2026: длинная надпись («ВЕРНУЛИСЬ С КОРРЕКТИРОВКАМИ») вылезала за кнопку — переносим по слогам */
+  .razdel-kn.rm-plitka span { display: block; font-family: "Baskervville", serif; font-size: calc(12px * var(--shrift)); letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--accent); line-height: 1.3; margin-top: 10px; overflow-wrap: anywhere; hyphens: auto; text-wrap: balance; }
   .razdel-kn.rm-plitka.vazhno b { color: var(--crit); }
   .razdel-kn.rm-plitka.vybran { background: var(--accent); border-color: var(--accent); box-shadow: none; }
   .razdel-kn.rm-plitka.vybran b, .razdel-kn.rm-plitka.vybran span { color: #fff; }
@@ -1739,7 +1740,7 @@ async function renderRabocheeMesto(app) {
   rmOtpravkiPrimenit();
   const P = RM.D.pachki || [];
   const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0 };
-  P.forEach(p => { s[p.status] = (s[p.status] || 0) + 1; });
+  P.forEach(p => { if (!p.staraya_versiya) s[p.status] = (s[p.status] || 0) + 1; });
   const vnim = rmVnimanie();
   const vnimVsego = vnim.length + (STATE.attnList || []).length;
   const obligN = (STATE.blocks["Б9_Обязательства"] || []).filter(r => r["Объект"] === RM_OBEKT && razbirat(r)).length;
@@ -1776,7 +1777,7 @@ async function renderRabocheeMesto(app) {
     document.getElementById("search").addEventListener("input", e => filterGrid(e.target.value));
     return rmSpisokIzdeliy(document.getElementById("rmIzd"));
   }
-  const vidno = P.filter(p => p.status === RM.vid);
+  const vidno = P.filter(p => p.status === RM.vid && !(RM.vid === "zhdet" && p.staraya_versiya));
   if (!vidno.length) {
     spisok.innerHTML = `<div class="rm-pusto">${RM.vid === "zhdet" ? "Все чертежи от конструктора уже у заказчика."
       : RM.vid === "otpravlen" ? "Сейчас у заказчика ничего нет на согласовании." : "Возвратов с корректировками нет."}</div>`;
@@ -1900,7 +1901,7 @@ function rmVnimanie() {
       `${z.otvety.some(o => o.fajly.length) ? ", есть файлы" : ""}. Рассмотреть, отметить «Принято в работу» и передать конструктору, что нужно.` })));
   P.filter(p => p.status === "korrektirovki").forEach(p => out.push({ tip: "pachka", metka: "заказчик вернул с корректировками", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — передать корректировки конструктору.` }));
-  P.filter(p => p.status === "zhdet" && !vzyato.has(p.id)).forEach(p => out.push({ tip: "pachka", metka: p.vOcheredi ? "письмо отправляется" : "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
+  P.filter(p => p.status === "zhdet" && !p.staraya_versiya && !vzyato.has(p.id)).forEach(p => out.push({ tip: "pachka", metka: p.vOcheredi ? "письмо отправляется" : "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — прислан ${rmDen(p.kogda)}, заказчику ещё не отправлен.` }));
   return out;
 }
@@ -2154,7 +2155,7 @@ async function renderIzdelieMO(code, it, rec) {
       (vmeste.length ? `<div class="rm-tusklo">Один чертёж вместе с ${escapeHtml(vmeste.join(", "))}.</div>` : "") + vnutr + rmFajlyHtml(posl), true);
     if (pachki.length > 1) {
       razdely += rmRazdel("Прежние версии", pachki.length - 1,
-        pachki.slice(1).map(p => `<div class="rm-gruppa">${rmDen(p.kogda)}</div>` + rmFajlyHtml(p)).join(""), false);
+        pachki.slice(1).map(p => `<div class="rm-gruppa">${rmDen(p.kogda)}${p.staraya_versiya ? " · в архиве: есть версия свежее" : ""}</div>` + rmFajlyHtml(p)).join(""), false);
     }
     const vopr = rmChisloVoprosov(posl);
     razdely += rmRazdel("Открытые вопросы по чертежу", vopr,
