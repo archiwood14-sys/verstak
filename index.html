@@ -1691,9 +1691,16 @@ async function rmFajl(bin) {
   return b;
 }
 
+// 21.09.2026 Мансур: «нужно везде убрать м² в помещениях». В реестре метраж остаётся, на экране — нет.
+function bezMetrazha(gde) { return String(gde || "").replace(/\s*\([^)]*(?:м²|кв\.?\s*м)[^)]*\)/g, "").trim(); }
+function pomeshchenieDlyaPisma(gde) {   // «2. Гардеробная» → «Гардеробная 2.»
+  const g = bezMetrazha(gde);
+  const m = g.match(/^(\d+)[.)]\s*(.+)$/);
+  return m ? `${m[2]} ${m[1]}.` : g ? g + "." : "";
+}
 function rmNazvanie(kod) {
   const i = (RM.D.izdeliya || []).find(x => x.kod === kod);
-  return i ? i.nazvanie + (i.gde ? " (" + i.gde + ")" : "") : "";
+  return i ? i.nazvanie + (bezMetrazha(i.gde) ? " (" + bezMetrazha(i.gde) + ")" : "") : "";
 }
 
 /* ---------------- экран ---------------- */
@@ -2174,7 +2181,7 @@ async function renderIzdelieMO(code, it, rec) {
       <span class="code-chip mono">${escapeHtml(kod)}</span>
       <h1>${escapeHtml(it ? it["Название"] : "")}</h1>
     </div>
-    <div class="item-desc">${it && it["Где стоит"] ? "Стоит в помещении «" + escapeHtml(it["Где стоит"]) + "» · " : ""}${escapeHtml(RM_OBEKT)}</div>
+    <div class="item-desc">${it && bezMetrazha(it["Где стоит"]) ? "Стоит в помещении «" + escapeHtml(bezMetrazha(it["Где стоит"])) + "» · " : ""}${escapeHtml(RM_OBEKT)}</div>
     <div class="rm-st ${st.cls} rm-st-bolshoy">${escapeHtml(st.tekst)}</div>
     ${knopki ? `<div class="rm-knopki">${knopki}</div>` : ""}
     <div class="rm-sost" data-sost="${escapeHtml(posl ? posl.id : "")}"></div>
@@ -2382,7 +2389,7 @@ function igIzdeliya(rows) {
     <div class="item-grid">${rows.filter(i => i["Объект"] === o).map(i => {
       const s = STATE.soglas[normCode(i["Код"])];
       return `<button class="item-card ig-izd" data-code="${escapeHtml(i["Код"])}"><div class="code">${escapeHtml(i["Код"])}</div>
-        <div class="nm">${escapeHtml(i["Название"] || "")}</div><div class="room">${escapeHtml(i["Где стоит"] || "")}</div>
+        <div class="nm">${escapeHtml(i["Название"] || "")}</div><div class="room">${escapeHtml(bezMetrazha(i["Где стоит"]))}</div>
         ${s && s["Статус"] ? `<div class="rm-st ${igStatusPilota(s["Статус"])}">пилот: ${escapeHtml(s["Статус"])}</div>` : ""}</button>`;
     }).join("")}</div></section>`).join("");
 }
@@ -3288,8 +3295,17 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- письмо ---------------- */
+// Ссылку на страницу согласования заказчик видит надписью, а не голым адресом (Мансур, 21.09.2026):
+// сам адрес подставляет отправитель на Маке, когда отправляет письмо.
+const RM_SSYLKA_NADPIS = "Ссылка на страницу согласования";
 function rmIzdStroki(p, kody) {
-  const stroki = (kody || p.kody).map(k => `${k} — ${rmNazvanie(k)}`).filter(s => !s.endsWith("— "));
+  // эталон Мансура 21.09.2026: «Гардеробная 2. ИИ3 — Шкаф встроенный»
+  const stroki = (kody || p.kody).map(k => {
+    const i = (RM.D.izdeliya || []).find(x => x.kod === k);
+    if (!i) return "";
+    const pom = pomeshchenieDlyaPisma(i.gde);
+    return `${pom ? pom + " " : ""}${k} — ${i.nazvanie}`;
+  }).filter(Boolean);
   return stroki.length ? stroki.join("\n") : p.zagolovok;
 }
 function rmShablon(p, kuda, kody) {
@@ -3297,14 +3313,14 @@ function rmShablon(p, kuda, kody) {
   const voprosy = [];
   (p.voprosy || []).forEach(g => {
     if (g.gruppa) voprosy.push(g.gruppa);
-    g.punkty.forEach((t, i) => voprosy.push(`${i + 1}. ${t}`));
+    g.punkty.forEach(t => voprosy.push(t));   // 21.09.2026: без нумерации, как в эталоне письма
   });
   if (kuda === "olga") {
     return `Ольга, добрый день!\n\nЗаказчик вернул с корректировками:\n${izd}\n\nКорректировки:\n1. \n`;
   }
   return `Добрый день!\n\nНаправляем на согласование чертежи:\n${izd}\n` +
     (voprosy.length ? `\nВопросы по чертежу:\n${voprosy.join("\n")}\n` : "") +
-    `\nВсе чертежи по объекту также лежат на странице согласования:\n${RM.D.stranica_zakazchika}`;
+    `\n${RM_SSYLKA_NADPIS}`;
 }
 
 function rmPismo(p, kuda) {
@@ -3369,7 +3385,8 @@ function rmPismo(p, kuda) {
     sost.textContent = "Ставлю в очередь…";
     try {
       const zadanie = { v: 1, obekt: RM_OBEKT, kuda: sel.value, pachka: p.id, izdeliya: kody,
-        tekst: tekst.value, fajly: vybrano.map(f => ({ id: f.id, imya: f.imya })),
+        tekst: tekst.value, ssylka: RM.D.stranica_zakazchika, nadpis: RM_SSYLKA_NADPIS,
+        fajly: vybrano.map(f => ({ id: f.id, imya: f.imya })),
         sozdano: new Date().toISOString().slice(0, 16).replace("T", " ") };
       const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
         type: "stroka", list: "Отправка_Телеграм", prefiksID: "ОТП",
@@ -3570,7 +3587,7 @@ function renderDashboard() {
     return `<button class="item-card" data-code="${escapeHtml(code)}">
       <div class="code">${escapeHtml(code)}</div>
       <div class="nm${nazvanie ? "" : " nm-net"}">${nazvanie ? escapeHtml(nazvanie) : "название не заведено"}</div>
-      <div class="room">${escapeHtml(it["Где стоит"] || "")}</div>
+      <div class="room">${escapeHtml(bezMetrazha(it["Где стоит"]))}</div>
       ${statusHtml}
       <div class="flags">${flags.join("")}</div>
     </button>`;
@@ -4633,7 +4650,7 @@ function renderItem(code) {
   }
 
   const nazvanie = it ? it["Название"] : "";
-  const gde = it ? it["Где стоит"] : "";
+  const gde = it ? bezMetrazha(it["Где стоит"]) : "";
   const opisanie = gde ? `${nazvanie ? nazvanie + ". " : ""}Стоит в помещении «${gde}».` : nazvanie;
 
   let pills = "";
