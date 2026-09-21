@@ -853,6 +853,10 @@
     padding: 14px 16px 12px; cursor: pointer; font-family: inherit; color: var(--ink); min-height: 96px; box-shadow: none; min-width: 0; overflow: hidden;
     display: flex; flex-direction: column; justify-content: space-between; transition: background .3s ease, border-color .3s ease, transform .3s ease; }
   .razdel-kn.rm-plitka:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .naverh { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom));
+    z-index: 60; background: var(--ink); color: var(--bg); border: 0; border-radius: 999px; padding: 11px 20px;
+    font-size: calc(13.5px * var(--shrift)); cursor: pointer; box-shadow: var(--shadow); font-family: inherit; }
+  .naverh[hidden] { display: none; }
   .razdel-kn.rm-plitka b { display: block; font-family: Arial, "Helvetica Neue", sans-serif; font-weight: 600; letter-spacing: -.5px; font-size: calc(32px * var(--shrift)); line-height: 1; color: var(--ink); min-height: 32px; }
   /* 21.09.2026: длинная надпись («ВЕРНУЛИСЬ С КОРРЕКТИРОВКАМИ») вылезала за кнопку — переносим по слогам */
   .razdel-kn.rm-plitka span { display: block; font-family: "Baskervville", serif; font-size: calc(12px * var(--shrift)); letter-spacing: 1.2px; text-transform: uppercase;
@@ -1780,6 +1784,7 @@ async function renderRabocheeMesto(app) {
     if (k === "zakazchik") { if (RM.D.stranica_zakazchika) window.open(RM.D.stranica_zakazchika, "_blank", "noopener"); return; }
     RM.vid = RM.vid === k ? "" : k;
     renderRabocheeMesto(app);
+    if (RM.vid) kSoderzhimomu("#rmSpisok");
   }));
 
   const spisok = document.getElementById("rmSpisok");
@@ -1812,6 +1817,25 @@ async function renderRabocheeMesto(app) {
     rmOtmenitOtpravku(P.find(p => p.id === el.dataset.otmenit), el)));
   rmMiniatyury(spisok);
 }
+
+/* 21.09.2026 Мансур: «нажал на раздел — внизу всё появилось, а человек не понимает, что надо
+   прокрутить. Нужно, чтобы спуск к этим данным происходил сам, и подъём обратно — одной кнопкой». */
+function kSoderzhimomu(selektor) {
+  setTimeout(() => {
+    const el = document.querySelector(selektor);
+    if (!el || !el.innerHTML.trim()) return;
+    const verh = el.getBoundingClientRect().top + window.pageYOffset - 64;
+    window.scrollTo({ top: Math.max(0, verh), behavior: "smooth" });
+  }, 60);
+}
+function kRazdelam() { window.scrollTo({ top: 0, behavior: "smooth" }); }
+(function nastroitNaverh() {
+  const kn = document.createElement("button");
+  kn.className = "naverh"; kn.id = "naverh"; kn.hidden = true; kn.textContent = "Наверх, к разделам";
+  kn.addEventListener("click", kRazdelam);
+  document.body.appendChild(kn);
+  window.addEventListener("scroll", () => { kn.hidden = window.pageYOffset < 260; }, { passive: true });
+})();
 
 function bindSegs(app) {
   app.querySelectorAll(".seg").forEach(el => el.addEventListener("click", () =>
@@ -3321,6 +3345,12 @@ document.addEventListener("keydown", e => {
 // Ссылку на страницу согласования заказчик видит надписью, а не голым адресом (Мансур, 21.09.2026):
 // сам адрес подставляет отправитель на Маке, когда отправляет письмо.
 const RM_SSYLKA_NADPIS = "Ссылка на страницу согласования";
+// 21.09.2026: ссылка ведёт не на общую страницу, а на карточку того изделия, которое отправляем.
+// Код изделия дописывается ПОСЛЕ решётки — эту часть адреса браузер на сервер не отправляет.
+function rmSsylkaNaIzdelie(kody) {
+  const s = RM.D.stranica_zakazchika || "";
+  return s && kody && kody.length ? s + "~" + encodeURIComponent(kody[0]) : s;
+}
 function rmIzdStroki(p, kody) {
   // эталон Мансура 21.09.2026: «Гардеробная 2. ИИ3 — Шкаф встроенный»
   const stroki = (kody || p.kody).map(k => {
@@ -3343,7 +3373,7 @@ function rmShablon(p, kuda, kody) {
   if (kuda === "olga") {
     return `Ольга, добрый день!\n\nЗаказчик вернул с корректировками:\n${izd}\n\nКорректировки:\n1. \n`;
   }
-  return `Добрый день!\n\nНаправляем на согласование чертежи:\n${izd}\n` +
+  return `Направляем на согласование чертежи:\n${izd}\n` +
     (voprosy.length ? `\nВопросы по чертежу:\n${voprosy.join("\n")}\n` : "") +
     `\n${RM_SSYLKA_NADPIS}`;
 }
@@ -3437,7 +3467,7 @@ function rmPismo(p, kuda) {
     sost.textContent = "Ставлю в очередь…";
     try {
       const zadanie = { v: 1, obekt: RM_OBEKT, kuda: sel.value, pachka: p.id, izdeliya: kody,
-        tekst: tekst.value, ssylka: RM.D.stranica_zakazchika, nadpis: RM_SSYLKA_NADPIS,
+        tekst: tekst.value, ssylka: rmSsylkaNaIzdelie(kody), nadpis: RM_SSYLKA_NADPIS,
         fajly: vybrano.map(f => ({ id: f.id, imya: f.imya })),
         sozdano: new Date().toISOString().slice(0, 16).replace("T", " ") };
       const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
@@ -3775,6 +3805,7 @@ function renderDashboard() {
     if (k === "fin") return nav(() => renderObjectFinance(STATE.activeObj));
     STATE.dashVid[STATE.activeObj] = STATE.dashVid[STATE.activeObj] === k ? "" : k;
     renderDashboard();
+    if (STATE.dashVid[STATE.activeObj]) kSoderzhimomu("#dashTelo");
   }));
   app.querySelectorAll(".item-card").forEach(el => el.addEventListener("click", () => nav(() => renderItem(el.dataset.code))));
   app.querySelectorAll(".attn-card[data-attn]").forEach(el => el.addEventListener("click", () => {
@@ -4682,6 +4713,7 @@ function renderHome() {
   app.querySelectorAll(".razdel-kn").forEach(b => b.addEventListener("click", () => {
     STATE.homeVid = STATE.homeVid === b.dataset.razdel ? "" : b.dataset.razdel;
     renderHome();
+    if (STATE.homeVid) kSoderzhimomu("#homeTelo");
   }));
   wireCards(app);
 }
