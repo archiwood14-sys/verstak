@@ -621,6 +621,13 @@
   .rm-fajl.net { padding:10px; color:var(--muted); font-size: calc(13px * var(--shrift)); cursor:default; }
   .rm-voprosy { margin-top:11px; background:#fbf6ee; border-radius:11px; padding:10px 13px; font-size: calc(14.5px * var(--shrift)); }
   .rm-voprosy h4 { margin:0 0 5px; font-size: calc(14px * var(--shrift)); color:#8a5f1c; }
+  .rm-voprosy-adresa { display:flex; flex-direction:column; gap:6px; max-height:230px; overflow:auto; margin-bottom:6px; }
+  .rm-vopros-adres { display:flex; gap:10px; align-items:center; justify-content:space-between; background:var(--surface-2);
+    border-radius:10px; padding:8px 10px; font-size: calc(14px * var(--shrift)); }
+  .rm-vopros-adres span { flex:1; min-width:0; }
+  .rm-vopros-adres select { border:1px solid var(--line); border-radius:8px; padding:6px 8px; background:var(--surface); font: inherit; color: inherit; }
+  .rm-obnovit { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:-10px 0 16px; }
+  .rm-obnovit-sost { color:var(--muted); font-size: calc(13.5px * var(--shrift)); }
   .rm-otvety { margin-top:11px; background:#eef6f0; border-radius:11px; padding:10px 13px; font-size: calc(14.5px * var(--shrift)); }
   .rm-otvety h4 { margin:0 0 5px; font-size: calc(14px * var(--shrift)); color:#2f7d4f; }
   .rm-otvet-paket + .rm-otvet-paket { margin-top:10px; padding-top:8px; border-top:1px solid #d5e7da; }
@@ -1680,7 +1687,7 @@ async function rmAvtoVhod() {
 }
 // письма заказчику и отметки статусов — только у Юлии (есть ключ её пароля)
 function rmTolkoYuliya(el) {
-  if (!RM.klyuchParol) el.querySelectorAll("[data-pismo], [data-status], [data-prinyat]").forEach(b => b.remove());
+  if (!RM.klyuchParol) el.querySelectorAll("[data-pismo], [data-status], [data-prinyat], [data-otmenit], [data-obnovit]").forEach(b => b.remove());
 }
 
 async function rmFajl(bin) {
@@ -1756,7 +1763,11 @@ async function renderRabocheeMesto(app) {
     ["zakazchik", "Страница заказчика", ""],
   ];
   app.innerHTML = `<div class="razdely-kn">${PLITKI.map(([k, t, n, dop]) => razdelKn(k, t, n, RM.vid, dop)).join("")}</div>
+    <div class="rm-obnovit"><button class="btn ghost" data-obnovit>Обновить сейчас</button>
+      <span class="rm-obnovit-sost" id="rmObnovitSost">${escapeHtml(RM_OBN.tekst || "")}</span></div>
     <div id="rmSpisok"></div>`;
+  const knObn = app.querySelector("[data-obnovit]");
+  if (knObn) knObn.addEventListener("click", () => rmObnovitSejchas(knObn));
   app.querySelectorAll(".razdel-kn").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.razdel;
     if (k === "oblig") return nav(() => renderObligations(RM_OBEKT));
@@ -1792,6 +1803,8 @@ async function renderRabocheeMesto(app) {
     rmPismo(P.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
   spisok.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
     rmOtmetit(P.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
+  spisok.querySelectorAll("[data-otmenit]").forEach(el => el.addEventListener("click", () =>
+    rmOtmenitOtpravku(P.find(p => p.id === el.dataset.otmenit), el)));
   rmMiniatyury(spisok);
 }
 
@@ -1822,7 +1835,8 @@ function rmKartochka(p) {
     knopki = `<button class="btn primary" data-pismo="${escapeHtml(p.id)}">Подготовить письмо заказчику</button>`;
   } else if (p.status === "otpravlen") {
     knopki = `<button class="btn ghost" data-pismo="${escapeHtml(p.id)}">Отправить повторно</button>
-      <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(p.id)}">Заказчик вернул с корректировками</button>`;
+      <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(p.id)}">Заказчик вернул с корректировками</button>
+      <button class="btn ghost" data-otmenit="${escapeHtml(p.id)}">Отменить отправку</button>`;
   } else {
     knopki = `<button class="btn primary" data-pismo="${escapeHtml(p.id)}" data-kuda="olga">Передать корректировки конструктору</button>
       <button class="btn ghost" data-status="правки внесены" data-pachka="${escapeHtml(p.id)}">Правки внесены — снять отметку</button>`;
@@ -2139,7 +2153,8 @@ async function renderIzdelieMO(code, it, rec) {
   if (posl && posl.vOcheredi) knopki = `<span class="rm-tusklo">Письмо ${escapeHtml(posl.vOcheredi)} отправляется…</span>`;
   else if (posl && posl.status === "zhdet") knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}">Подготовить письмо заказчику</button>`;
   else if (posl && posl.status === "otpravlen") knopki = `<button class="btn ghost" data-pismo="${escapeHtml(posl.id)}">Отправить повторно</button>
-    <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(posl.id)}">Заказчик вернул с корректировками</button>`;
+    <button class="btn ghost" data-status="корректировки заказчика" data-pachka="${escapeHtml(posl.id)}">Заказчик вернул с корректировками</button>
+    <button class="btn ghost" data-otmenit="${escapeHtml(posl.id)}">Отменить отправку</button>`;
   else if (posl) knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}" data-kuda="olga">Передать корректировки конструктору</button>
     <button class="btn ghost" data-status="правки внесены" data-pachka="${escapeHtml(posl.id)}">Правки внесены — снять отметку</button>`;
 
@@ -2194,6 +2209,8 @@ async function renderIzdelieMO(code, it, rec) {
     rmPismo(pachki.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
   app.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
     rmOtmetit(pachki.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
+  app.querySelectorAll("[data-otmenit]").forEach(el => el.addEventListener("click", () =>
+    rmOtmenitOtpravku(pachki.find(p => p.id === el.dataset.otmenit), el)));
   app.querySelectorAll("[data-viz]").forEach(el => el.addEventListener("click", () =>
     rmSmotret({ fajly: vizy.map(v => ({ imya: `${kod} · ${v.pomeshchenie || "визуализация"}`, tip: "kartinka", mime: "image/jpeg",
       poluchit: async () => (await fetch(v.url)).arrayBuffer() })) }, +el.dataset.viz)));
@@ -3312,9 +3329,11 @@ function rmIzdStroki(p, kody) {
 function rmShablon(p, kuda, kody) {
   const izd = rmIzdStroki(p, kody);
   const voprosy = [];
-  (p.voprosy || []).forEach(g => {
+  (p.voprosy || []).forEach((g, gi) => {
+    const svoi = g.punkty.filter((t, ii) => rmKomu(p, gi, ii) === "zakazchik");
+    if (!svoi.length) return;
     if (g.gruppa) voprosy.push(g.gruppa);
-    g.punkty.forEach(t => voprosy.push(t));   // 21.09.2026: без нумерации, как в эталоне письма
+    svoi.forEach(t => voprosy.push(t));   // 21.09.2026: без нумерации, как в эталоне письма
   });
   if (kuda === "olga") {
     return `Ольга, добрый день!\n\nЗаказчик вернул с корректировками:\n${izd}\n\nКорректировки:\n1. \n`;
@@ -3322,6 +3341,26 @@ function rmShablon(p, kuda, kody) {
   return `Добрый день!\n\nНаправляем на согласование чертежи:\n${izd}\n` +
     (voprosy.length ? `\nВопросы по чертежу:\n${voprosy.join("\n")}\n` : "") +
     `\n${RM_SSYLKA_NADPIS}`;
+}
+
+/* Вопросы конструктора — кому (21.09.2026). Мансур: «некоторые вопросы относятся к производству,
+   некоторые заказчику… при отправке Юлия видит все вопросы и сортирует, кому что». Заказчику в письмо
+   идут только его вопросы; остальные уходят адресатам и в письмо не попадают. */
+const RM_ADRESATY = [["zakazchik", "Заказчику"], ["proizvodstvo", "Производству"], ["igor", "Игорю Михайловичу"],
+                     ["mansur", "Мансуру"], ["nam", "Нам, разобраться"]];
+const RM_KOMU = new Map();
+function rmKlyuchVoprosa(p, gi, ii) { return `${p.id}:${gi}:${ii}`; }
+function rmKomu(p, gi, ii) { return RM_KOMU.get(rmKlyuchVoprosa(p, gi, ii)) || "zakazchik"; }
+function rmVoprosyVyborHtml(p) {
+  const stroki = [];
+  (p.voprosy || []).forEach((g, gi) => g.punkty.forEach((t, ii) => {
+    const k = rmKlyuchVoprosa(p, gi, ii);
+    stroki.push(`<label class="rm-vopros-adres"><span>${g.gruppa ? escapeHtml(g.gruppa) + " · " : ""}${escapeHtml(t)}</span>
+      <select data-komu="${escapeHtml(k)}">${RM_ADRESATY.map(([v, n]) =>
+        `<option value="${v}"${rmKomu(p, gi, ii) === v ? " selected" : ""}>${n}</option>`).join("")}</select></label>`);
+  }));
+  return stroki.length ? `<label class="rm-metka">Вопросы конструктора — кому</label>
+    <div class="rm-voprosy-adresa">${stroki.join("")}</div>` : "";
 }
 
 function rmPismo(p, kuda) {
@@ -3343,6 +3382,7 @@ function rmPismo(p, kuda) {
     <select id="rmIzdKod" class="rm-pole"><option value="">— выберите изделие —</option>${izdOpc}</select>` : ""}
     <label class="rm-metka">Куда</label>
     <select id="rmKuda" class="rm-pole">${gruppy}</select>
+    ${rmVoprosyVyborHtml(p)}
     <label class="rm-metka">${bezKoda ? "Текст — напишите от себя, что это за изделие и что по нему важно" : "Текст — можно править и дописывать свои вопросы"}</label>
     <textarea id="rmTekst" class="rm-pole" rows="14"></textarea>
     <label class="rm-metka">Файлы</label>
@@ -3368,6 +3408,12 @@ function rmPismo(p, kuda) {
   };
   let bylKody = vybor();
   document.getElementById("rmKuda").addEventListener("change", obnovitShablon);
+  fon.querySelectorAll("[data-komu]").forEach(sel => sel.addEventListener("change", () => {
+    RM_KOMU.set(sel.dataset.komu, sel.value);
+    const nov = rmShablon(p, document.getElementById("rmKuda").value, vybor());
+    if (tekst.value === bylShablon) tekst.value = nov;      // своё не затираем
+    bylShablon = nov;
+  }));
   if (bezKoda) document.getElementById("rmIzdKod").addEventListener("change", obnovitShablon);
   document.getElementById("rmOtmena").addEventListener("click", () => fon.remove());
   document.getElementById("rmOtpravit").addEventListener("click", async (e) => {
@@ -3401,6 +3447,7 @@ function rmPismo(p, kuda) {
           znacheniya: { "Объект": RM_OBEKT, "Пачка": p.id, "Изделия": kody.join(", "), "Кто": rmKto() } }) }).catch(() => {});
       }
       if (sel.value === "zakazchik") rmOtpravkaZapomnit(p.id, { id: d.id, sost: "ochered", t: Date.now() });
+      await rmVoprosyAdresatam(p, kody);
       sost.textContent = `В очереди (${d.id}). Отправляется — обычно 15–30 секунд…`;
       rmSledit(d.id, sost, p.id, sel.value === "zakazchik");
     } catch (err) {
@@ -3425,7 +3472,14 @@ const RM_SLEDIM = new Set();
 function rmOtpravkiPrimenit() {
   if (!RM.D || !RM.D.pachki) return;
   const vse = rmOtpravki();
+  const otmeneno = rmOtmeneno();
   for (const p of RM.D.pachki) {
+    if (otmeneno.includes(p.id)) {          // Мак ещё не пересобрал — показываем как «ждёт отправки»
+      if (p.status === "otpravlen") { p.status = "zhdet"; p.u_zakazchika = ""; }
+      else if (p.status === "zhdet") {      // пересобрал — память больше не нужна
+        try { localStorage.setItem("rm_otmeneno", JSON.stringify(otmeneno.filter(x => x !== p.id))); } catch (e) {}
+      }
+    }
     const z = vse[p.id];
     delete p.vOcheredi;
     if (!z) continue;
@@ -3440,6 +3494,92 @@ function rmOtpravkiPrimenit() {
 function rmPerersovat() {
   const s = document.getElementById("rmSpisok");
   if (s && s.parentElement) renderRabocheeMesto(s.parentElement);
+}
+
+async function rmVoprosyAdresatam(p, kody) {
+  const drugim = [];
+  (p.voprosy || []).forEach((g, gi) => g.punkty.forEach((t, ii) => {
+    const komu = rmKomu(p, gi, ii);
+    if (komu !== "zakazchik") drugim.push({ t, komu, gruppa: g.gruppa || "" });
+  }));
+  if (!drugim.length) return;
+  try {
+    await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Вопросы_адресаты", prefiksID: "ВА",
+      znacheniya: { "Объект": RM_OBEKT, "Кто": rmKto(),
+                    "Шифр": await rmZashifrovat(JSON.stringify({ pachka: p.id, izdeliya: kody, voprosy: drugim, w: Date.now() })) } }) });
+  } catch (e) {}
+}
+
+/* «Обновить сейчас» (21.09.2026). Мансур: «нам прислали чертёж, он появится у Юлии только через
+   некоторое время, так как цикл его ещё не видел, а отправить нужно сейчас — Юлия нажимает кнопку,
+   цикл запускается, собирает данные и сообщает, что обновился». */
+const RM_OBN = { tekst: "", idet: false };
+async function rmObnovitSejchas(knopka) {
+  if (RM_OBN.idet) return;
+  RM_OBN.idet = true;
+  knopka.disabled = true;
+  const pokazat = t => { RM_OBN.tekst = t; const el = document.getElementById("rmObnovitSost"); if (el) el.textContent = t; };
+  pokazat("Собираю свежие данные… это занимает пару минут.");
+  try {
+    const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Обновить_сейчас", prefiksID: "ОБН",
+      znacheniya: { "Кто": rmKto(), "Объект": RM_OBEKT, "Статус": "в очереди" } }) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || "мостик отказал");
+    for (let i = 0; i < 120; i++) {
+      await new Promise(r => setTimeout(r, 5000));
+      let stroka = null;
+      try { stroka = (await fetchTab(REESTR_ID, "Обновить_сейчас")).find(x => x["ID"] === d.id); } catch (e) {}
+      const st = stroka && (stroka["Статус"] || "");
+      if (st && /готово/.test(st)) {
+        pokazat("Готово — данные свежие. Обновляю экран…");
+        RM.D = null; RM.fajly = new Map();
+        try { await rmAvtoVhod(); } catch (e) {}
+        RM_OBN.idet = false;
+        RM_OBN.tekst = "Данные обновлены " + st.replace(/[^\d:]/g, "") + ".";
+        rmPerersovat();
+        return;
+      }
+      if (i === 6) pokazat("Идёт сбор переписки и пересборка… можно продолжать работать.");
+    }
+    pokazat("Обновление идёт дольше обычного. Данные появятся сами, как только цикл закончит.");
+  } catch (e) {
+    pokazat("Не получилось запустить обновление: " + e.message);
+  }
+  RM_OBN.idet = false;
+  knopka.disabled = false;
+}
+
+/* Отмена отправки (21.09.2026). Мансур: «удалили сообщение в телеграм — значит, отменили отправку
+   этого чертежа у заказчика… чтобы можно было переотправить». Мак удаляет наши сообщения у заказчика
+   и возвращает чертёж в «ждут отправки»; пока он это делает, приложение помнит отмену само. */
+function rmOtmeneno(id) {
+  let v = []; try { v = JSON.parse(localStorage.getItem("rm_otmeneno") || "[]"); } catch (e) {}
+  if (id === undefined) return v;
+  if (!v.includes(id)) { v.push(id); try { localStorage.setItem("rm_otmeneno", JSON.stringify(v.slice(-200))); } catch (e) {} }
+}
+async function rmOtmenitOtpravku(p, knopka) {
+  if (!p) return;
+  if (!confirm("Отменить отправку этого чертежа?\n\nСообщения с ним будут удалены у заказчика в Телеграме, а чертёж вернётся в «Ждут отправки» — его можно будет отправить заново.")) return;
+  const prichina = prompt("Почему отменяем? (можно коротко, для архива)") || "";
+  knopka.disabled = true;
+  const sost = document.querySelector(`[data-sost="${CSS.escape(p.id)}"]`);
+  if (sost) sost.textContent = "Отменяю отправку…";
+  try {
+    const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: "Отправка_отмена", prefiksID: "ОТМ",
+      znacheniya: { "Объект": RM_OBEKT, "Пачка": p.id, "Кто": rmKto(), "Причина": prichina } }) });
+    const d = await res.json();
+    if (!d.ok) throw new Error(d.error || "мостик отказал");
+    rmOtmeneno(p.id);
+    rmOtpravkaZapomnit(p.id, null);
+    if (sost) sost.textContent = "Отправка отменена: удаляю сообщения у заказчика, чертёж вернулся в «Ждут отправки».";
+    rmPerersovat();
+  } catch (e) {
+    knopka.disabled = false;
+    if (sost) sost.textContent = "Не получилось отменить: " + e.message;
+  }
 }
 
 /* Следим за письмом по очереди, пока отправитель не отметит результат */
