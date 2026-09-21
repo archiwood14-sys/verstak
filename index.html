@@ -626,7 +626,8 @@
     border-radius:10px; padding:8px 10px; font-size: calc(14px * var(--shrift)); }
   .rm-vopros-adres span { flex:1; min-width:0; }
   .rm-vopros-adres select { border:1px solid var(--line); border-radius:8px; padding:6px 8px; background:var(--surface); font: inherit; color: inherit; }
-  .rm-obnovit { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:-10px 0 16px; }
+  .rm-obnovit { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:-10px 0 16px; }
+  .rm-obnovit .btn { padding: 8px 14px; font-size: calc(13.5px * var(--shrift)); }
   .rm-obnovit-sost { color:var(--muted); font-size: calc(13.5px * var(--shrift)); }
   .rm-otvety { margin-top:11px; background:#eef6f0; border-radius:11px; padding:10px 13px; font-size: calc(14.5px * var(--shrift)); }
   .rm-otvety h4 { margin:0 0 5px; font-size: calc(14px * var(--shrift)); color:#2f7d4f; }
@@ -1763,11 +1764,15 @@ async function renderRabocheeMesto(app) {
     ["zakazchik", "Страница заказчика", ""],
   ];
   app.innerHTML = `<div class="razdely-kn">${PLITKI.map(([k, t, n, dop]) => razdelKn(k, t, n, RM.vid, dop)).join("")}</div>
-    <div class="rm-obnovit"><button class="btn ghost" data-obnovit>Обновить сейчас</button>
+    <div class="rm-obnovit">
+      <button class="btn ghost" data-perezagruzit>Обновить страницу</button>
+      <button class="btn ghost" data-obnovit>Проверить новые чертежи</button>
       <span class="rm-obnovit-sost" id="rmObnovitSost">${escapeHtml(RM_OBN.tekst || "")}</span></div>
     <div id="rmSpisok"></div>`;
   const knObn = app.querySelector("[data-obnovit]");
   if (knObn) knObn.addEventListener("click", () => rmObnovitSejchas(knObn));
+  const knPerez = app.querySelector("[data-perezagruzit]");
+  if (knPerez) knPerez.addEventListener("click", () => location.reload());
   app.querySelectorAll(".razdel-kn").forEach(b => b.addEventListener("click", () => {
     const k = b.dataset.razdel;
     if (k === "oblig") return nav(() => renderObligations(RM_OBEKT));
@@ -3333,7 +3338,7 @@ function rmShablon(p, kuda, kody) {
     const svoi = g.punkty.filter((t, ii) => rmKomu(p, gi, ii) === "zakazchik");
     if (!svoi.length) return;
     if (g.gruppa) voprosy.push(g.gruppa);
-    svoi.forEach(t => voprosy.push(t));   // 21.09.2026: без нумерации, как в эталоне письма
+    svoi.forEach((t, n) => voprosy.push(`${n + 1}. ${t}`));   // 21.09.2026: нумерация — Юлия дописывала её руками
   });
   if (kuda === "olga") {
     return `Ольга, добрый день!\n\nЗаказчик вернул с корректировками:\n${izd}\n\nКорректировки:\n1. \n`;
@@ -3517,6 +3522,9 @@ async function rmVoprosyAdresatam(p, kody) {
 const RM_OBN = { tekst: "", idet: false };
 async function rmObnovitSejchas(knopka) {
   if (RM_OBN.idet) return;
+  // 21.09.2026 Мансур: «Юлия нажимает его, думая, что это просто обновить страницу» — объясняем,
+  // что это другое: сбор переписки и пересборка, пара минут.
+  if (!confirm("Проверить, не прислал ли конструктор новые чертежи?\n\nЭто не обновление страницы: Мак заново соберёт переписку и пересоберёт данные. Занимает одну-две минуты, работать в приложении можно.\n\nПросто обновить страницу — кнопка «Обновить страницу».")) return;
   RM_OBN.idet = true;
   knopka.disabled = true;
   const pokazat = t => { RM_OBN.tekst = t; const el = document.getElementById("rmObnovitSost"); if (el) el.textContent = t; };
