@@ -596,6 +596,8 @@
   .rm-kod { font-weight:700; font-size: calc(17px * var(--shrift)); white-space:nowrap; }
   .rm-nazv { flex:1; min-width:200px; }
   .rm-data { color:var(--muted); font-size: calc(13.5px * var(--shrift)); white-space:nowrap; }
+  .rm-naznach { font-size: calc(13px * var(--shrift)); color: var(--muted); background: var(--surface-2);
+    border-radius: 10px; padding: 7px 10px; }
   .rm-vnutr { background:#fbf1de; color:#7a5313; border-radius:10px; padding:9px 12px; font-size: calc(14px * var(--shrift)); margin-bottom:10px; }
   .rm-fajly { display:flex; gap:9px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; }
   .rm-fajl { flex:0 0 auto; width:136px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
@@ -1751,7 +1753,7 @@ async function renderRabocheeMesto(app) {
 
   rmOtpravkiPrimenit();
   const P = RM.D.pachki || [];
-  const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0 };
+  const s = { zhdet: 0, otpravlen: 0, korrektirovki: 0, rabochka: 0, model: 0 };
   P.forEach(p => { if (!p.staraya_versiya) s[p.status] = (s[p.status] || 0) + 1; });
   const vnim = rmVnimanie();
   const vnimVsego = vnim.length + (STATE.attnList || []).length;
@@ -1762,6 +1764,8 @@ async function renderRabocheeMesto(app) {
     ["zhdet", "Ждут отправки заказчику", s.zhdet],
     ["otpravlen", "У заказчика на согласовании", s.otpravlen],
     ["korrektirovki", "Вернулись с корректировками", s.korrektirovki],
+    ["rabochka", "Рабочие чертежи — производству", s.rabochka],
+    ["model", "Другие форматы — для нас", s.model],
     ["arhiv", "Архив писем", ""],
     ["oblig", "Мои обязательства", obligN],
     ["dok", "Документы проекта", (RM.D.dokumenty || []).length],
@@ -1800,8 +1804,11 @@ async function renderRabocheeMesto(app) {
   }
   const vidno = P.filter(p => p.status === RM.vid && !(RM.vid === "zhdet" && p.staraya_versiya));
   if (!vidno.length) {
-    spisok.innerHTML = `<div class="rm-pusto">${RM.vid === "zhdet" ? "Все чертежи от конструктора уже у заказчика."
-      : RM.vid === "otpravlen" ? "Сейчас у заказчика ничего нет на согласовании." : "Возвратов с корректировками нет."}</div>`;
+    spisok.innerHTML = `<div class="rm-pusto">${RM.vid === "zhdet" ? "Все пилоты от конструктора уже у заказчика."
+      : RM.vid === "otpravlen" ? "Сейчас у заказчика ничего нет на согласовании."
+      : RM.vid === "rabochka" ? "Рабочих чертежей от конструктора пока не приходило."
+      : RM.vid === "model" ? "Файлов в других форматах пока не присылали."
+      : "Возвратов с корректировками нет."}</div>`;
     return;
   }
   spisok.innerHTML = vidno.map(rmKartochka).join("");
@@ -1857,8 +1864,12 @@ function rmKartochka(p) {
     ? `<div class="rm-vnutr">Для нас, не для заказчика: ${escapeHtml(p.zamechaniya.join("; "))}` +
       (p.podskazki && p.podskazki.length ? ` · по описанию похоже на <b>${escapeHtml(p.podskazki.join(", "))}</b>` : "") +
       `. Проверьте код, прежде чем отправлять.</div>` : "";
+  const naznachenie = p.naznachenie === "рабочка" ? "рабочие чертежи — производству, заказчику не отправляем"
+    : p.naznachenie === "модель" ? "файл в другом формате — для нас, заказчику не отправляем" : "";
   let knopki = "";
-  if (p.vOcheredi) {
+  if (p.status === "rabochka" || p.status === "model") {
+    knopki = "";
+  } else if (p.vOcheredi) {
     knopki = `<span class="rm-tusklo">Письмо ${escapeHtml(p.vOcheredi)} отправляется…</span>`;
   } else if (p.status === "zhdet") {
     knopki = `<button class="btn primary" data-pismo="${escapeHtml(p.id)}">Подготовить письмо заказчику</button>`;
@@ -1874,9 +1885,10 @@ function rmKartochka(p) {
     <div class="rm-karta-verh">
       ${kody ? `<span class="rm-kod">${escapeHtml(kody)}</span>` : ""}
       <span class="rm-nazv">${nazv.length ? nazv.map(escapeHtml).join("<br>") : escapeHtml(p.zagolovok)}</span>
-      <span class="rm-data">${p.status === "zhdet" ? "от конструктора " + rmDen(p.kogda) : "у заказчика с " + rmDen(p.u_zakazchika)}</span>
+      <span class="rm-data">${p.status === "otpravlen" || p.status === "korrektirovki" ? "у заказчика с " + rmDen(p.u_zakazchika) : "от конструктора " + rmDen(p.kogda)}</span>
     </div>
     ${vnutr}
+    ${naznachenie ? `<div class="rm-naznach">${escapeHtml(naznachenie)}${p.pochemu_naznachenie ? " · " + escapeHtml(p.pochemu_naznachenie) : ""}</div>` : ""}
     <div class="rm-fajly">${fajly}</div>
     ${voprosy ? `<div class="rm-voprosy"><h4>Вопросы конструктора по чертежу</h4>${voprosy}</div>` : ""}
     ${rmOtvetyHtml(p)}
@@ -1978,9 +1990,9 @@ function rmPokazatVnimanie(el, vnim) {
   }));
 }
 
-function rmPachkiIzdeliya(kod) {
+function rmPachkiIzdeliya(kod, vse) {
   rmOtpravkiPrimenit();
-  return (RM.D && RM.D.pachki || []).filter(p => p.kody.includes(kod))
+  return (RM.D && RM.D.pachki || []).filter(p => p.kody.includes(kod) && (vse || !["rabochka", "model"].includes(p.status)))
     .sort((a, b) => b.kogda.localeCompare(a.kogda));
 }
 function rmStatusIzdeliya(p) {
@@ -2204,6 +2216,11 @@ async function renderIzdelieMO(code, it, rec) {
     const vopr = rmChisloVoprosov(posl);
     razdely += rmRazdel("Открытые вопросы по чертежу", vopr,
       vopr ? `<div class="rm-voprosy">${rmVoprosyHtml(posl)}</div>` : `<div class="rm-tusklo">Открытых вопросов нет.</div>`, vopr > 0);
+    const inye = rmPachkiIzdeliya(kod, true).filter(p => ["rabochka", "model"].includes(p.status));
+    if (inye.length) {
+      razdely += rmRazdel("Рабочие чертежи и другие форматы — не для заказчика", inye.length,
+        inye.map(p => `<div class="rm-gruppa">${rmDen(p.kogda)} · ${escapeHtml(p.naznachenie || "")}</div>` + rmFajlyHtml(p)).join(""), false);
+    }
     const sOtvetami = pachki.filter(p => (p.otvety_zakazchika || []).length);
     if (sOtvetami.length) {
       razdely += rmRazdel("Ответы заказчика", sOtvetami.reduce((n, p) => n + p.otvety_zakazchika.length, 0),
