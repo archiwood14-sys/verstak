@@ -1,0 +1,246 @@
+{
+  "demo": true,
+  "zachem": "ВЫДУМАННЫЕ ДАННЫЕ для демонстрации устройства пространства производства (22.09.2026). Ничего настоящего здесь нет: ни изделий, ни людей, ни сроков. Из демонстрации ничего никуда не уходит — все нажатия живут только в памяти открытой страницы.",
+  "segodnya": "2026-09-22",
+  "obekt": {
+    "nazvanie": "Плющиха",
+    "chto_delaem": "Кухня, гардеробные, детская, прихожая — 8 изделий",
+    "sroki": [
+      { "chto": "Кухня — привезти на объект", "kogda": "2026-10-14", "tochno": false, "kto": "Юлия Евгеньевна" },
+      { "chto": "Монтаж кухни и прихожей", "kogda": "2026-10-28", "tochno": false, "kto": "Юлия Евгеньевна" },
+      { "chto": "Сдача объекта заказчику", "kogda": "2026-11-20", "tochno": false, "kto": "Игорь Михайлович" }
+    ],
+    "montazh": [
+      { "gde": "Весь объект", "chto": "Подъезд со двора, грузовой лифт 1,90 × 1,10 м, 7-й этаж. Пропуск на машину заказывать за сутки." },
+      { "gde": "3. Кухня", "chto": "Стены выровнены, плитка уложена 12.09. Розетки выведены по чертежу электрики." },
+      { "gde": "5. Детская", "chto": "Помещение не готово: стены не покрашены. Монтаж не раньше ноября." },
+      { "gde": "1. Прихожая", "chto": "Закладная под подсветку сделана, высота потолка 2 780 мм." }
+    ],
+    "materialy": [
+      { "chto": "Корпуса", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+      { "chto": "Фасады крашеные", "znach": "Эмаль RAL 9010, матовая 20 %" },
+      { "chto": "Фасады шпон", "znach": "Шпон вишни, лак матовый" },
+      { "chto": "Кромка", "znach": "ABS 2 мм в цвет корпуса" },
+      { "chto": "Столешница", "znach": "Кварцевый агломерат Caesarstone 5100, 20 мм" }
+    ],
+    "ostatki": [
+      { "chto": "Шпон вишни", "znach": "в цехе 12 м², по объекту нужно 9 м²" },
+      { "chto": "ЛДСП H1180", "znach": "в цехе 6 листов, по объекту нужно 11 листов" },
+      { "chto": "Эмаль RAL 9010", "znach": "в цехе 8 кг, по объекту нужно ориентировочно 14 кг" }
+    ]
+  },
+  "lyudi": [
+    "Абдулов Тимур", "Басов Николай", "Ветров Сергей", "Гаврилов Пётр", "Дёмин Артём",
+    "Егоров Иван", "Жуков Роман", "Зотов Максим", "Ильин Денис", "Ковалёв Юрий",
+    "Лапшин Андрей", "Мухин Олег", "Новиков Игорь", "Орехов Павел"
+  ],
+  "vchera": { "byli": 12, "chasov": 94 },
+  "kartochki": [
+    {
+      "kod": "ИП1", "nazvanie": "Кухня прямая с высоким пеналом", "pom": { "n": "3", "imya": "Кухня" }, "kol": 1,
+      "status": "v_rabote", "srok": "2026-10-14", "srok_tochno": false,
+      "razreshenie": { "kto": "Юлия Евгеньевна", "kogda": "2026-09-15" },
+      "gabarity": { "sh": 3600, "v": 2400, "g": 600, "polok": 4 },
+      "vizualizacii": ["Вид от окна", "Вид от входа"],
+      "pilot": { "kogda": "2026-08-20", "listov": 4 },
+      "dokumenty": [
+        { "vid": "деталировка", "imya": "ИП1_Кухня_деталировка_v3.pdf", "kogda": "2026-09-16", "kto": "Ольга", "listov": 6, "novyj": true },
+        { "vid": "сборка", "imya": "ИП1_Кухня_сборка.pdf", "kogda": "2026-09-16", "kto": "Ольга", "listov": 4 },
+        { "vid": "присадки и ЧПУ", "imya": "ИП1_присадки.dwg", "kogda": "2026-09-16", "kto": "Ольга", "listov": 3 },
+        { "vid": "фурнитура", "imya": "ИП1_фурнитура.pdf", "kogda": "2026-09-16", "kto": "Ольга", "listov": 2 },
+        { "vid": "согласованный пилот", "imya": "ИП1_пилот_согласовано_20.08.pdf", "kogda": "2026-08-20", "kto": "Ольга", "listov": 4, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+        { "chto": "Фасады", "znach": "МДФ под эмаль RAL 9010, матовая 20 %" },
+        { "chto": "Кромка", "znach": "ABS 2 мм в цвет корпуса" },
+        { "chto": "Столешница", "znach": "Кварц Caesarstone 5100, 20 мм", "obrazec": true },
+        { "chto": "Ручки", "znach": "Профиль-ручка врезная, чёрный матовый" }
+      ],
+      "furnitura": [
+        { "art": "BLUM 71B3550", "chto": "Петля Clip top Blumotion 110°", "kol": 14, "kto": "наша закупка", "est": true },
+        { "art": "BLUM 560H5000B", "chto": "Направляющая Tandem полного выдвижения 500 мм", "kol": 8, "kto": "наша закупка", "est": true },
+        { "art": "BLUM 20L3200", "chto": "Подъёмник Aventos HL", "kol": 2, "kto": "наша закупка", "est": false },
+        { "art": "HAFELE 833.74.020", "chto": "Светодиодный профиль, 2 м", "kol": 3, "kto": "наша закупка", "est": true }
+      ],
+      "prilegayushchie": [
+        { "chto": "Мойка Blanco Subline 500-U", "kto": "заказчик", "est": false, "kogda": "ждём к 01.10" },
+        { "chto": "Смеситель Grohe Minta", "kto": "заказчик", "est": true },
+        { "chto": "Варочная панель Bosch PIE631FB1E", "kto": "заказчик", "est": true },
+        { "chto": "Холодильник Liebherr, встроенный 178 см", "kto": "заказчик", "est": false, "kogda": "ждём к 05.10" },
+        { "chto": "Посудомоечная машина 45 см", "kto": "заказчик", "est": true }
+      ],
+      "zamery": [{ "imya": "Обмерный лист, кухня", "kogda": "2026-08-02", "kto": "Игорь Михайлович" }],
+      "ispolnitel": "Басов Николай", "vzyal": "2026-09-18", "gotovo": null,
+      "meshaet": [{ "tekst": "Ждём подъёмники Aventos — обещали 25.09", "kogda": "2026-09-19" }],
+      "net_materialov": [],
+      "foto": []
+    },
+    {
+      "kod": "ИП2", "nazvanie": "Шкаф-купе в прихожей", "pom": { "n": "1", "imya": "Прихожая" }, "kol": 1,
+      "status": "razresheno", "srok": "2026-10-20", "srok_tochno": false,
+      "razreshenie": { "kto": "Юлия Евгеньевна", "kogda": "2026-09-20" },
+      "gabarity": { "sh": 2400, "v": 2780, "g": 600, "polok": 5 },
+      "vizualizacii": ["Прихожая, вид от двери"],
+      "pilot": { "kogda": "2026-08-28", "listov": 2 },
+      "dokumenty": [
+        { "vid": "деталировка", "imya": "ИП2_Шкаф_деталировка.pdf", "kogda": "2026-09-19", "kto": "Ольга", "listov": 4, "novyj": true },
+        { "vid": "сборка", "imya": "ИП2_Шкаф_сборка.pdf", "kogda": "2026-09-19", "kto": "Ольга", "listov": 3 },
+        { "vid": "фурнитура", "imya": "ИП2_фурнитура.pdf", "kogda": "2026-09-19", "kto": "Ольга", "listov": 1 },
+        { "vid": "согласованный пилот", "imya": "ИП2_пилот_согласовано_28.08.pdf", "kogda": "2026-08-28", "kto": "Ольга", "listov": 2, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+        { "chto": "Фасады", "znach": "Зеркало бронза в профиле, чёрный матовый" },
+        { "chto": "Кромка", "znach": "ABS 2 мм в цвет корпуса" },
+        { "chto": "Подсветка", "znach": "Лента 4000K, датчик движения" }
+      ],
+      "furnitura": [
+        { "art": "RAUMPLUS S1200", "chto": "Раздвижная система, 2 двери", "kol": 1, "kto": "наша закупка", "est": false, "kogda": "заказано 18.09" },
+        { "art": "HAFELE 807.94.320", "chto": "Штанга с доводчиком, 900 мм", "kol": 2, "kto": "наша закупка", "est": true }
+      ],
+      "prilegayushchie": [],
+      "zamery": [{ "imya": "Обмерный лист, прихожая", "kogda": "2026-08-02", "kto": "Игорь Михайлович" }],
+      "ispolnitel": "", "vzyal": null, "gotovo": null,
+      "meshaet": [], "net_materialov": [], "foto": []
+    },
+    {
+      "kod": "ИП3", "nazvanie": "Гардеробная с открытыми полками", "pom": { "n": "6", "imya": "Гардеробная" }, "kol": 1,
+      "status": "zhdet_zapuska", "srok": "2026-10-30", "srok_tochno": false,
+      "razreshenie": null,
+      "gabarity": { "sh": 3000, "v": 2600, "g": 550, "polok": 6 },
+      "vizualizacii": ["Гардеробная, общий вид"],
+      "pilot": { "kogda": "2026-09-05", "listov": 3 },
+      "dokumenty": [
+        { "vid": "деталировка", "imya": "ИП3_Гардеробная_деталировка.pdf", "kogda": "2026-09-21", "kto": "Ольга", "listov": 5, "novyj": true },
+        { "vid": "сборка", "imya": "ИП3_Гардеробная_сборка.pdf", "kogda": "2026-09-21", "kto": "Ольга", "listov": 3 },
+        { "vid": "согласованный пилот", "imya": "ИП3_пилот_согласовано_05.09.pdf", "kogda": "2026-09-05", "kto": "Ольга", "listov": 3, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+        { "chto": "Фасады", "znach": "Шпон вишни, лак матовый", "obrazec": true },
+        { "chto": "Кромка", "znach": "Шпон в цвет фасада" }
+      ],
+      "furnitura": [
+        { "art": "BLUM 560H4500B", "chto": "Направляющая Tandem 450 мм", "kol": 6, "kto": "наша закупка", "est": true },
+        { "art": "HAFELE 805.05.110", "chto": "Полкодержатель скрытый", "kol": 40, "kto": "наша закупка", "est": true }
+      ],
+      "prilegayushchie": [],
+      "zamery": [],
+      "ispolnitel": "", "vzyal": null, "gotovo": null,
+      "meshaet": [{ "tekst": "Нет разрешения в работу: ждём ответ заказчика по цвету шпона", "kogda": "2026-09-21" }],
+      "net_materialov": ["Шпон вишни — на объект нужно ещё 4 м²"],
+      "foto": []
+    },
+    {
+      "kod": "ИП4", "nazvanie": "Стеллаж в детской", "pom": { "n": "5", "imya": "Детская" }, "kol": 1,
+      "status": "net_chertezha", "srok": "2026-11-05", "srok_tochno": false,
+      "razreshenie": null,
+      "gabarity": { "sh": 1800, "v": 2200, "g": 400, "polok": 6 },
+      "vizualizacii": ["Детская, вид от окна"],
+      "pilot": { "kogda": "2026-09-12", "listov": 2 },
+      "dokumenty": [
+        { "vid": "согласованный пилот", "imya": "ИП4_пилот_согласовано_12.09.pdf", "kogda": "2026-09-12", "kto": "Ольга", "listov": 2, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+        { "chto": "Фасады", "znach": "Эмаль RAL 9010" }
+      ],
+      "furnitura": [],
+      "prilegayushchie": [],
+      "zamery": [],
+      "ispolnitel": "", "vzyal": null, "gotovo": null,
+      "meshaet": [{ "tekst": "Рабочего чертежа нет — Юлия Евгеньевна ждёт от конструктора", "kogda": "2026-09-20" }],
+      "net_materialov": [], "foto": []
+    },
+    {
+      "kod": "ИП5", "nazvanie": "Тумба под телевизор", "pom": { "n": "2", "imya": "Гостиная" }, "kol": 1,
+      "status": "gotovo", "srok": "2026-09-19", "srok_tochno": true,
+      "razreshenie": { "kto": "Юлия Евгеньевна", "kogda": "2026-08-30" },
+      "gabarity": { "sh": 2000, "v": 450, "g": 450, "polok": 1 },
+      "vizualizacii": ["Гостиная, стена с ТВ"],
+      "pilot": { "kogda": "2026-08-18", "listov": 2 },
+      "dokumenty": [
+        { "vid": "деталировка", "imya": "ИП5_Тумба_деталировка.pdf", "kogda": "2026-09-01", "kto": "Ольга", "listov": 3 },
+        { "vid": "сборка", "imya": "ИП5_Тумба_сборка.pdf", "kogda": "2026-09-01", "kto": "Ольга", "listov": 2 },
+        { "vid": "согласованный пилот", "imya": "ИП5_пилот_согласовано_18.08.pdf", "kogda": "2026-08-18", "kto": "Ольга", "listov": 2, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+        { "chto": "Фасады", "znach": "Шпон вишни, лак матовый" }
+      ],
+      "furnitura": [
+        { "art": "BLUM 760H5000S", "chto": "Legrabox 500 мм", "kol": 2, "kto": "наша закупка", "est": true }
+      ],
+      "prilegayushchie": [{ "chto": "Телевизор 65\", кронштейн", "kto": "заказчик", "est": true }],
+      "zamery": [],
+      "ispolnitel": "Ветров Сергей", "vzyal": "2026-09-08", "gotovo": "2026-09-19",
+      "meshaet": [], "net_materialov": [],
+      "foto": [{ "imya": "Тумба, собрана в цехе", "kogda": "2026-09-19", "kto": "Мансур" }]
+    },
+    {
+      "kod": "ИП6", "nazvanie": "Шкаф в мастер-спальне", "pom": { "n": "4", "imya": "Мастер-спальня" }, "kol": 1,
+      "status": "v_rabote", "srok": "2026-10-24", "srok_tochno": false,
+      "razreshenie": { "kto": "Юлия Евгеньевна", "kogda": "2026-09-10" },
+      "gabarity": { "sh": 2800, "v": 2600, "g": 600, "polok": 5 },
+      "vizualizacii": ["Спальня, вид от кровати", "Спальня, вид от окна"],
+      "pilot": { "kogda": "2026-08-25", "listov": 3 },
+      "dokumenty": [
+        { "vid": "деталировка", "imya": "ИП6_Шкаф_деталировка_v2.pdf", "kogda": "2026-09-11", "kto": "Ольга", "listov": 5 },
+        { "vid": "сборка", "imya": "ИП6_Шкаф_сборка.pdf", "kogda": "2026-09-11", "kto": "Ольга", "listov": 3 },
+        { "vid": "согласованный пилот", "imya": "ИП6_пилот_согласовано_25.08.pdf", "kogda": "2026-08-25", "kto": "Ольга", "listov": 3, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "ЛДСП Egger H1180 ST37, 18 мм" },
+        { "chto": "Фасады", "znach": "МДФ под эмаль RAL 9010" },
+        { "chto": "Кромка", "znach": "ABS 2 мм в цвет корпуса" }
+      ],
+      "furnitura": [
+        { "art": "BLUM 71B3550", "chto": "Петля Clip top Blumotion 110°", "kol": 10, "kto": "наша закупка", "est": true }
+      ],
+      "prilegayushchie": [],
+      "zamery": [{ "imya": "Обмерный лист, спальня", "kogda": "2026-08-02", "kto": "Игорь Михайлович" }],
+      "ispolnitel": "Ильин Денис", "vzyal": "2026-09-15", "gotovo": null,
+      "meshaet": [], "net_materialov": [], "foto": []
+    },
+    {
+      "kod": "ИП7", "nazvanie": "Портал вокруг входа в гардеробную", "pom": { "n": "4", "imya": "Мастер-спальня" }, "kol": 1,
+      "status": "net_dannyh", "srok": "", "srok_tochno": false,
+      "razreshenie": null,
+      "gabarity": null,
+      "vizualizacii": [],
+      "pilot": null,
+      "dokumenty": [],
+      "materialy": [], "furnitura": [], "prilegayushchie": [], "zamery": [],
+      "ispolnitel": "", "vzyal": null, "gotovo": null,
+      "meshaet": [{ "tekst": "По изделию нет ничего: ни пилота, ни чертежа, ни материалов", "kogda": "2026-09-22" }],
+      "net_materialov": [], "foto": []
+    },
+    {
+      "kod": "ИП8", "nazvanie": "Тумбы в санузле", "pom": { "n": "7", "imya": "Санузел" }, "kol": 2,
+      "status": "razresheno", "srok": "2026-10-18", "srok_tochno": false,
+      "razreshenie": { "kto": "Юлия Евгеньевна", "kogda": "2026-09-21" },
+      "gabarity": { "sh": 900, "v": 600, "g": 450, "polok": 2 },
+      "vizualizacii": ["Санузел, вид от двери"],
+      "pilot": { "kogda": "2026-09-02", "listov": 2 },
+      "dokumenty": [
+        { "vid": "деталировка", "imya": "ИП8_Тумбы_деталировка.pdf", "kogda": "2026-09-21", "kto": "Ольга", "listov": 3, "novyj": true },
+        { "vid": "согласованный пилот", "imya": "ИП8_пилот_согласовано_02.09.pdf", "kogda": "2026-09-02", "kto": "Ольга", "listov": 2, "pilot": true }
+      ],
+      "materialy": [
+        { "chto": "Корпус", "znach": "Влагостойкая ЛДСП, 18 мм" },
+        { "chto": "Фасады", "znach": "Эмаль RAL 7016, матовая" }
+      ],
+      "furnitura": [
+        { "art": "BLUM 760H4000S", "chto": "Legrabox 400 мм", "kol": 4, "kto": "наша закупка", "est": true }
+      ],
+      "prilegayushchie": [
+        { "chto": "Раковина Duravit ME by Starck 830 мм", "kto": "заказчик", "est": false, "kogda": "ждём к 08.10" },
+        { "chto": "Смеситель настенный", "kto": "заказчик", "est": false }
+      ],
+      "zamery": [],
+      "ispolnitel": "", "vzyal": null, "gotovo": null,
+      "meshaet": [], "net_materialov": [], "foto": []
+    }
+  ]
+}

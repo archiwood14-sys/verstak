@@ -1000,6 +1000,39 @@
   .pr-chasy:disabled { opacity:.35; }
   .pr-zn { position:fixed; inset:0; background:rgba(20,16,12,.55); z-index:120; display:grid; place-items:center; padding:16px; }
   .pr-zn-okno { background:var(--surface); border-radius:18px; padding:22px; max-width:440px; display:flex; flex-direction:column; gap:12px; }
+  /* демонстрация устройства производства (22.09.2026) — выдуманные данные, ничего наружу */
+  .dm-plashka { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+                border:1px dashed var(--accent); border-radius:14px; padding:10px 14px; background:var(--surface-2);
+                font-size: calc(13.5px * var(--shrift)); }
+  .dm-spisok { display:flex; flex-direction:column; gap:8px; }
+  .dm-stroka { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; width:100%;
+               border:1px solid var(--line); border-radius:14px; padding:12px 14px; background:var(--surface);
+               text-align:left; font:inherit; color:inherit; cursor:pointer; }
+  .dm-stroka:hover { border-color:var(--accent); }
+  .dm-stroka-levo { display:flex; flex-direction:column; gap:3px; min-width:200px; flex:1; }
+  .dm-stroka-levo small { color:var(--muted); font-size: calc(12.5px * var(--shrift)); }
+  .dm-chipy { display:flex; gap:8px; flex-wrap:wrap; }
+  .dm-chip { border:1px solid var(--line); background:var(--surface); border-radius:999px; padding:8px 14px; cursor:pointer;
+             font:inherit; font-size: calc(13px * var(--shrift)); color:inherit; }
+  .dm-chip.tek { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .dm-pary { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(250px,100%),1fr)); gap:10px; }
+  .dm-para { border:1px solid var(--line); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:2px;
+             font-size: calc(14.5px * var(--shrift)); }
+  .dm-para span { color:var(--muted); font-size: calc(12.5px * var(--shrift)); }
+  .dm-3d { width:100%; aspect-ratio:4/3; max-height:420px; border:1px solid var(--line); border-radius:14px;
+           background:var(--surface-2); touch-action:none; display:block; cursor:grab; }
+  .dm-smotr { position:fixed; inset:0; background:rgba(20,16,12,.78); z-index:130; display:flex; flex-direction:column; gap:10px; padding:14px; }
+  .dm-smotr canvas { flex:1; min-height:0; width:100%; background:#fff; border-radius:12px; }
+  .dm-smotr-verh { display:flex; gap:10px; align-items:center; justify-content:space-between; color:#fff; flex-wrap:wrap; }
+  .dm-galka { display:flex; gap:10px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size: calc(14.5px * var(--shrift)); }
+  .dm-galka input { width:22px; height:22px; flex:none; }
+  .dm-bolshaya { width:100%; min-height:54px; font-size: calc(16px * var(--shrift)); }
+  .dm-posesh-str { display:flex; gap:10px; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); padding:8px 0; }
+  .dm-posesh-str.net { opacity:.45; }
+  .dm-imya { flex:1; min-width:120px; text-align:left; background:none; border:0; font:inherit; color:inherit; cursor:pointer; padding:8px 0; }
+  .dm-chasy { display:inline-flex; align-items:center; gap:8px; }
+  .dm-chasy button { width:40px; height:40px; border:1px solid var(--line); background:var(--surface); border-radius:10px; font:inherit; font-size:18px; cursor:pointer; color:inherit; }
+  .dm-chasy b { min-width:34px; text-align:center; }
 </style>
 
 <div class="gate-backdrop hidden" id="gateBackdrop">
@@ -1034,6 +1067,7 @@
     <button class="sidebar-link sb-punkt" id="sbMoiOtvety" style="--i:1">Мои ответы</button>
     <button class="sidebar-link sb-punkt" id="sbIgor" style="--i:2" hidden>Пространство Игоря</button>
     <button class="sidebar-link sb-punkt" id="sbProizv" style="--i:2" hidden>Пространство производства</button>
+    <button class="sidebar-link sb-punkt" id="sbDemo" style="--i:2" hidden>Демонстрация производства</button>
     <button class="sidebar-link sb-punkt" id="sbChat" style="--i:2">Мессенджер <span class="ch-menu-schet" id="chMenuSchet" hidden></span></button>
     <div class="sb-razdel sb-punkt" style="--i:3"><span>Объекты</span><i></i></div>
     <div id="sidebarObjects" class="sidebar-sub"></div>
@@ -1317,6 +1351,7 @@ function po_opisaniyu(op) {
   if (op.v === "igor") return () => renderIgor();
   if (op.v === "dok") return () => renderDokumenty(op.obj);
   if (op.v === "pr") return () => renderPr(op.e, op.k);
+  if (op.v === "dm") return () => renderDemo(op.e, op.k);
   return null;
 }
 
@@ -5130,6 +5165,7 @@ function openMenu() {
   let imya = ""; try { imya = localStorage.getItem("verstak_role_name") || ""; } catch (e) {}
   document.getElementById("sbIgor").hidden = imya !== "Мансур";
   document.getElementById("sbProizv").hidden = !(prMozhet() && !prEsliOleg());
+  document.getElementById("sbDemo").hidden = !prMozhet();
   uvObnovitKnopku();
   document.querySelectorAll(".sidebar-obj-link").forEach(b =>
     b.classList.toggle("active", STATE.tekushchiy && STATE.tekushchiy.v === "dash" && b.dataset.obj === STATE.activeObj));
@@ -5159,6 +5195,7 @@ document.getElementById("sbMoiOtvety").addEventListener("click", () => nav(() =>
 document.getElementById("sbChat").addEventListener("click", () => nav(() => renderChat("")));
 document.getElementById("sbIgor").addEventListener("click", () => nav(() => renderIgor()));
 document.getElementById("sbProizv").addEventListener("click", () => nav(() => renderPr("home")));
+document.getElementById("sbDemo").addEventListener("click", () => nav(() => renderDemo("home")));
 document.getElementById("sbUved").addEventListener("click", () => uvVklyuchit());
 // Выйти из профиля — у всех: в меню и в шапке мессенджера (Мансур, 11.09.2026). Стираются
 // вход, личный ключ мессенджера и ключ рабочего места — следующий человек на этом устройстве
@@ -5268,6 +5305,10 @@ function prGlavnaya(app) {
           <button class="btn ghost" data-pr-izd="${x.ki}">Посмотреть</button></div>`).join("")
         : `<p class="pr-tusklo">Новых чертежей нет — всё, что пришло за последние дни, вы уже открыли.</p>`}</section>
 
+    <div class="dm-plashka"><span>Готовится новое устройство этого пространства: изделия со состоянием, материалы, отметки «взял — готово».
+      Посмотреть можно на выдуманном примере — там ничего настоящего и ничего никуда не уходит.</span>
+      <button class="btn ghost" id="prKDemo">Открыть демонстрацию</button></div>
+
     <section class="pr-blok-bez"><h2>${escapeHtml(D.obekt)}</h2>
       <div class="pr-setka pr-plitki">
         <button class="pr-plitka" data-pr="obekt"><b>${D.kartochki.length}</b><span>Изделия и чертежи</span></button>
@@ -5277,6 +5318,8 @@ function prGlavnaya(app) {
       </div></section>
   </div>`;
   prPrivyazat(app);
+  const kDemo = document.getElementById("prKDemo");
+  if (kDemo) kDemo.addEventListener("click", () => nav(() => renderDemo("home")));
   if (PR.posesh === null) prZagruzitPosesh().then(() => { if (STATE.tekushchiy && STATE.tekushchiy.v === "pr" && STATE.tekushchiy.e === "home") prGlavnaya(app); });
   prZnakomstvo();
 }
@@ -5491,6 +5534,548 @@ function prZnakomstvo() {
     const p = document.getElementById("prZnPropustit"); if (p) p.onclick = () => { n = SHAGI.length; pokazat(); };
   };
   pokazat();
+}
+
+/* ---------------- ДЕМОНСТРАЦИЯ устройства производства (22.09.2026) ----------------
+   Мансур: «давай для примера подготовим всё, что я написал, только пока у нас будут
+   выдуманные факты, для демонстрации, чтобы выявить неудобства… только чтобы оттуда
+   из выдуманных данных никуда ничего не ушло и ничего у нас не пострадало от них».
+   Поэтому здесь всё нарочно отрезано от рабочей системы:
+     • данные — demo/proizvodstvo.json, в нём нет ни одного настоящего изделия, человека и срока;
+     • ни одной отправки наружу: ни в реестр, ни в мессенджер, ни в Телеграм (fetch тут один —
+       за самим файлом демонстрации);
+     • всё нажатое живёт в памяти открытой страницы и пропадает при обновлении;
+     • чертежи и объёмная модель рисуются прямо в окне, настоящих файлов демонстрация не трогает.
+   Разделы — по разбору Мансура: проект → изделие → работа → обратно к нам. */
+const DM_FAJL = "demo/proizvodstvo.json";
+const DM = { D: null, vkl: "vid", posesh: null, filtr: "vse", kuda: "yuliya" };
+const DM_SOST = {
+  net_dannyh:    { t: "нет данных", k: "zhd" },
+  net_chertezha: { t: "нет рабочего чертежа", k: "zhd" },
+  zhdet_zapuska: { t: "ждёт разрешения", k: "nov" },
+  razresheno:    { t: "разрешено — можно делать", k: "rab" },
+  v_rabote:      { t: "в работе", k: "rab" },
+  gotovo:        { t: "готово", k: "ok" }
+};
+const DM_FILTRY = [["vse", "Все"], ["v_rabote", "В работе"], ["razresheno", "Можно делать"],
+  ["zhdet_zapuska", "Ждут разрешения"], ["net", "Чего-то не хватает"], ["gotovo", "Готовы"]];
+
+async function dmZagruzit() {
+  if (DM.D) return;
+  DM.D = await (await fetch(DM_FAJL + "?" + Date.now())).json();
+  DM.D.kartochki.forEach(k => {
+    k.net_materialov = k.net_materialov || []; k.meshaet = k.meshaet || []; k.foto = k.foto || [];
+    k.dokumenty = k.dokumenty || []; k.materialy = k.materialy || []; k.furnitura = k.furnitura || [];
+    k.prilegayushchie = k.prilegayushchie || []; k.zamery = k.zamery || []; k.vizualizacii = k.vizualizacii || [];
+  });
+}
+function dmSost(k) { return DM_SOST[k.status] || DM_SOST.net_dannyh; }
+function dmPom(k) { return k.pom && k.pom.imya ? (k.pom.n ? "Помещение " + k.pom.n + " · " : "") + k.pom.imya : ""; }
+function dmNovoe() {
+  const out = [];
+  DM.D.kartochki.forEach((k, ki) => {
+    k.dokumenty.filter(d => d.novyj).forEach(d => out.push({ ki, k, chto: "новый чертёж: " + d.vid, kogda: d.kogda }));
+    if (k.razreshenie && k.razreshenie.kogda >= "2026-09-19") out.push({ ki, k, chto: "разрешено в работу", kogda: k.razreshenie.kogda });
+  });
+  return out.sort((a, b) => (a.kogda < b.kogda ? 1 : -1));
+}
+function dmPomehi() {
+  const out = [];
+  DM.D.kartochki.forEach((k, ki) => k.meshaet.forEach(m => out.push({ ki, k, m })));
+  return out;
+}
+function dmPlashka() {
+  return `<div class="dm-plashka"><span><b>Демонстрация.</b> Все данные здесь выдуманы — изделия, люди, сроки.
+    Ничего отсюда никуда не уходит: ни в реестр, ни заказчику, ни в цех.</span>
+    <button class="btn ghost" data-dm="vyjti">Выйти из демонстрации</button></div>`;
+}
+
+async function renderDemo(ekran, ki) {
+  ekran = ekran || "home";
+  STATE.tekushchiy = { v: "dm", e: ekran, k: ki };
+  const app = document.getElementById("app");
+  if (!DM.D) app.innerHTML = `<div class="empty-hint">Открываю демонстрацию…</div>`;
+  try { await dmZagruzit(); } catch (e) {
+    app.innerHTML = `<div class="empty-hint">Демонстрация не открылась: ${escapeHtml(String(e && e.message || e))}</div>`; return;
+  }
+  if (!STATE.tekushchiy || STATE.tekushchiy.v !== "dm") return;
+  if (ekran === "obekt") return dmObekt(app);
+  if (ekran === "izd") return dmIzdelie(app, +ki || 0);
+  if (ekran === "posesh") return dmPosesh(app);
+  if (ekran === "proekt") return dmProekt(app);
+  if (ekran === "materialy") return dmMaterialyObekta(app);
+  return dmGlavnaya(app);
+}
+
+/* ---- 1. Мой день: посещаемость, что в работе, что нового, что мешает ---- */
+function dmGlavnaya(app) {
+  const D = DM.D, nov = dmNovoe(), pom = dmPomehi();
+  const vRabote = D.kartochki.map((k, ki) => ({ k, ki })).filter(x => x.k.status === "v_rabote");
+  const sP = DM.posesh && DM.posesh.d === D.segodnya;
+  const bylo = sP ? DM.posesh.l.filter(x => x.b).length : 0;
+  const chasov = sP ? DM.posesh.l.reduce((n, x) => n + (+x.h || 0), 0) : 0;
+  app.innerHTML = `<div class="pr">
+    ${dmPlashka()}
+    <div class="pr-zag"><h1>Добрый день, Олег</h1>
+      <p class="pr-tusklo">${rmDen(D.segodnya)} · ${escapeHtml(D.obekt.nazvanie)}</p></div>
+
+    <section class="blk pr-blok pr-vazhno"><div class="pr-ryad"><h2>Посещаемость за сегодня</h2>
+      <span class="pr-metka ${sP ? "ok" : "nov"}">${sP ? "заполнено" : "не заполнено"}</span></div>
+      <p class="pr-tusklo">${sP ? `На работе ${bylo} из ${DM.posesh.l.length} · часов ${chasov}`
+        : `Вчера было ${D.vchera.byli} человек, ${D.vchera.chasov} часов. Отметить сегодняшний день — минута.`}</p>
+      <div class="pr-ryad">
+        <button class="btn primary" data-dm="posesh">${sP ? "Открыть и поправить" : "Отметить посещаемость"}</button>
+        ${sP ? "" : `<button class="btn ghost" data-dm="posesh-bystro">Все на работе по 8 часов</button>`}</div></section>
+
+    <section class="blk pr-blok"><div class="pr-ryad"><h2>Сегодня в работе</h2>
+      <span class="pr-metka rab">${vRabote.length}</span></div>
+      ${vRabote.length ? vRabote.map(x => `<div class="pr-novoe"><div>
+          <b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
+          <div class="pr-tusklo">${x.k.ispolnitel ? "делает " + escapeHtml(x.k.ispolnitel) + " · " : ""}взяли ${rmDen(x.k.vzyal)}${x.k.srok ? " · срок " + rmDen(x.k.srok) : ""}</div></div>
+          <div class="pr-ryad"><button class="btn primary" data-dm-gotovo="${x.ki}">Готово</button>
+          <button class="btn ghost" data-dm-izd="${x.ki}">Открыть</button></div></div>`).join("")
+        : `<p class="pr-tusklo">Сейчас в работе ничего нет. Откройте изделия и возьмите то, что разрешено.</p>`}</section>
+
+    <section class="blk pr-blok"><div class="pr-ryad"><h2>Что нового</h2>
+      ${nov.length ? `<span class="pr-metka nov">${nov.length}</span>` : ""}</div>
+      ${nov.length ? nov.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
+          <div class="pr-tusklo">${escapeHtml(x.chto)}, ${rmDen(x.kogda)}</div></div>
+          <button class="btn ghost" data-dm-izd="${x.ki}">Посмотреть</button></div>`).join("")
+        : `<p class="pr-tusklo">Новых чертежей и разрешений нет.</p>`}</section>
+
+    ${pom.length ? `<section class="blk pr-blok"><div class="pr-ryad"><h2>Что мешает</h2>
+      <span class="pr-metka nov">${pom.length}</span></div>
+      ${pom.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
+        <div class="pr-tusklo">${escapeHtml(x.m.tekst)} · ${rmDen(x.m.kogda)}</div></div>
+        <button class="btn ghost" data-dm-izd="${x.ki}">Открыть</button></div>`).join("")}</section>` : ""}
+
+    <section class="pr-blok-bez"><h2>${escapeHtml(D.obekt.nazvanie)}</h2>
+      <div class="pr-setka pr-plitki">
+        <button class="pr-plitka" data-dm="obekt"><b>${D.kartochki.length}</b><span>Изделия: состояние и чертежи</span></button>
+        <button class="pr-plitka" data-dm="proekt"><b>${D.obekt.sroki.length}</b><span>Сроки и условия монтажа</span></button>
+        <button class="pr-plitka" data-dm="materialy"><b>${D.obekt.materialy.length}</b><span>Материалы объекта, расход и остатки</span></button>
+        <button class="pr-plitka" data-dm="chat"><b>·</b><span>Написать Юлии Евгеньевне или Игорю Михайловичу</span></button>
+      </div></section>
+  </div>`;
+  dmPrivyazat(app);
+}
+
+/* ---- 2. Проект: сроки и условия монтажа ---- */
+function dmProekt(app) {
+  const D = DM.D;
+  app.innerHTML = `<div class="pr">
+    ${dmPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Сроки и монтаж</h1>
+      <p class="pr-tusklo">Сроки плавают — здесь всегда последнее, что мы назначили. Поменялась дата — поменялась и тут.</p></div>
+    <section class="blk pr-blok"><h2>Ключевые даты</h2>
+      <div class="dm-spisok">${D.obekt.sroki.map(s => `<div class="dm-stroka" style="cursor:default">
+        <div class="dm-stroka-levo"><b>${escapeHtml(s.chto)}</b><small>назначил ${escapeHtml(s.kto)}</small></div>
+        <div class="pr-ryad"><b>${rmDen(s.kogda)}</b>
+          <span class="pr-metka ${s.tochno ? "ok" : "zhd"}">${s.tochno ? "точная дата" : "ориентир"}</span></div></div>`).join("")}</div></section>
+    <section class="blk pr-blok"><h2>Условия монтажа</h2>
+      <p class="pr-tusklo">Доступ, лифт, этаж и готовность помещений — по объекту и по комнатам.</p>
+      <div class="dm-spisok">${D.obekt.montazh.map(m => `<div class="dm-stroka" style="cursor:default">
+        <div class="dm-stroka-levo"><b>${escapeHtml(m.gde)}</b><small>${escapeHtml(m.chto)}</small></div></div>`).join("")}</div></section>
+  </div>`;
+  dmPrivyazat(app);
+}
+
+/* ---- 3. Материалы объекта, расход и остатки ---- */
+function dmMaterialyObekta(app) {
+  const D = DM.D;
+  const netu = D.kartochki.flatMap((k, ki) => k.net_materialov.map(t => ({ ki, k, t })));
+  app.innerHTML = `<div class="pr">
+    ${dmPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Материалы и остатки</h1>
+      <p class="pr-tusklo">Общая отделка объекта и что сейчас лежит в цехе.</p></div>
+    <section class="blk pr-blok"><h2>Материалы и отделка объекта</h2>
+      <div class="dm-pary">${D.obekt.materialy.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}</span>${escapeHtml(m.znach)}</div>`).join("")}</div></section>
+    <section class="blk pr-blok"><h2>Расход и остатки</h2>
+      <div class="dm-pary">${D.obekt.ostatki.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>
+      <p class="pr-tusklo">Остатки ведём и по объекту, и по изделию: в изделии отмечаете, чего не хватает, — сюда попадает общая нехватка.</p></section>
+    <section class="blk pr-blok"><h2>Чего не хватает по изделиям</h2>
+      ${netu.length ? `<div class="dm-spisok">${netu.map(x => `<button class="dm-stroka" data-dm-izd="${x.ki}">
+        <div class="dm-stroka-levo"><b>${escapeHtml(x.k.kod)} ${escapeHtml(x.k.nazvanie)}</b><small>${escapeHtml(x.t)}</small></div>
+        <span class="pr-metka nov">нет</span></button>`).join("")}</div>`
+        : `<p class="pr-tusklo">Ничего не отмечено. Отмечается в изделии, вкладка «Работа».</p>`}</section>
+  </div>`;
+  dmPrivyazat(app);
+}
+
+/* ---- 4. Изделия объекта: простой список со состоянием ---- */
+function dmObekt(app) {
+  const D = DM.D;
+  const podhodit = k => DM.filtr === "vse" ? true
+    : DM.filtr === "net" ? (k.status === "net_dannyh" || k.status === "net_chertezha" || k.net_materialov.length || k.meshaet.length)
+    : k.status === DM.filtr;
+  const spisok = D.kartochki.map((k, ki) => ({ k, ki })).filter(x => podhodit(x.k));
+  app.innerHTML = `<div class="pr">
+    ${dmPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Изделия</h1>
+      <p class="pr-tusklo">Состав объекта одним списком: сразу видно, в каком состоянии изделие и чего ему не хватает.</p></div>
+    <div class="dm-chipy">${DM_FILTRY.map(f => `<button class="dm-chip${DM.filtr === f[0] ? " tek" : ""}" data-dm-filtr="${f[0]}">${f[1]}</button>`).join("")}</div>
+    <section class="blk pr-blok"><div class="dm-spisok">
+      ${spisok.length ? spisok.map(x => {
+        const s = dmSost(x.k), pometki = [];
+        if (x.k.dokumenty.filter(d => !d.pilot).length) pometki.push("чертежей " + x.k.dokumenty.filter(d => !d.pilot).length);
+        if (x.k.pilot) pometki.push("вид есть");
+        if (x.k.ispolnitel) pometki.push("делает " + x.k.ispolnitel);
+        if (x.k.net_materialov.length) pometki.push("нет материалов");
+        if (x.k.kol > 1) pometki.push(x.k.kol + " шт.");
+        return `<button class="dm-stroka" data-dm-izd="${x.ki}">
+          <div class="dm-stroka-levo"><b>${escapeHtml(x.k.kod)} · ${escapeHtml(x.k.nazvanie)}</b>
+            <small>${escapeHtml([dmPom(x.k)].concat(pometki).filter(Boolean).join(" · "))}</small></div>
+          <div class="pr-ryad"><span class="pr-metka ${s.k}">${s.t}</span>
+            ${x.k.srok ? `<small class="pr-tusklo">срок ${rmDen(x.k.srok)}</small>` : ""}</div></button>`;
+      }).join("") : `<p class="pr-tusklo">В этом состоянии изделий нет.</p>`}
+    </div></section>
+  </div>`;
+  dmPrivyazat(app);
+}
+
+/* ---- 5. Изделие: как выглядит · чертежи · материалы · работа · вопрос ---- */
+function dmIzdelie(app, ki) {
+  const k = DM.D.kartochki[ki];
+  if (!k) return dmObekt(app);
+  const s = dmSost(k);
+  const chertezhi = k.dokumenty.filter(d => !d.pilot);
+  const vkladki = [["vid", "Как выглядит", (k.gabarity ? 1 : 0) + k.vizualizacii.length],
+    ["chert", "Чертежи", chertezhi.length],
+    ["mat", "Материалы и фурнитура", k.materialy.length + k.furnitura.length + k.prilegayushchie.length],
+    ["rab", "Работа", k.meshaet.length],
+    ["vopr", "Вопрос", 0]];
+  if (!vkladki.some(v => v[0] === DM.vkl)) DM.vkl = "vid";
+  let telo = "";
+  if (DM.vkl === "vid") telo = dmVidHtml(k, ki);
+  else if (DM.vkl === "chert") telo = dmChertezhiHtml(k, ki);
+  else if (DM.vkl === "mat") telo = dmMaterialyHtml(k);
+  else if (DM.vkl === "rab") telo = dmRabotaHtml(k, ki);
+  else telo = dmVoprosHtml(k);
+  app.innerHTML = `<div class="pr">
+    ${dmPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(DM.D.obekt.nazvanie)}${dmPom(k) ? " · " + escapeHtml(dmPom(k)) : ""}</span>
+      <h1>${escapeHtml(k.kod)} · ${escapeHtml(k.nazvanie)}${k.kol > 1 ? " — " + k.kol + " шт." : ""}</h1>
+      <div class="pr-ryad"><span class="pr-metka ${s.k}">${s.t}</span>
+        ${k.srok ? `<span class="pr-tusklo">срок ${rmDen(k.srok)}${k.srok_tochno ? "" : " (ориентир)"}</span>` : `<span class="pr-tusklo">срок не назначен</span>`}</div></div>
+    <div class="pr-vkladki">${vkladki.map(v => `<button class="pr-vkladka${DM.vkl === v[0] ? " tek" : ""}" data-dm-vkl="${v[0]}">${v[1]}${v[2] ? ` <i>${v[2]}</i>` : ""}</button>`).join("")}</div>
+    <section class="blk pr-blok">${telo}</section>
+  </div>`;
+  dmPrivyazat(app, ki);
+  const cv = document.getElementById("dm3d");
+  if (cv) dm3D(cv, k.gabarity);
+}
+
+function dmVidHtml(k, ki) {
+  if (!k.gabarity && !k.vizualizacii.length && !k.pilot)
+    return `<p class="pr-tusklo">По изделию пока нет ни модели, ни визуализаций, ни согласованного вида.</p>`;
+  return `${k.gabarity ? `<h2>Объёмная модель изделия</h2>
+      <p class="pr-tusklo">Собрана из чертежа конструктора. Поверните пальцем или мышью.</p>
+      <canvas class="dm-3d" id="dm3d"></canvas>
+      <div class="pr-ryad"><div class="dm-chipy">
+        <button class="dm-chip" data-dm-vid3d="pered">Спереди</button>
+        <button class="dm-chip" data-dm-vid3d="bok">Сбоку</button>
+        <button class="dm-chip" data-dm-vid3d="ugol">Под углом</button></div>
+        <span class="pr-tusklo">${k.gabarity.sh} × ${k.gabarity.v} × ${k.gabarity.g} мм</span></div>` : ""}
+    ${k.vizualizacii.length ? `<h2>Визуализации</h2>
+      <div class="pr-vidy">${k.vizualizacii.map((v, i) => `<button class="pr-vid" data-dm-viz="${ki}:${i}"><span>${escapeHtml(v)}</span></button>`).join("")}</div>` : ""}
+    ${k.pilot ? `<p class="pr-tusklo">Согласованный вид от ${rmDen(k.pilot.kogda)} — он же лежит во вкладке «Чертежи», чтобы можно было сверить.</p>` : ""}`;
+}
+
+function dmChertezhiHtml(k, ki) {
+  const chert = k.dokumenty.filter(d => !d.pilot), pilot = k.dokumenty.find(d => d.pilot);
+  return `${chert.length ? `<div class="pr-chertezhi">${chert.map((d, i) => `<div class="pr-chertezh">
+      <div class="pr-ch-imya"><b>${escapeHtml(d.vid[0].toUpperCase() + d.vid.slice(1))}</b>
+        <small>${escapeHtml(d.imya)} · ${rmDen(d.kogda)} · ${escapeHtml(d.kto)} · листов ${d.listov}</small></div>
+      ${d.novyj ? `<span class="pr-metka nov">новый</span>` : ""}
+      <button class="btn ${d.novyj ? "primary" : "ghost"}" data-dm-dok="${ki}:${i}">Открыть</button></div>`).join("")}</div>
+    <p class="pr-tusklo">Только действующие чертежи: прежние версии убраны, чтобы не сделать по старому.</p>`
+    : `<p class="pr-tusklo">Рабочего чертежа нет. Изделие в работу не запускаем — напишите Юлии Евгеньевне во вкладке «Вопрос».</p>`}
+    ${pilot ? `<h2>Согласованный пилот</h2>
+      <p class="pr-tusklo">На случай вопроса к виду: что именно согласовал заказчик.</p>
+      <div class="pr-chertezhi"><div class="pr-chertezh">
+        <div class="pr-ch-imya"><b>Согласованный пилот</b><small>${escapeHtml(pilot.imya)} · ${rmDen(pilot.kogda)} · листов ${pilot.listov}</small></div>
+        <button class="btn ghost" data-dm-dok="${ki}:pilot">Открыть</button></div></div>` : ""}
+    ${k.zamery.length ? `<h2>Замеры с объекта</h2><div class="pr-chertezhi">${k.zamery.map((z, i) => `<div class="pr-chertezh">
+        <div class="pr-ch-imya"><b>${escapeHtml(z.imya)}</b><small>${rmDen(z.kogda)} · ${escapeHtml(z.kto)}</small></div>
+        <button class="btn ghost" data-dm-dok="${ki}:zam${i}">Открыть</button></div>`).join("")}</div>` : ""}`;
+}
+
+function dmMaterialyHtml(k) {
+  const net = k.furnitura.filter(f => !f.est).concat(k.prilegayushchie.filter(p => !p.est));
+  return `${k.materialy.length ? `<h2>Материалы и отделка</h2>
+      <div class="dm-pary">${k.materialy.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}${m.obrazec ? " · есть образец" : ""}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>`
+    : `<p class="pr-tusklo">Материалы и отделка по изделию пока не заведены.</p>`}
+    ${k.furnitura.length ? `<h2>Фурнитура</h2><div class="pr-tabl"><table>
+      <thead><tr><th>Артикул</th><th>Что</th><th>Сколько</th><th>Есть в цехе</th></tr></thead><tbody>
+      ${k.furnitura.map(f => `<tr><td>${escapeHtml(f.art)}</td><td>${escapeHtml(f.chto)}</td><td>${f.kol}</td>
+        <td>${f.est ? `<span class="pr-metka ok">есть</span>` : `<span class="pr-metka nov">нет${f.kogda ? " · " + escapeHtml(f.kogda) : ""}</span>`}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    ${k.prilegayushchie.length ? `<h2>Что встраиваем и что рядом</h2>
+      <p class="pr-tusklo">Покупное и то, что даёт заказчик: без этих размеров изделие не собрать.</p>
+      <div class="pr-tabl"><table><thead><tr><th>Что</th><th>Чьё</th><th>На месте</th></tr></thead><tbody>
+      ${k.prilegayushchie.map(p => `<tr><td>${escapeHtml(p.chto)}</td><td>${escapeHtml(p.kto)}</td>
+        <td>${p.est ? `<span class="pr-metka ok">есть</span>` : `<span class="pr-metka nov">нет${p.kogda ? " · " + escapeHtml(p.kogda) : ""}</span>`}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    ${net.length ? `<p class="pr-tusklo">Не хватает ${net.length} позиций — отметить, чего нет, можно во вкладке «Работа».</p>` : ""}`;
+}
+
+function dmRabotaHtml(k, ki) {
+  const pozicii = k.materialy.map(m => m.chto + ": " + m.znach)
+    .concat(k.furnitura.map(f => f.chto + " · " + f.art));
+  const mozhno = k.status === "razresheno" || k.status === "v_rabote";
+  return `<h2>Разрешение и срок</h2>
+    ${k.razreshenie ? `<p class="pr-tusklo">Разрешила ${escapeHtml(k.razreshenie.kto)}, ${rmDen(k.razreshenie.kogda)}. Срок: ${k.srok ? rmDen(k.srok) + (k.srok_tochno ? "" : " (ориентир, может поменяться)") : "не назначен"}.</p>`
+      : `<p class="pr-tusklo">Разрешения в работу нет — запускать нельзя.</p>`}
+    <h2>Кто делает</h2>
+    <div class="dm-chipy">${DM.D.lyudi.map(n => `<button class="dm-chip${k.ispolnitel === n ? " tek" : ""}" data-dm-kto="${ki}:${escapeHtml(n)}">${escapeHtml(n)}</button>`).join("")}</div>
+    <div class="pr-ryad">
+      ${k.gotovo ? `<span class="pr-metka ok">готово ${rmDen(k.gotovo)}</span>`
+        : k.vzyal ? `<button class="btn primary dm-bolshaya" data-dm-gotovo="${ki}">Отметить готовым</button>`
+        : mozhno ? `<button class="btn primary dm-bolshaya" data-dm-vzyal="${ki}">Взять в работу</button>`
+        : `<span class="pr-tusklo">Взять в работу можно, когда изделие разрешили.</span>`}
+    </div>
+    ${k.vzyal && !k.gotovo ? `<p class="pr-tusklo">Взяли ${rmDen(k.vzyal)}${k.ispolnitel ? ", делает " + escapeHtml(k.ispolnitel) : ""}.</p>` : ""}
+    <h2>Что мешает</h2>
+    ${k.meshaet.length ? `<div class="pr-vazhnoe">${k.meshaet.map(m => `<div class="pr-zapis pr-vopros">
+      <span class="pr-vid-zapisi">${rmDen(m.kogda)}</span><div>${escapeHtml(m.tekst)}</div></div>`).join("")}</div>`
+      : `<p class="pr-tusklo">Ничего не мешает.</p>`}
+    <div class="dm-chipy">${["Ждём материал", "Ждём ответ", "Не сходится размер", "Нет места в цехе"].map(t =>
+      `<button class="dm-chip" data-dm-meshaet="${ki}:${escapeHtml(t)}">${t}</button>`).join("")}</div>
+    <h2>Чего нет из материалов</h2>
+    <p class="pr-tusklo">Отметьте то, чего не хватает, — это увидим мы и подвезём.</p>
+    <div>${pozicii.map((p, i) => `<label class="dm-galka"><input type="checkbox" data-dm-net="${ki}:${i}"
+      ${k.net_materialov.includes(p) ? "checked" : ""}><span>${escapeHtml(p)}</span></label>`).join("")}</div>
+    <textarea id="dmSvoe" rows="2" placeholder="Чего-то нет в списке — напишите сюда"></textarea>
+    <div><button class="btn ghost" data-dm-svoe="${ki}">Добавить</button></div>
+    ${k.foto.length ? `<h2>Фото готового</h2><div class="pr-vidy">${k.foto.map(f => `<button class="pr-vid" style="cursor:default"><span>${escapeHtml(f.imya)}</span></button>`).join("")}</div>
+      <p class="pr-tusklo">Снято ${rmDen(k.foto[0].kogda)}, ${escapeHtml(k.foto[0].kto)}.</p>` : ""}`;
+}
+
+function dmVoprosHtml(k) {
+  const KUDA = [["yuliya", "Юлии Евгеньевне"], ["igor", "Игорю Михайловичу"], ["gruppa", "В группу объекта"]];
+  return `<h2>Написать по этому изделию</h2>
+    <p class="pr-tusklo">Письмо уйдёт в мессенджер уже подписанным изделием — искать и объяснять, о чём речь, не нужно.</p>
+    <div class="dm-chipy">${KUDA.map(x => `<button class="dm-chip${DM.kuda === x[0] ? " tek" : ""}" data-dm-kuda="${x[0]}">${x[1]}</button>`).join("")}</div>
+    <textarea id="dmVopros" rows="3" placeholder="Что непонятно по изделию"></textarea>
+    <div class="pr-ryad"><button class="btn primary" id="dmOtpravit">Отправить</button>
+      <span class="pr-tusklo" id="dmVoprSost"></span></div>
+    <p class="pr-tusklo">Начало письма подставится само: «${escapeHtml(DM.D.obekt.nazvanie)}, ${escapeHtml(k.kod)} ${escapeHtml(k.nazvanie)}: …»</p>`;
+}
+
+/* ---- 6. Посещаемость: главное, что заполняют каждый день ---- */
+function dmNovayaPosesh(vse, chasov) {
+  return { d: DM.D.segodnya, l: DM.D.lyudi.map(n => ({ n, b: !!vse, h: vse ? (chasov || 8) : 0 })) };
+}
+function dmItogPosesh() {
+  const na = DM.posesh.l.filter(x => x.b);
+  return `На работе ${na.length} из ${DM.posesh.l.length} · всего часов ${na.reduce((s, x) => s + (+x.h || 0), 0)}`;
+}
+function dmPosesh(app) {
+  if (!DM.posesh || DM.posesh.d !== DM.D.segodnya) DM.posesh = dmNovayaPosesh(true, 8);
+  const S = DM.posesh.l;
+  app.innerHTML = `<div class="pr">
+    ${dmPlashka()}
+    <div class="pr-zag"><h1>Посещаемость</h1>
+      <p class="pr-tusklo">${rmDen(DM.D.segodnya)}. Нажмите на фамилию — значит, человека не было. Часы по умолчанию 8.</p></div>
+    <section class="blk pr-blok">
+      <div class="dm-chipy"><button class="dm-chip" data-dm-vse="8">Все по 8 часов</button>
+        <button class="dm-chip" data-dm-vse="10">Все по 10 часов</button>
+        <button class="dm-chip" data-dm-vse="0">Никого не было</button></div>
+      <div>${S.map((x, i) => `<div class="dm-posesh-str${x.b ? "" : " net"}">
+        <button class="dm-imya" data-dm-perekl="${i}">${escapeHtml(x.n)}</button>
+        ${x.b ? `<span class="dm-chasy"><button data-dm-ch="${i}:-1">−</button><b id="dmH${i}">${x.h}</b><button data-dm-ch="${i}:1">+</button></span>`
+          : `<span class="pr-metka zhd">не был</span>`}</div>`).join("")}</div>
+      <p class="pr-tusklo" id="dmItog">${dmItogPosesh()}</p>
+      <div class="pr-ryad"><button class="btn primary dm-bolshaya" id="dmSohr">Сохранить</button></div>
+      <p class="pr-tusklo" id="dmSohrSost"></p></section>
+  </div>`;
+  dmPrivyazat(app);
+  document.getElementById("dmSohr").addEventListener("click", () => {
+    document.getElementById("dmSohrSost").textContent = "Сохранено — в демонстрации только на этой странице, никуда не ушло.";
+    setTimeout(() => nazadKnopkoy(), 800);
+  });
+}
+
+/* ---- объёмная модель: каркас изделия, крутится пальцем ---- */
+function dm3D(cv, g) {
+  if (!g || !cv.getContext) return;
+  const ctx = cv.getContext("2d");
+  if (!ctx) return;
+  let a = 0.62, b = 0.28, tyanut = null;
+  const stil = getComputedStyle(document.body);
+  const cvetLinii = (stil.getPropertyValue("--ink") || "#2a241e").trim() || "#2a241e";
+  const cvetPolok = (stil.getPropertyValue("--accent") || "#c18048").trim() || "#c18048";
+  const risovat = () => {
+    const W = cv.width = Math.max(320, cv.clientWidth * 2), H = cv.height = Math.max(240, cv.clientHeight * 2);
+    ctx.clearRect(0, 0, W, H);
+    const sh = g.sh / 1000, v = g.v / 1000, gl = g.g / 1000;
+    const m = Math.min(W / (sh + gl + 1), H / (v + gl + 1)) * 0.78;
+    const to = (x, y, z) => {
+      const X = x * Math.cos(a) - z * Math.sin(a), Z = x * Math.sin(a) + z * Math.cos(a);
+      return [W / 2 + X * m, H / 2 - (y * Math.cos(b) - Z * Math.sin(b)) * m];
+    };
+    const liniya = (p1, p2, cvet, tolshchina) => {
+      const A = to(p1[0], p1[1], p1[2]), B = to(p2[0], p2[1], p2[2]);
+      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]);
+      ctx.strokeStyle = cvet; ctx.lineWidth = tolshchina; ctx.stroke();
+    };
+    const X = sh / 2, Y = v / 2, Z = gl / 2;
+    const u = [[-X, -Y, -Z], [X, -Y, -Z], [X, Y, -Z], [-X, Y, -Z], [-X, -Y, Z], [X, -Y, Z], [X, Y, Z], [-X, Y, Z]];
+    [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]
+      .forEach(r => liniya(u[r[0]], u[r[1]], cvetLinii, 3));
+    const n = Math.max(1, g.polok || 3);
+    for (let i = 1; i <= n; i++) {
+      const y = -Y + (v * i) / (n + 1);
+      liniya([-X, y, -Z], [X, y, -Z], cvetPolok, 2); liniya([-X, y, Z], [X, y, Z], cvetPolok, 2);
+      liniya([-X, y, -Z], [-X, y, Z], cvetPolok, 2); liniya([X, y, -Z], [X, y, Z], cvetPolok, 2);
+    }
+    if (sh > 1.2) { liniya([0, -Y, -Z], [0, Y, -Z], cvetLinii, 2); liniya([0, -Y, Z], [0, Y, Z], cvetLinii, 2); }
+  };
+  const tochka = e => (e.touches && e.touches[0]) ? e.touches[0] : e;
+  const nachat = e => { const t = tochka(e); tyanut = { x: t.clientX, y: t.clientY, a, b }; };
+  const vesti = e => {
+    if (!tyanut) return;
+    const t = tochka(e);
+    a = tyanut.a + (t.clientX - tyanut.x) / 120;
+    b = Math.max(-1.2, Math.min(1.2, tyanut.b + (t.clientY - tyanut.y) / 160));
+    risovat(); if (e.cancelable) e.preventDefault();
+  };
+  const konec = () => { tyanut = null; };
+  cv.addEventListener("mousedown", nachat); window.addEventListener("mousemove", vesti); window.addEventListener("mouseup", konec);
+  cv.addEventListener("touchstart", nachat, { passive: true }); cv.addEventListener("touchmove", vesti, { passive: false }); cv.addEventListener("touchend", konec);
+  window.addEventListener("resize", risovat);
+  cv.dmVid = vid => { if (vid === "pered") { a = 0; b = 0; } else if (vid === "bok") { a = Math.PI / 2; b = 0; } else { a = 0.62; b = 0.28; } risovat(); };
+  risovat();
+}
+
+/* ---- просмотр листа: условный чертёж рисуется прямо в окне ---- */
+function dmSmotret(zagolovok, podpis, listov, gab) {
+  let list = 1;
+  const fon = document.createElement("div");
+  fon.className = "dm-smotr";
+  fon.innerHTML = `<div class="dm-smotr-verh"><div><b>${escapeHtml(zagolovok)}</b><br><small>${escapeHtml(podpis)}</small></div>
+      <button class="btn ghost" id="dmSmZakryt">Закрыть</button></div>
+    <canvas id="dmSmList"></canvas>
+    <div class="dm-smotr-verh"><button class="btn ghost" id="dmSmNazad">‹ Лист</button>
+      <span id="dmSmNomer">Лист ${list} из ${listov}</span>
+      <button class="btn ghost" id="dmSmVpered">Лист ›</button></div>`;
+  document.body.appendChild(fon);
+  const cv = fon.querySelector("#dmSmList");
+  const risovat = () => {
+    const ctx = cv.getContext && cv.getContext("2d");
+    if (!ctx) return;
+    const W = cv.width = Math.max(600, cv.clientWidth * 2), H = cv.height = Math.max(420, cv.clientHeight * 2);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#2a241e"; ctx.lineWidth = 3;
+    ctx.strokeRect(24, 24, W - 48, H - 48);
+    const shW = Math.min(520, W - 80), shH = 150;
+    ctx.strokeRect(W - 24 - shW, H - 24 - shH, shW, shH);
+    ctx.fillStyle = "#2a241e"; ctx.font = "26px Arial";
+    ctx.fillText(zagolovok, W - 24 - shW + 20, H - 24 - shH + 46);
+    ctx.font = "22px Arial"; ctx.fillStyle = "#6f6659";
+    ctx.fillText(podpis, W - 24 - shW + 20, H - 24 - shH + 84);
+    ctx.fillText("Лист " + list + " из " + listov + " · демонстрация, чертёж условный", W - 24 - shW + 20, H - 24 - shH + 120);
+    const g = gab || { sh: 2000, v: 2000, g: 600, polok: 3 };
+    const pole = { x: 90, y: 90, w: W - 260, h: H - 300 };
+    const mas = Math.min(pole.w / g.sh, pole.h / g.v) * 0.85;
+    const w = g.sh * mas, h = g.v * mas, x0 = pole.x + (pole.w - w) / 2, y0 = pole.y + (pole.h - h) / 2;
+    ctx.strokeStyle = "#2a241e"; ctx.lineWidth = 4; ctx.strokeRect(x0, y0, w, h);
+    ctx.lineWidth = 2; ctx.strokeStyle = "#c18048";
+    const n = Math.max(1, g.polok || 3);
+    for (let i = 1; i <= n; i++) { const y = y0 + (h * i) / (n + 1); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y); ctx.stroke(); }
+    if (list % 2 === 0) { ctx.beginPath(); ctx.moveTo(x0 + w / 2, y0); ctx.lineTo(x0 + w / 2, y0 + h); ctx.stroke(); }
+    ctx.strokeStyle = "#6f6659"; ctx.lineWidth = 2; ctx.font = "24px Arial"; ctx.fillStyle = "#6f6659";
+    ctx.beginPath(); ctx.moveTo(x0, y0 + h + 40); ctx.lineTo(x0 + w, y0 + h + 40); ctx.stroke();
+    ctx.fillText(g.sh + " мм", x0 + w / 2 - 50, y0 + h + 76);
+    ctx.beginPath(); ctx.moveTo(x0 - 40, y0); ctx.lineTo(x0 - 40, y0 + h); ctx.stroke();
+    ctx.save(); ctx.translate(x0 - 56, y0 + h / 2 + 50); ctx.rotate(-Math.PI / 2); ctx.fillText(g.v + " мм", 0, 0); ctx.restore();
+  };
+  const obnovit = () => { fon.querySelector("#dmSmNomer").textContent = "Лист " + list + " из " + listov; risovat(); };
+  fon.querySelector("#dmSmZakryt").addEventListener("click", () => fon.remove());
+  fon.querySelector("#dmSmNazad").addEventListener("click", () => { list = list > 1 ? list - 1 : listov; obnovit(); });
+  fon.querySelector("#dmSmVpered").addEventListener("click", () => { list = list < listov ? list + 1 : 1; obnovit(); });
+  window.addEventListener("resize", risovat);
+  setTimeout(obnovit, 30);
+  return fon;
+}
+
+/* ---- нажатия. Ни одного обращения наружу: всё меняется только в памяти ---- */
+function dmPrivyazat(app, ki) {
+  const perersovat = () => renderDemo(STATE.tekushchiy.e, STATE.tekushchiy.k);
+  app.querySelectorAll("[data-dm]").forEach(b => b.addEventListener("click", () => {
+    const e = b.dataset.dm;
+    if (e === "vyjti") return nav(() => (prMozhet() ? renderPr("home") : renderHome()));
+    if (e === "chat") return nav(() => renderChat(""));
+    if (e === "posesh-bystro") { DM.posesh = dmNovayaPosesh(true, 8); return perersovat(); }
+    nav(() => renderDemo(e));
+  }));
+  app.querySelectorAll("[data-dm-izd]").forEach(b => b.addEventListener("click", () => nav(() => renderDemo("izd", +b.dataset.dmIzd))));
+  app.querySelectorAll("[data-dm-vkl]").forEach(b => b.addEventListener("click", () => { DM.vkl = b.dataset.dmVkl; dmIzdelie(app, ki); }));
+  app.querySelectorAll("[data-dm-filtr]").forEach(b => b.addEventListener("click", () => { DM.filtr = b.dataset.dmFiltr; dmObekt(app); }));
+  app.querySelectorAll("[data-dm-vid3d]").forEach(b => b.addEventListener("click", () => {
+    const cv = document.getElementById("dm3d"); if (cv && cv.dmVid) cv.dmVid(b.dataset.dmVid3d);
+  }));
+  app.querySelectorAll("[data-dm-dok]").forEach(b => b.addEventListener("click", () => {
+    const chasti = b.dataset.dmDok.split(":"), k = DM.D.kartochki[+chasti[0]], chto = chasti[1];
+    if (chto === "pilot") { const p = k.dokumenty.find(d => d.pilot); dmSmotret(k.kod + " · согласованный пилот", p.imya + " · " + rmDen(p.kogda), p.listov, k.gabarity); return; }
+    if (chto.indexOf("zam") === 0) { const z = k.zamery[+chto.slice(3)]; dmSmotret(k.kod + " · " + z.imya, rmDen(z.kogda) + " · " + z.kto, 1, k.gabarity); return; }
+    const d = k.dokumenty.filter(x => !x.pilot)[+chto];
+    dmSmotret(k.kod + " · " + d.vid, d.imya + " · " + rmDen(d.kogda) + " · " + d.kto, d.listov, k.gabarity);
+  }));
+  app.querySelectorAll("[data-dm-viz]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.dmViz.split(":"), k = DM.D.kartochki[+ch[0]];
+    dmSmotret(k.kod + " · " + k.vizualizacii[+ch[1]], "визуализация", 1, k.gabarity);
+  }));
+  app.querySelectorAll("[data-dm-vzyal]").forEach(b => b.addEventListener("click", () => {
+    const k = DM.D.kartochki[+b.dataset.dmVzyal];
+    k.vzyal = DM.D.segodnya; k.status = "v_rabote"; perersovat();
+  }));
+  app.querySelectorAll("[data-dm-gotovo]").forEach(b => b.addEventListener("click", () => {
+    const k = DM.D.kartochki[+b.dataset.dmGotovo];
+    k.gotovo = DM.D.segodnya; k.status = "gotovo"; perersovat();
+  }));
+  app.querySelectorAll("[data-dm-kto]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.dmKto.split(":"), k = DM.D.kartochki[+ch[0]];
+    k.ispolnitel = k.ispolnitel === ch[1] ? "" : ch[1]; perersovat();
+  }));
+  app.querySelectorAll("[data-dm-meshaet]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.dmMeshaet.split(":");
+    DM.D.kartochki[+ch[0]].meshaet.push({ tekst: ch[1], kogda: DM.D.segodnya }); perersovat();
+  }));
+  app.querySelectorAll("[data-dm-net]").forEach(inp => inp.addEventListener("change", () => {
+    const ch = inp.dataset.dmNet.split(":"), k = DM.D.kartochki[+ch[0]];
+    const pozicii = k.materialy.map(m => m.chto + ": " + m.znach).concat(k.furnitura.map(f => f.chto + " · " + f.art));
+    const p = pozicii[+ch[1]];
+    if (inp.checked) { if (!k.net_materialov.includes(p)) k.net_materialov.push(p); }
+    else k.net_materialov = k.net_materialov.filter(x => x !== p);
+  }));
+  app.querySelectorAll("[data-dm-svoe]").forEach(b => b.addEventListener("click", () => {
+    const pole = document.getElementById("dmSvoe");
+    if (pole && pole.value.trim()) { DM.D.kartochki[+b.dataset.dmSvoe].net_materialov.push(pole.value.trim()); perersovat(); }
+  }));
+  app.querySelectorAll("[data-dm-kuda]").forEach(b => b.addEventListener("click", () => { DM.kuda = b.dataset.dmKuda; dmIzdelie(app, ki); }));
+  const otpr = document.getElementById("dmOtpravit");
+  if (otpr) otpr.addEventListener("click", () => {
+    const pole = document.getElementById("dmVopros"), sost = document.getElementById("dmVoprSost");
+    const kuda = { yuliya: "Юлии Евгеньевне", igor: "Игорю Михайловичу", gruppa: "в группу объекта" }[DM.kuda];
+    sost.textContent = pole && pole.value.trim()
+      ? "В рабочем виде письмо ушло бы " + kuda + ". В демонстрации никуда не уходит."
+      : "Напишите вопрос — и станет видно, куда он уйдёт.";
+  });
+  app.querySelectorAll("[data-dm-perekl]").forEach(b => b.addEventListener("click", () => {
+    const x = DM.posesh.l[+b.dataset.dmPerekl];
+    x.b = !x.b; x.h = x.b ? (+x.h || 8) : 0; dmPosesh(app);
+  }));
+  app.querySelectorAll("[data-dm-ch]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.dmCh.split(":"), x = DM.posesh.l[+ch[0]];
+    x.h = Math.max(0, Math.min(16, (+x.h || 0) + (+ch[1])));
+    document.getElementById("dmH" + ch[0]).textContent = x.h;
+    document.getElementById("dmItog").textContent = dmItogPosesh();
+  }));
+  app.querySelectorAll("[data-dm-vse]").forEach(b => b.addEventListener("click", () => {
+    const ch = +b.dataset.dmVse;
+    DM.posesh = dmNovayaPosesh(ch > 0, ch); dmPosesh(app);
+  }));
 }
 
 function vyjtiIzProfilya() {
