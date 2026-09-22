@@ -951,8 +951,30 @@
   .pr-metka.rab { background:#e9eef7; color:#35568a; } .pr-metka.zhd { background:var(--surface-2); color:var(--muted); }
   .pr-novoe { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; border-top:1px solid var(--line); padding-top:10px; }
   .pr-novoe:first-of-type { border-top:0; padding-top:0; }
+  .pr-plitki { grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)); }
   .pr-plitka { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px; text-align:left; cursor:pointer;
-               display:flex; flex-direction:column; gap:6px; align-items:flex-start; font:inherit; color:inherit; }
+               display:flex; flex-direction:column; gap:6px; align-items:flex-start; font:inherit; color:inherit; min-height:112px; justify-content:space-between; }
+  .pr-plitka b { font-family: Arial, sans-serif; font-weight:600; font-size: calc(30px * var(--shrift)); line-height:1; }
+  .pr-plitka span { font-size: calc(13px * var(--shrift)); color:var(--muted); line-height:1.3; }
+  .pr-karta { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px; display:flex;
+              flex-direction:column; gap:10px; min-width:0; }
+  .pr-karta:hover { border-color:var(--accent); }
+  .pr-karta-verh { display:flex; gap:10px; align-items:baseline; min-width:0; min-height:44px; }
+  .pr-karta-nazv { flex:1; min-width:0; font-size: calc(15.5px * var(--shrift)); line-height:1.35; }
+  .pr-karta-pom { display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; font-size: calc(13.5px * var(--shrift)); color:var(--muted); }
+  .pr-pom-n { background:var(--surface-2); color:var(--ink); border-radius:999px; padding:2px 9px; font-size: calc(12.5px * var(--shrift)); font-weight:600; }
+  .pr-shirokaya { width:100%; margin-top:auto; text-align:center; }
+  .pr-vkladki { display:flex; gap:8px; flex-wrap:wrap; }
+  .pr-vkladka { flex:1 1 130px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:10px 14px;
+                font:inherit; font-size: calc(13.5px * var(--shrift)); color:var(--ink); cursor:pointer; text-align:center; }
+  .pr-vkladka i { font-style:normal; color:var(--muted); }
+  .pr-vkladka.tek { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .pr-vkladka.tek i { color:rgba(255,255,255,.85); }
+  .pr-chertezhi { display:flex; flex-direction:column; gap:8px; }
+  .pr-vazhnoe { display:flex; flex-direction:column; gap:8px; }
+  .pr-zapis { border-left:3px solid var(--line); padding:8px 0 8px 12px; font-size: calc(14.5px * var(--shrift)); }
+  .pr-zapis .pr-vid-zapisi { display:block; font-size: calc(12px * var(--shrift)); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
+  .pr-resheno { border-left-color: var(--ok); } .pr-vopros { border-left-color: var(--warn); } .pr-obeshchano { border-left-color: var(--accent); }
   .pr-plitka:hover, .pr-karta:hover { border-color:var(--accent); }
   .pr-kod { font-family:Baskervville, Georgia, serif; font-size: calc(24px * var(--shrift)); }
   .pr-setka { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap:12px; }
@@ -5208,7 +5230,20 @@ async function renderPr(ekran, ki) {
   if (ekran === "obekt") return prObekt(app);
   if (ekran === "izd") return prIzdelie(app, +ki);
   if (ekran === "posesh") return prPosesh(app);
+  if (ekran === "vazhnoe") return prVazhnoe(app);
+  if (ekran === "zamery") return prZamery(app);
   return prGlavnaya(app);
+}
+
+function prPomeshchenie(gde) {
+  const m = String(gde || "").match(/^(\d+)[.)]\s*(.+)$/);
+  return m ? { n: m[1], imya: m[2] } : { n: "", imya: gde || "" };
+}
+function prSostoyanie(k) {
+  const nov = prNovye().some(x => x.k === k);
+  if (nov) return { kl: "nov", tekst: "новый чертёж" };
+  if (k.rabochka.length) return { kl: "rab", tekst: "чертежи есть" };
+  return { kl: "zhd", tekst: "ждёт чертежей" };
 }
 
 function prGlavnaya(app) {
@@ -5216,23 +5251,30 @@ function prGlavnaya(app) {
   const imya = prEsliOleg() ? "Олег" : "";
   const sPosesh = PR.posesh && PR.posesh.d === prSegodnya();
   const bylo = sPosesh ? PR.posesh.l.filter(x => x.b).length : 0;
+  const chasov = sPosesh ? PR.posesh.l.reduce((n, x) => n + (+x.h || 0), 0) : 0;
   app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><h1>Добрый день${imya ? ", " + imya : ""}</h1><p class="pr-tusklo">${rmDen(prSegodnya())} · производство${prEsliOleg() ? "" : " · вы видите то же, что Олег"}</p></div>
+    <div class="pr-zag"><h1>Добрый день${imya ? ", " + imya : ""}</h1>
+      <p class="pr-tusklo">${rmDen(prSegodnya())} · производство${prEsliOleg() ? "" : " · вы видите то же, что Олег"}</p></div>
+
     <section class="blk pr-blok pr-vazhno"><div class="pr-ryad"><h2>Посещаемость за сегодня</h2>
       <span class="pr-metka ${sPosesh ? "ok" : "nov"}">${sPosesh ? "заполнено" : "не заполнено"}</span></div>
-      <p class="pr-tusklo">${sPosesh ? `На работе ${bylo} из ${PR.posesh.l.length}. Можно поправить до конца дня.` : "Отметьте, кто сегодня на работе и сколько часов отработал."}</p>
-      <div><button class="btn primary" data-pr="posesh">${sPosesh ? "Открыть" : "Отметить"}</button></div></section>
-    <section class="blk pr-blok"><h2>Что нового</h2>
+      <p class="pr-tusklo">${sPosesh ? `На работе ${bylo} из ${PR.posesh.l.length} · часов ${chasov}` : "Отметьте, кто сегодня на работе и сколько часов отработал."}</p>
+      <div><button class="btn primary" data-pr="posesh">${sPosesh ? "Открыть и поправить" : "Отметить"}</button></div></section>
+
+    <section class="blk pr-blok"><div class="pr-ryad"><h2>Что нового</h2>
+      ${nov.length ? `<span class="pr-metka nov">${nov.length}</span>` : ""}</div>
       ${nov.length ? nov.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.podpis)}</b> ${escapeHtml(prNazvanieKarty(x.k))}
-          <div class="pr-tusklo">новый рабочий чертёж: ${escapeHtml(x.f.vid)}, ${rmDen(x.f.kogda)}</div></div>
+          <div class="pr-tusklo">новый чертёж: ${escapeHtml(x.f.vid)}, ${rmDen(x.f.kogda)}</div></div>
           <button class="btn ghost" data-pr-izd="${x.ki}">Посмотреть</button></div>`).join("")
-        : `<p class="pr-tusklo">Новых рабочих чертежей нет — всё, что пришло за последние дни, вы уже открыли.</p>`}</section>
-    <section class="pr-blok-bez"><h2>Объект в работе</h2>
-      <button class="pr-plitka" data-pr="obekt"><span class="pr-kod">${escapeHtml(D.obekt)}</span>
-        <span class="pr-tusklo">изделий: ${D.kartochki.length} · с рабочими чертежами: ${D.kartochki.filter(k => k.rabochka.length).length}</span>
-        ${nov.length ? `<span class="pr-metka nov">новое: ${nov.length}</span>` : ""}</button></section>
-    <section class="blk pr-blok"><h2>Сообщения</h2><p class="pr-tusklo">Переписки с Юлией Евгеньевной и Игорем Михайловичем — как и раньше.</p>
-      <div><button class="btn ghost" data-pr="chat">Открыть сообщения</button></div></section>
+        : `<p class="pr-tusklo">Новых чертежей нет — всё, что пришло за последние дни, вы уже открыли.</p>`}</section>
+
+    <section class="pr-blok-bez"><h2>${escapeHtml(D.obekt)}</h2>
+      <div class="pr-setka pr-plitki">
+        <button class="pr-plitka" data-pr="obekt"><b>${D.kartochki.length}</b><span>Изделия и чертежи</span></button>
+        <button class="pr-plitka" data-pr="vazhnoe"><b>${(D.vazhnoe || []).length}</b><span>Важно знать: материалы, отделка, монтаж</span></button>
+        <button class="pr-plitka" data-pr="zamery"><b>${(D.zamery || []).length}</b><span>Замеры и обмеры</span></button>
+        <button class="pr-plitka" data-pr="chat"><b>·</b><span>Сообщения Юлии Евгеньевне и Игорю Михайловичу</span></button>
+      </div></section>
   </div>`;
   prPrivyazat(app);
   if (PR.posesh === null) prZagruzitPosesh().then(() => { if (STATE.tekushchiy && STATE.tekushchiy.v === "pr" && STATE.tekushchiy.e === "home") prGlavnaya(app); });
@@ -5240,20 +5282,28 @@ function prGlavnaya(app) {
 }
 
 function prObekt(app) {
-  const D = PR.D, nov = prNovye();
+  const D = PR.D;
   app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><h1>${escapeHtml(D.obekt)}</h1><p class="pr-tusklo">Изделия объекта. Нажмите на изделие — там вид, рабочие чертежи и всё по нему.</p></div>
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt)}</span><h1>Изделия и чертежи</h1>
+      <p class="pr-tusklo">Нажмите на изделие — вид, действующие чертежи, модели и что важно знать.</p></div>
     <div class="pr-setka">${D.kartochki.map((k, ki) => {
-      const n = nov.filter(x => x.ki === ki).length;
-      const kart = (k.pilot && k.pilot.fajly.find(f => f.mini)) || k.rabochka.find(f => f.mini);
-      const st = n ? ["nov", "новый чертёж"] : k.rabochka.length ? ["rab", "рабочие чертежи есть"] : ["zhd", "ждёт рабочих чертежей"];
-      return `<button class="pr-karta" data-pr-izd="${ki}">
-        <span class="pr-kartinka">${kart ? `<img data-pr-mini="${escapeHtml(kart.mini)}" alt="">` : `<span>${escapeHtml(k.podpis)}</span>`}</span>
-        <span class="pr-karta-telo"><span><b>${escapeHtml(k.podpis)}</b> ${escapeHtml(prNazvanieKarty(k))}</span>
-        <span class="pr-metka ${st[0]}">${st[1]}</span></span></button>`;
+      const st = prSostoyanie(k), pom = prPomeshchenie(k.gde);
+      const pometki = [];
+      if (k.rabochka.length) pometki.push("чертежей · " + k.rabochka.length);
+      if (k.modeli && k.modeli.length) pometki.push("моделей · " + k.modeli.length);
+      if (k.pilot) pometki.push("вид есть");
+      return `<article class="pr-karta">
+        <div class="pr-karta-verh"><span class="pr-kod">${escapeHtml(k.podpis)}</span>
+          <span class="pr-karta-nazv">${escapeHtml(prNazvanieKarty(k))}</span></div>
+        ${pom.imya ? `<div class="pr-karta-pom">${pom.n ? `<span class="pr-pom-n">Помещение ${escapeHtml(pom.n)}</span>` : ""}
+          <span>${escapeHtml(pom.imya)}</span></div>` : ""}
+        <div><span class="pr-metka ${st.kl}">${st.tekst}</span></div>
+        ${pometki.length ? `<div class="pr-tusklo">${escapeHtml(pometki.join(" · "))}</div>` : ""}
+        <button class="btn primary pr-shirokaya" data-pr-izd="${ki}">Открыть изделие</button>
+      </article>`;
     }).join("")}</div>
-    ${D.bez_koda.length ? `<section class="blk pr-blok"><h2>Рабочие чертежи без номера изделия</h2>
-      <p class="pr-tusklo">Конструктор не указал, к какому изделию они относятся. Уточняйте у Юлии Евгеньевны.</p>
+    ${D.bez_koda.length ? `<section class="blk pr-blok"><h2>Чертежи без номера изделия</h2>
+      <p class="pr-tusklo">Конструктор не указала, к какому изделию. Уточняйте у Юлии Евгеньевны.</p>
       ${prChertezhiHtml(D.bez_koda.flatMap(g => g.fajly), "bk")}</section>` : ""}
   </div>`;
   prPrivyazat(app);
@@ -5261,34 +5311,70 @@ function prObekt(app) {
 
 function prChertezhiHtml(spisok, gruppa) {
   const nov = prNovye().map(x => x.f.id);
-  return spisok.filter(f => !f.net_fajla).map((f, i) => `<div class="pr-chertezh">
+  if (!spisok.filter(f => !f.net_fajla).length) return `<p class="pr-tusklo">Здесь пока пусто.</p>`;
+  return `<div class="pr-chertezhi">` + spisok.filter(f => !f.net_fajla).map((f, i) => `<div class="pr-chertezh">
       <div class="pr-ch-imya"><b>${escapeHtml(f.vid ? f.vid[0].toUpperCase() + f.vid.slice(1) : f.imya)}</b>
-        <small>${escapeHtml(f.imya)} · ${rmDen(f.kogda || "")}${f.kto ? " · " + escapeHtml(f.kto) : ""}</small></div>
+        <small>${escapeHtml(f.imya)}${f.kogda ? " · " + rmDen(f.kogda) : ""}${f.kto ? " · " + escapeHtml(f.kto) : ""}</small></div>
       ${nov.includes(f.id) ? `<span class="pr-metka nov">новый</span>` : ""}
       <button class="btn ${nov.includes(f.id) ? "primary" : "ghost"}" data-pr-otkr="${gruppa}:${i}">${nov.includes(f.id) ? "Открыть и ознакомиться" : "Открыть"}</button>
-    </div>`).join("");
+    </div>`).join("") + `</div>`;
 }
 
+/* окно изделия — как у заказчика: вкладки, ничего лишнего */
+const PR_OKNO = { ki: -1, v: "chertezhi" };
 function prIzdelie(app, ki) {
   const k = PR.D.kartochki[ki];
   if (!k) return prObekt(app);
-  const vidy = k.pilot ? k.pilot.fajly.filter(f => !f.net_fajla) : [];
+  PR_OKNO.ki = ki;
+  const pom = prPomeshchenie(k.gde), st = prSostoyanie(k);
+  const vkladki = [["chertezhi", "Чертежи", k.rabochka.length]];
+  if (k.pilot) vkladki.push(["vid", "Как выглядит", k.pilot.fajly.filter(f => !f.net_fajla).length]);
+  if (k.modeli && k.modeli.length) vkladki.push(["modeli", "Модели", k.modeli.length]);
+  vkladki.push(["vazhnoe", "Важно знать", (PR.D.vazhnoe || []).length]);
+  vkladki.push(["vopros", "Вопрос", 0]);
+  if (!vkladki.some(v => v[0] === PR_OKNO.v)) PR_OKNO.v = "chertezhi";
+  let telo = "";
+  if (PR_OKNO.v === "chertezhi") telo = prChertezhiHtml(k.rabochka, "rab") +
+    `<p class="pr-tusklo">Только действующие чертежи — прежние версии убраны, чтобы не делать по старому.</p>`;
+  else if (PR_OKNO.v === "vid") telo = `<div class="pr-vidy">${k.pilot.fajly.filter(f => !f.net_fajla).map((f, i) => `
+      <button class="pr-vid" data-pr-otkr="vid:${i}">${f.mini ? `<img data-pr-mini="${escapeHtml(f.mini)}" alt="">` : `<span>${f.tip === "pdf" ? "PDF" : "вид"}</span>`}</button>`).join("")}</div>
+    <p class="pr-tusklo">Согласованный пилот от ${rmDen(k.pilot.kogda)} — для понимания вида. Изготавливать по чертежам.</p>`;
+  else if (PR_OKNO.v === "modeli") telo = prChertezhiHtml(k.modeli, "mod") +
+    `<p class="pr-tusklo">Файлы в формате step и подобных — для ЧПУ и модели.</p>`;
+  else if (PR_OKNO.v === "vazhnoe") telo = prVazhnoeHtml();
+  else telo = `<p class="pr-tusklo">Что непонятно по этому изделию — напишите Юлии Евгеньевне, ответ придёт в сообщения.</p>
+    <div><button class="btn primary" data-pr-vopros="${ki}">Задать вопрос</button></div>`;
   app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}</span><h1>${escapeHtml(k.podpis)} · ${escapeHtml(prNazvanieKarty(k))}</h1>
-      ${k.gde ? `<p class="pr-tusklo">${escapeHtml(k.gde)}</p>` : ""}</div>
-    <section class="blk pr-blok"><h2>Как выглядит</h2>
-      ${vidy.length ? `<div class="pr-vidy">${vidy.map((f, i) => `<button class="pr-vid" data-pr-otkr="vid:${i}">
-          ${f.mini ? `<img data-pr-mini="${escapeHtml(f.mini)}" alt="">` : `<span>${f.tip === "pdf" ? "PDF" : "вид"}</span>`}</button>`).join("")}</div>
-        <p class="pr-tusklo">Согласованный пилот от ${rmDen(k.pilot.kogda)} — для понимания вида. Изготавливать по рабочим чертежам ниже.</p>`
-        : `<p class="pr-tusklo">Пилота по этому изделию пока нет.</p>`}</section>
-    <section class="blk pr-blok"><h2>Рабочие чертежи</h2>
-      ${k.rabochka.length ? prChertezhiHtml(k.rabochka, "rab") + `<p class="pr-tusklo">Здесь только действующие чертежи — прежние версии убраны, чтобы не делать по старому.</p>`
-        : `<p class="pr-tusklo">Рабочих чертежей пока нет. Как только конструктор пришлёт — они появятся здесь и в «Что нового».</p>`}</section>
-    <section class="blk pr-blok"><h2>Вопрос по изделию</h2>
-      <p class="pr-tusklo">Что-то непонятно — напишите Юлии Евгеньевне, ответ придёт в сообщения.</p>
-      <div><button class="btn ghost" data-pr-vopros="${ki}">Задать вопрос</button></div></section>
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}${pom.imya ? " · " + (pom.n ? "помещение " + escapeHtml(pom.n) + " · " : "") + escapeHtml(pom.imya) : ""}</span>
+      <h1>${escapeHtml(k.podpis)} · ${escapeHtml(prNazvanieKarty(k))}</h1>
+      <div><span class="pr-metka ${st.kl}">${st.tekst}</span></div></div>
+    <div class="pr-vkladki">${vkladki.map(v => `<button class="pr-vkladka${PR_OKNO.v === v[0] ? " tek" : ""}" data-pr-vkl="${v[0]}">${v[1]}${v[2] ? ` <i>${v[2]}</i>` : ""}</button>`).join("")}</div>
+    <section class="blk pr-blok">${telo}</section>
   </div>`;
   prPrivyazat(app, k);
+}
+
+function prVazhnoeHtml() {
+  const v = PR.D.vazhnoe || [];
+  if (!v.length) return `<p class="pr-tusklo">Пока нечего добавить: по этому объекту записей про материалы и отделку нет.</p>`;
+  return `<div class="pr-vazhnoe">` + v.map(x => `<div class="pr-zapis pr-${x.vid === "решено" ? "resheno" : x.vid === "обещано" ? "obeshchano" : "vopros"}">
+      <span class="pr-vid-zapisi">${escapeHtml(x.vid)}${x.kogda ? " · " + escapeHtml(String(x.kogda).slice(0, 10)) : ""}</span>
+      <div>${escapeHtml(x.tekst)}</div></div>`).join("") + `</div>`;
+}
+function prVazhnoe(app) {
+  app.innerHTML = `<div class="pr">
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}</span><h1>Важно знать</h1>
+      <p class="pr-tusklo">Материалы, отделка, фурнитура, замеры и монтаж — из решений и вопросов по объекту.</p></div>
+    <section class="blk pr-blok">${prVazhnoeHtml()}</section></div>`;
+  prPrivyazat(app);
+}
+function prZamery(app) {
+  const z = PR.D.zamery || [];
+  app.innerHTML = `<div class="pr">
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}</span><h1>Замеры и обмеры</h1>
+      <p class="pr-tusklo">По ним сверяют размеры на месте.</p></div>
+    <section class="blk pr-blok">${prChertezhiHtml(z, "zam")}</section></div>`;
+  prPrivyazat(app);
 }
 
 function prPrivyazat(app, k) {
@@ -5298,9 +5384,11 @@ function prPrivyazat(app, k) {
     nav(() => renderPr(e));
   }));
   app.querySelectorAll("[data-pr-izd]").forEach(b => b.addEventListener("click", () => nav(() => renderPr("izd", +b.dataset.prIzd))));
+  app.querySelectorAll("[data-pr-vkl]").forEach(b => b.addEventListener("click", () => { PR_OKNO.v = b.dataset.prVkl; prIzdelie(app, PR_OKNO.ki); }));
   app.querySelectorAll("[data-pr-otkr]").forEach(b => b.addEventListener("click", () => {
     const [gr, i] = b.dataset.prOtkr.split(":");
-    const spisok = (gr === "vid" ? k.pilot.fajly : gr === "rab" ? k.rabochka : PR.D.bez_koda.flatMap(g => g.fajly)).filter(f => !f.net_fajla);
+    const spisok = (gr === "vid" ? k.pilot.fajly : gr === "rab" ? k.rabochka : gr === "mod" ? k.modeli
+      : gr === "zam" ? PR.D.zamery : PR.D.bez_koda.flatMap(g => g.fajly)).filter(f => !f.net_fajla);
     const f = spisok[+i];
     if (gr !== "vid" && !prOznakomlen().includes(f.id)) {
       prOznakomlen(f.id);
