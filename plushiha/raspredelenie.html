@@ -151,6 +151,7 @@ let OBEKT = "Ильинка";   // берётся из razbor.json — одна 
 const STORONY = ["А", "Б", "В", "Г", "Общий вид", "Деталь"];
 const MUSOR = "в мусор";
 const BEZ_STORONY = "не указана";   // 14.09.2026 Мансур: сохранять можно и без стороны — Юлия не всегда знает сторону   // страница не нужна: не распределяется и не попадает в изделия
+const mini = f => "m-" + f;
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const S = { v: null, r: null, pom: [], izd: [], filtrPom: "", filtrSost: "ne", lupaSpisok: [], lupaN: 0 };
 
@@ -275,8 +276,37 @@ function risovat() {
   document.querySelectorAll("[data-sost]").forEach(b => b.onclick = () => { S.filtrSost = b.dataset.sost; risovat(); });
   const vidno = st.filter(podhodit);
   S.lupaSpisok = vidno.map(s => "vizual/" + s.fajl);
-  document.getElementById("spisok").innerHTML = vidno.map((s, n) => kartochka(s, n)).join("") || `<div class="pusto">В этой группе страниц нет.</div>`;
-  vidno.forEach(s => privyazat(s));
+  S.vidno = vidno; S.pokazano = 0;
+  document.getElementById("spisok").innerHTML = "";
+  dorisovat();
+}
+
+// 22.09.2026: в альбоме Плющихи 98 страниц, у каждой — десятки кнопок изделий. Если рисовать
+// всё разом, страница еле шевелится. Поэтому рисуем порциями и добавляем следующие, когда
+// человек до них дошёл.
+const PORCIYA = 8;
+function dorisovat() {
+  const el = document.getElementById("spisok");
+  const staryy = document.getElementById("eshche");
+  if (staryy) staryy.remove();
+  const chast = S.vidno.slice(S.pokazano, S.pokazano + PORCIYA);
+  if (!chast.length) {
+    if (!S.pokazano) el.innerHTML = `<div class="pusto">В этой группе страниц нет.</div>`;
+    return;
+  }
+  el.insertAdjacentHTML("beforeend", chast.map((s, i) => kartochka(s, S.pokazano + i)).join(""));
+  chast.forEach(s => privyazat(s));
+  S.pokazano += chast.length;
+  if (S.pokazano < S.vidno.length) {
+    el.insertAdjacentHTML("beforeend",
+      `<div id="eshche" class="pusto"><button class="tonk" id="eshcheK">Показать ещё · осталось ${S.vidno.length - S.pokazano}</button></div>`);
+    document.getElementById("eshcheK").onclick = dorisovat;
+    if (window.IntersectionObserver) {
+      if (S.nabl) S.nabl.disconnect();
+      S.nabl = new IntersectionObserver(zapisi => { if (zapisi.some(z => z.isIntersecting)) dorisovat(); }, { rootMargin: "600px" });
+      S.nabl.observe(document.getElementById("eshche"));
+    }
+  }
 }
 
 function chipIzd(s, i) {
@@ -284,13 +314,13 @@ function chipIzd(s, i) {
 }
 function kartochka(s, n) {
   if (s._musor) return `<div class="stranica v-musore" id="s-${esc(s.fajl)}">
-    <div class="kartinka"><img src="vizual/${esc(s.fajl)}" loading="lazy" alt="страница ${s.stranica}" data-n="${n}">
+    <div class="kartinka"><img src="vizual/${esc(mini(s.fajl))}" loading="lazy" alt="страница ${s.stranica}" data-n="${n}">
       <div class="pod">страница альбома ${s.stranica} · удалена${s._kto ? ": " + esc(s._kto) : ""}</div></div>
     <div><div class="model">Эта визуализация удалена — она не распределяется и не попадает в карточки изделий. Если удалили по ошибке — верните.${s._kom ? " Комментарий: " + esc(s._kom) : ""}</div>
       <div class="niz"><button class="vernut">Вернуть</button><span class="sost" data-sost-str></span></div></div></div>`;
   const svoi = S.izd.filter(i => i.pom && i.pom === s._pom), drugie = S.izd.filter(i => !(i.pom && i.pom === s._pom));
   return `<div class="stranica${s._gotova ? " gotova" : ""}" id="s-${esc(s.fajl)}">
-    <div class="kartinka"><img src="vizual/${esc(s.fajl)}" loading="lazy" alt="страница ${s.stranica}" data-n="${n}">
+    <div class="kartinka"><img src="vizual/${esc(mini(s.fajl))}" loading="lazy" alt="страница ${s.stranica}" data-n="${n}">
       <div class="pod">страница альбома ${s.stranica}${s.tip ? " · " + esc(s.tip) : ""}${s._gotova ? " · распределено" + (s._kto ? ": " + esc(s._kto) : "") : ""}</div></div>
     <div>
       ${S.r.bez_modeli ? (s.chto_vidno ? `<div class="model">${esc(s.chto_vidno)}</div>` : "")
