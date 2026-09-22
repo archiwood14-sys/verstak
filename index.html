@@ -5165,7 +5165,8 @@ function openMenu() {
   let imya = ""; try { imya = localStorage.getItem("verstak_role_name") || ""; } catch (e) {}
   document.getElementById("sbIgor").hidden = imya !== "Мансур";
   document.getElementById("sbProizv").hidden = !(prMozhet() && !prEsliOleg());
-  document.getElementById("sbDemo").hidden = !prMozhet();
+  // у Олега пространство личное — демонстрация ему не нужна (Мансур, 22.09.2026)
+  document.getElementById("sbDemo").hidden = !(prMozhet() && !prEsliOleg());
   uvObnovitKnopku();
   document.querySelectorAll(".sidebar-obj-link").forEach(b =>
     b.classList.toggle("active", STATE.tekushchiy && STATE.tekushchiy.v === "dash" && b.dataset.obj === STATE.activeObj));
@@ -5200,18 +5201,46 @@ document.getElementById("sbUved").addEventListener("click", () => uvVklyuchit())
 // Выйти из профиля — у всех: в меню и в шапке мессенджера (Мансур, 11.09.2026). Стираются
 // вход, личный ключ мессенджера и ключ рабочего места — следующий человек на этом устройстве
 // не увидит ничего чужого.
-/* ---------------- пространство производства (18.09.2026) ----------------
-   Мансур: «им полюбому нужны чертежи, визуализации, все нужные данные об изделии… кучу кнопок и запутанной
-   системы не нужно — плавно показать и отдать на пользование… у производства должно быть заполнение
-   посещаемости» (начальник производства: был/не был, сколько отработал). «Вход один — Олег, у него уже есть
-   пространство в мессенджере, туда и нужно всё остальное. Объект пока что только Плющиха».
-   Данные собирает sozdat_prostranstvo_proizvodstva.py, всё зашифровано; открывается личным ключом
-   мессенджера (Олег, Юлия, Игорь Михайлович, Мансур). */
+/* ---------------- ПРОСТРАНСТВО ПРОИЗВОДСТВА (18.09.2026; переустроено 22.09.2026) ----------------
+   Мансур, 22.09.2026: «Демонстрация прекрасна, нужно сделать пространство производства полностью
+   таким, как в демонстрации, будем потихоньку пополнять, пока что пополни тем что есть. И ещё:
+   у Олега пространство ничьё не должно быть, только его, и всё, что он пишет в разделах, всё
+   пишется в мессенджер».
+
+   Поэтому здесь один движок на два случая — живое пространство Олега и демонстрация:
+     • экраны, разделы и вкладки одни и те же, отличаются только данные;
+     • чего у нас ещё нет (сроки, материалы, фурнитура), честно написано «пока нет данных»;
+     • пространство личное: ни других объектов, ни чужих разделов, ни пометок «вы видите то же»;
+     • каждое действие Олега — отметка «взял / готово», кто делает, что мешает, чего нет,
+       посещаемость, вопрос — уходит сообщением в мессенджер Юлии Евгеньевне (или Игорю
+       Михайловичу, если он выбрал его) и заодно ложится в служебную вкладку реестра.
+   Данные собирает sozdat_prostranstvo_proizvodstva.py, всё зашифровано; открывается личным
+   ключом мессенджера. */
 const PR_PAPKA = "chertezhi/plushiha-p/";
-const PR = { klyuch: null, D: null, fajly: new Map(), posesh: null };
+const PR = { klyuch: null, D: null, V: null, fajly: new Map(), posesh: null, otmetki: null };
 const PR_SVEZHIE_DNEY = 10;
+const PR_OTMETKI_LIST = "Производство_отметки";
+// одно состояние на оба случая: где мы сейчас и что открыто
+const PS = { rezhim: "pr", vkl: "vid", filtr: "vse", kuda: "yuliya", ki: -1 };
+const PS_SOST = {
+  net_dannyh:     { t: "нет данных", k: "zhd" },
+  net_chertezha:  { t: "нет рабочего чертежа", k: "zhd" },
+  zhdet_zapuska:  { t: "ждёт разрешения", k: "nov" },
+  razresheno:     { t: "разрешено — можно делать", k: "rab" },
+  est_chertezhi:  { t: "чертежи есть", k: "rab" },
+  v_rabote:       { t: "в работе", k: "rab" },
+  gotovo:         { t: "готово", k: "ok" }
+};
+const PS_FILTRY = [["vse", "Все"], ["v_rabote", "В работе"], ["est", "Чертежи есть"],
+  ["net", "Чего-то не хватает"], ["gotovo", "Готовы"]];
+const PS_KUDA = { yuliya: "Юлии Евгеньевне", igor: "Игорю Михайловичу" };
+
 function prEsliOleg() { return chUid() === "oleg"; }
 function prMozhet() { return ["oleg", "yuliya", "igor", "mansur"].includes(chUid()); }
+function psDemo() { return PS.rezhim === "demo"; }
+function psD() { return psDemo() ? DM.D : PR.V; }
+function prSegodnya() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+
 async function prZagruzit() {
   if (PR.D) return true;
   let k = ""; try { k = localStorage.getItem("chat_k") || ""; } catch (e) {}
@@ -5238,24 +5267,118 @@ async function prZashifrovat(tekst) {
   let s = ""; out.forEach(b => { s += String.fromCharCode(b); });
   return btoa(s);
 }
-function prSegodnya() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function prOznakomlen(id) {
   let v = []; try { v = JSON.parse(localStorage.getItem("pr_oznakomlen") || "[]"); } catch (e) {}
   if (id === undefined) return v;
   if (!v.includes(id)) { v.push(id); try { localStorage.setItem("pr_oznakomlen", JSON.stringify(v.slice(-1000))); } catch (e) {} }
 }
-// «новое» — рабочий чертёж последних дней, который ещё не открывали
+
+/* ---- всё, что пишет Олег, уходит в мессенджер ---- */
+async function psVMessendzher(tekst, komu) {
+  if (psDemo()) return true;
+  const D = PR.D || {};
+  const cid = (komu === "igor" ? D.chat_s_igorem : D.chat_s_yuliey) || D.chat_s_yuliey;
+  if (!cid) return false;
+  try {
+    if (!CH.klyuchi.size) await chGotov();
+    const kl = CH.klyuchi.get(cid);
+    if (!kl) return false;
+    const d = { t: tekst, w: Date.now(), k: Math.random().toString(36).slice(2, 12) };
+    const otv = await (await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: CH_LIST, prefiksID: "ЧАТ",
+      znacheniya: { "Чат": cid, "Кто": chUid(), "Шифр": chB64(await chShifr(kl, new TextEncoder().encode(JSON.stringify(d)))) } }) })).json();
+    return !!otv.ok;
+  } catch (e) { return false; }
+}
+// отметка ложится и в служебную вкладку — из неё пространство собирается заново
+async function psOtmetit(zapis, tekst, komu) {
+  if (psDemo()) return true;
+  let vkladka = false;
+  try {
+    const shifr = await prZashifrovat(JSON.stringify(Object.assign({ w: Date.now(), kto: chUid() }, zapis)));
+    const otv = await (await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
+      type: "stroka", list: PR_OTMETKI_LIST, prefiksID: "ПО",
+      znacheniya: { "Кто": chUid(), "Шифр": shifr } }) })).json();
+    vkladka = !!otv.ok;
+  } catch (e) {}
+  if (tekst) await psVMessendzher(tekst, komu);
+  return vkladka;
+}
+async function prZagruzitOtmetki() {
+  PR.otmetki = {};
+  try {
+    const stroki = (await fetchTab(REESTR_ID, PR_OTMETKI_LIST)) || [];
+    for (const r of stroki) {
+      if (!r["Шифр"]) continue;
+      try {
+        const u = Uint8Array.from(atob(r["Шифр"]), c => c.charCodeAt(0));
+        const d = JSON.parse(new TextDecoder().decode(await chRasshifr(PR.klyuch, u)));
+        if (!d.v || !d.kod) continue;                       // старые записи «открыл чертёж» пропускаем
+        const o = PR.otmetki[d.kod] || (PR.otmetki[d.kod] = { meshaet: [], net_materialov: [] });
+        const den = String(d.kogda || "").slice(0, 10);
+        if (d.v === "vzyal") { o.vzyal = den; o.gotovo = null; }
+        else if (d.v === "gotovo") o.gotovo = den;
+        else if (d.v === "kto") o.ispolnitel = d.tekst || "";
+        else if (d.v === "meshaet" && d.tekst) o.meshaet.push({ tekst: d.tekst, kogda: den });
+        else if (d.v === "net" && d.tekst) o.net_materialov.push(d.tekst);
+        else if (d.v === "est" && d.tekst) o.net_materialov = o.net_materialov.filter(x => x !== d.tekst);
+      } catch (e) {}
+    }
+  } catch (e) {}
+}
+
+/* ---- живые данные — в том же виде, в каком их показывает демонстрация ---- */
 function prNovye() {
   const granica = new Date(Date.now() - PR_SVEZHIE_DNEY * 86400000).toISOString().slice(0, 10);
   const vid = prOznakomlen(), out = [];
-  PR.D.kartochki.forEach((k, ki) => k.rabochka.forEach(f => {
-    if (f.bin && f.kogda.slice(0, 10) >= granica && !vid.includes(f.id)) out.push({ k, ki, f });
+  (PR.D.kartochki || []).forEach(k => k.rabochka.forEach(f => {
+    if (f.bin && String(f.kogda).slice(0, 10) >= granica && !vid.includes(f.id)) out.push(f.id);
   }));
   return out;
 }
-function prNazvanieKarty(k) { return k.nazvaniya.join(", "); }
+function prPomeshchenie(gde) {
+  const m = String(gde || "").match(/^(\d+)[.)]\s*(.+)$/);
+  return m ? { n: m[1], imya: m[2] } : { n: "", imya: gde || "" };
+}
+function prVForme() {
+  const D = PR.D, novye = prNovye(), otm = PR.otmetki || {};
+  const dok = (f, vid) => ({ vid: vid || f.vid || "чертёж", imya: f.imya, kogda: String(f.kogda || "").slice(0, 10),
+    kto: f.kto || "конструктор", novyj: novye.includes(f.id), bin: f.bin, mini: f.mini, tip: f.tip, id: f.id,
+    net_fajla: f.net_fajla });
+  const kartochki = D.kartochki.map(k => {
+    const o = otm[k.podpis] || {};
+    const dokumenty = (k.rabochka || []).filter(f => !f.net_fajla).map(f => dok(f));
+    const modeli = (k.modeli || []).filter(f => !f.net_fajla).map(f => dok(f, f.vid));
+    const pilot = k.pilot ? { kogda: String(k.pilot.kogda || "").slice(0, 10), kto: k.pilot.kto || "конструктор",
+      fajly: (k.pilot.fajly || []).filter(f => !f.net_fajla).map(f => dok(f, "согласованный вид")) } : null;
+    let status = "net_dannyh";
+    if (o.gotovo) status = "gotovo";
+    else if (o.vzyal) status = "v_rabote";
+    else if (dokumenty.length) status = "est_chertezhi";
+    else if (pilot) status = "net_chertezha";
+    return {
+      kod: k.podpis, nazvanie: (k.nazvaniya || []).join(", "), pom: prPomeshchenie(k.gde), kol: 1,
+      status, srok: k.srok || "", srok_tochno: false, razreshenie: k.razreshenie || null,
+      gabarity: null, vizualizacii: [], pilot, dokumenty, modeli,
+      materialy: k.materialy || [], furnitura: k.furnitura || [], prilegayushchie: k.prilegayushchie || [],
+      zamery: (k.zamery || []).map(z => ({ imya: z.imya, kogda: String(z.kogda || "").slice(0, 10), kto: z.kto || "", bin: z.bin, tip: z.tip })),
+      ispolnitel: o.ispolnitel || "", vzyal: o.vzyal || null, gotovo: o.gotovo || null,
+      meshaet: (o.meshaet || []).slice(), net_materialov: (o.net_materialov || []).slice(), foto: []
+    };
+  });
+  const pr = D.proekt || {};
+  return {
+    segodnya: prSegodnya(),
+    obekt: { nazvanie: D.obekt, sroki: pr.sroki || [], montazh: pr.montazh || [], materialy: pr.materialy || [],
+             ostatki: pr.ostatki || [], otdelka: pr.otdelka || [], dveri: pr.dveri || [],
+             pomeshcheniya: pr.pomeshcheniya || [], otkuda_plan: pr.otkuda_plan || "" },
+    lyudi: D.lyudi || [], kartochki, vazhnoe: D.vazhnoe || [], zamery: D.zamery || [], bez_koda: D.bez_koda || [],
+    vchera: null
+  };
+}
 
 async function renderPr(ekran, ki) {
+  PS.rezhim = "pr";
   ekran = ekran || "home";
   STATE.tekushchiy = { v: "pr", e: ekran, k: ki };
   const app = document.getElementById("app");
@@ -5264,199 +5387,356 @@ async function renderPr(ekran, ki) {
   try { ok = await prZagruzit(); } catch (e) {}
   if (!STATE.tekushchiy || STATE.tekushchiy.v !== "pr") return;
   if (!ok) { app.innerHTML = `<div class="empty-hint">Пространство производства не открылось. Войдите в приложение своим паролем мессенджера.</div>`; return; }
-  if (ekran === "obekt") return prObekt(app);
-  if (ekran === "izd") return prIzdelie(app, +ki);
-  if (ekran === "posesh") return prPosesh(app);
-  if (ekran === "vazhnoe") return prVazhnoe(app);
-  if (ekran === "zamery") return prZamery(app);
-  return prGlavnaya(app);
+  if (PR.otmetki === null) { await prZagruzitOtmetki(); if (!STATE.tekushchiy || STATE.tekushchiy.v !== "pr") return; }
+  PR.V = prVForme();
+  psEkran(app, ekran, ki);
+  prZnakomstvo();
+}
+async function renderDemo(ekran, ki) {
+  PS.rezhim = "demo";
+  ekran = ekran || "home";
+  STATE.tekushchiy = { v: "dm", e: ekran, k: ki };
+  const app = document.getElementById("app");
+  if (!DM.D) app.innerHTML = `<div class="empty-hint">Открываю демонстрацию…</div>`;
+  try { await dmZagruzit(); } catch (e) {
+    app.innerHTML = `<div class="empty-hint">Демонстрация не открылась: ${escapeHtml(String(e && e.message || e))}</div>`; return;
+  }
+  if (!STATE.tekushchiy || STATE.tekushchiy.v !== "dm") return;
+  psEkran(app, ekran, ki);
+}
+function psEkran(app, ekran, ki) {
+  if (ekran === "obekt") return psObekt(app);
+  if (ekran === "izd") return psIzdelie(app, +ki || 0);
+  if (ekran === "posesh") return psPosesh(app);
+  if (ekran === "proekt") return psProekt(app);
+  if (ekran === "materialy") return psMaterialy(app);
+  return psGlavnaya(app);
+}
+function psPererisovat() {
+  const t = STATE.tekushchiy || {};
+  return psDemo() ? renderDemo(t.e, t.k) : renderPr(t.e, t.k);
 }
 
-function prPomeshchenie(gde) {
-  const m = String(gde || "").match(/^(\d+)[.)]\s*(.+)$/);
-  return m ? { n: m[1], imya: m[2] } : { n: "", imya: gde || "" };
+/* ---- общие куски ---- */
+function psSost(k) { return PS_SOST[k.status] || PS_SOST.net_dannyh; }
+function psPom(k) { return k.pom && k.pom.imya ? (k.pom.n ? "Помещение " + k.pom.n + " · " : "") + k.pom.imya : ""; }
+function psNovoe() {
+  const out = [];
+  psD().kartochki.forEach((k, ki) => {
+    k.dokumenty.filter(d => d.novyj).forEach(d => out.push({ ki, k, chto: "новый чертёж: " + d.vid, kogda: d.kogda }));
+    if (k.razreshenie && k.razreshenie.kogda) out.push({ ki, k, chto: "разрешено в работу", kogda: k.razreshenie.kogda });
+  });
+  return out.sort((a, b) => (a.kogda < b.kogda ? 1 : -1));
 }
-function prSostoyanie(k) {
-  const nov = prNovye().some(x => x.k === k);
-  if (nov) return { kl: "nov", tekst: "новый чертёж" };
-  if (k.rabochka.length) return { kl: "rab", tekst: "чертежи есть" };
-  return { kl: "zhd", tekst: "ждёт чертежей" };
+function psPomehi() {
+  const out = [];
+  psD().kartochki.forEach((k, ki) => (k.meshaet || []).forEach(m => out.push({ ki, k, m })));
+  return out;
+}
+function psPusto(chto) {
+  return `<p class="pr-tusklo">${escapeHtml(chto)} — пока нет данных. Будем пополнять.</p>`;
+}
+function psPlashka() {
+  if (!psDemo()) return "";
+  return `<div class="dm-plashka"><span><b>Демонстрация.</b> Все данные здесь выдуманы — изделия, люди, сроки.
+    Ничего отсюда никуда не уходит: ни в реестр, ни заказчику, ни в цех.</span>
+    <button class="btn ghost" data-ps="vyjti">Выйти из демонстрации</button></div>`;
 }
 
-function prGlavnaya(app) {
-  const nov = prNovye(), D = PR.D;
-  const imya = prEsliOleg() ? "Олег" : "";
-  const sPosesh = PR.posesh && PR.posesh.d === prSegodnya();
-  const bylo = sPosesh ? PR.posesh.l.filter(x => x.b).length : 0;
-  const chasov = sPosesh ? PR.posesh.l.reduce((n, x) => n + (+x.h || 0), 0) : 0;
+/* ---- 1. Мой день ---- */
+function psGlavnaya(app) {
+  const D = psD(), nov = psNovoe(), pom = psPomehi();
+  const vRabote = D.kartochki.map((k, ki) => ({ k, ki })).filter(x => x.k.status === "v_rabote");
+  const sP = PR.posesh && PR.posesh.d === D.segodnya && psDemo() === false
+    || psDemo() && DM.posesh && DM.posesh.d === D.segodnya;
+  const posesh = psDemo() ? DM.posesh : PR.posesh;
+  const bylo = sP ? posesh.l.filter(x => x.b).length : 0;
+  const chasov = sP ? posesh.l.reduce((n, x) => n + (+x.h || 0), 0) : 0;
+  const imya = psDemo() ? "Олег" : (prEsliOleg() ? "Олег" : "");
   app.innerHTML = `<div class="pr">
+    ${psPlashka()}
     <div class="pr-zag"><h1>Добрый день${imya ? ", " + imya : ""}</h1>
-      <p class="pr-tusklo">${rmDen(prSegodnya())} · производство${prEsliOleg() ? "" : " · вы видите то же, что Олег"}</p></div>
+      <p class="pr-tusklo">${rmDen(D.segodnya)} · ${escapeHtml(D.obekt.nazvanie)}</p></div>
 
     <section class="blk pr-blok pr-vazhno"><div class="pr-ryad"><h2>Посещаемость за сегодня</h2>
-      <span class="pr-metka ${sPosesh ? "ok" : "nov"}">${sPosesh ? "заполнено" : "не заполнено"}</span></div>
-      <p class="pr-tusklo">${sPosesh ? `На работе ${bylo} из ${PR.posesh.l.length} · часов ${chasov}` : "Отметьте, кто сегодня на работе и сколько часов отработал."}</p>
-      <div><button class="btn primary" data-pr="posesh">${sPosesh ? "Открыть и поправить" : "Отметить"}</button></div></section>
+      <span class="pr-metka ${sP ? "ok" : "nov"}">${sP ? "заполнено" : "не заполнено"}</span></div>
+      <p class="pr-tusklo">${sP ? `На работе ${bylo} из ${posesh.l.length} · часов ${chasov}`
+        : (D.vchera ? `Вчера было ${D.vchera.byli} человек, ${D.vchera.chasov} часов. ` : "") + "Отметить сегодняшний день — минута."}</p>
+      <div class="pr-ryad">
+        <button class="btn primary" data-ps="posesh">${sP ? "Открыть и поправить" : "Отметить посещаемость"}</button>
+        ${sP ? "" : `<button class="btn ghost" data-ps="posesh-bystro">Все на работе по 8 часов</button>`}</div></section>
+
+    <section class="blk pr-blok"><div class="pr-ryad"><h2>Сегодня в работе</h2>
+      <span class="pr-metka rab">${vRabote.length}</span></div>
+      ${vRabote.length ? vRabote.map(x => `<div class="pr-novoe"><div>
+          <b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
+          <div class="pr-tusklo">${x.k.ispolnitel ? "делает " + escapeHtml(x.k.ispolnitel) + " · " : ""}взяли ${rmDen(x.k.vzyal)}${x.k.srok ? " · срок " + rmDen(x.k.srok) : ""}</div></div>
+          <div class="pr-ryad"><button class="btn primary" data-ps-gotovo="${x.ki}">Готово</button>
+          <button class="btn ghost" data-ps-izd="${x.ki}">Открыть</button></div></div>`).join("")
+        : `<p class="pr-tusklo">Сейчас в работе ничего нет. Откройте изделия и возьмите то, что готово к работе.</p>`}</section>
 
     <section class="blk pr-blok"><div class="pr-ryad"><h2>Что нового</h2>
       ${nov.length ? `<span class="pr-metka nov">${nov.length}</span>` : ""}</div>
-      ${nov.length ? nov.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.podpis)}</b> ${escapeHtml(prNazvanieKarty(x.k))}
-          <div class="pr-tusklo">новый чертёж: ${escapeHtml(x.f.vid)}, ${rmDen(x.f.kogda)}</div></div>
-          <button class="btn ghost" data-pr-izd="${x.ki}">Посмотреть</button></div>`).join("")
-        : `<p class="pr-tusklo">Новых чертежей нет — всё, что пришло за последние дни, вы уже открыли.</p>`}</section>
+      ${nov.length ? nov.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
+          <div class="pr-tusklo">${escapeHtml(x.chto)}, ${rmDen(x.kogda)}</div></div>
+          <button class="btn ghost" data-ps-izd="${x.ki}">Посмотреть</button></div>`).join("")
+        : `<p class="pr-tusklo">Новых чертежей и разрешений нет.</p>`}</section>
 
-    <div class="dm-plashka"><span>Готовится новое устройство этого пространства: изделия со состоянием, материалы, отметки «взял — готово».
-      Посмотреть можно на выдуманном примере — там ничего настоящего и ничего никуда не уходит.</span>
-      <button class="btn ghost" id="prKDemo">Открыть демонстрацию</button></div>
+    ${pom.length ? `<section class="blk pr-blok"><div class="pr-ryad"><h2>Что мешает</h2>
+      <span class="pr-metka nov">${pom.length}</span></div>
+      ${pom.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
+        <div class="pr-tusklo">${escapeHtml(x.m.tekst)} · ${rmDen(x.m.kogda)}</div></div>
+        <button class="btn ghost" data-ps-izd="${x.ki}">Открыть</button></div>`).join("")}</section>` : ""}
 
-    <section class="pr-blok-bez"><h2>${escapeHtml(D.obekt)}</h2>
+    <section class="pr-blok-bez"><h2>${escapeHtml(D.obekt.nazvanie)}</h2>
       <div class="pr-setka pr-plitki">
-        <button class="pr-plitka" data-pr="obekt"><b>${D.kartochki.length}</b><span>Изделия и чертежи</span></button>
-        <button class="pr-plitka" data-pr="vazhnoe"><b>${(D.vazhnoe || []).length}</b><span>Важно знать: материалы, отделка, монтаж</span></button>
-        <button class="pr-plitka" data-pr="zamery"><b>${(D.zamery || []).length}</b><span>Замеры и обмеры</span></button>
-        <button class="pr-plitka" data-pr="chat"><b>·</b><span>Сообщения Юлии Евгеньевне и Игорю Михайловичу</span></button>
+        <button class="pr-plitka" data-ps="obekt"><b>${D.kartochki.length}</b><span>Изделия: состояние и чертежи</span></button>
+        <button class="pr-plitka" data-ps="proekt"><b>${D.obekt.sroki.length || (D.obekt.pomeshcheniya || []).length || "·"}</b><span>Проект: сроки, помещения, монтаж</span></button>
+        <button class="pr-plitka" data-ps="materialy"><b>${(D.obekt.materialy.length || (D.obekt.otdelka || []).length) || "·"}</b><span>Материалы, отделка и остатки</span></button>
+        <button class="pr-plitka" data-ps="chat"><b>·</b><span>Написать Юлии Евгеньевне или Игорю Михайловичу</span></button>
       </div></section>
   </div>`;
-  prPrivyazat(app);
-  const kDemo = document.getElementById("prKDemo");
-  if (kDemo) kDemo.addEventListener("click", () => nav(() => renderDemo("home")));
-  if (PR.posesh === null) prZagruzitPosesh().then(() => { if (STATE.tekushchiy && STATE.tekushchiy.v === "pr" && STATE.tekushchiy.e === "home") prGlavnaya(app); });
-  prZnakomstvo();
+  psPrivyazat(app);
+  if (!psDemo() && PR.posesh === null) prZagruzitPosesh().then(() => {
+    const t = STATE.tekushchiy || {};
+    if (t.v === "pr" && (t.e || "home") === "home") psGlavnaya(app);
+  });
 }
 
-function prObekt(app) {
-  const D = PR.D;
+/* ---- 2. Проект: сроки, помещения, монтаж ---- */
+function psProekt(app) {
+  const D = psD(), o = D.obekt;
   app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt)}</span><h1>Изделия и чертежи</h1>
-      <p class="pr-tusklo">Нажмите на изделие — вид, действующие чертежи, модели и что важно знать.</p></div>
-    <div class="pr-setka">${D.kartochki.map((k, ki) => {
-      const st = prSostoyanie(k), pom = prPomeshchenie(k.gde);
-      const pometki = [];
-      if (k.rabochka.length) pometki.push("чертежей · " + k.rabochka.length);
-      if (k.modeli && k.modeli.length) pometki.push("моделей · " + k.modeli.length);
-      if (k.pilot) pometki.push("вид есть");
-      return `<article class="pr-karta">
-        <div class="pr-karta-verh"><span class="pr-kod">${escapeHtml(k.podpis)}</span>
-          <span class="pr-karta-nazv">${escapeHtml(prNazvanieKarty(k))}</span></div>
-        ${pom.imya ? `<div class="pr-karta-pom">${pom.n ? `<span class="pr-pom-n">Помещение ${escapeHtml(pom.n)}</span>` : ""}
-          <span>${escapeHtml(pom.imya)}</span></div>` : ""}
-        <div><span class="pr-metka ${st.kl}">${st.tekst}</span></div>
-        ${pometki.length ? `<div class="pr-tusklo">${escapeHtml(pometki.join(" · "))}</div>` : ""}
-        <button class="btn primary pr-shirokaya" data-pr-izd="${ki}">Открыть изделие</button>
-      </article>`;
-    }).join("")}</div>
-    ${D.bez_koda.length ? `<section class="blk pr-blok"><h2>Чертежи без номера изделия</h2>
-      <p class="pr-tusklo">Конструктор не указала, к какому изделию. Уточняйте у Юлии Евгеньевны.</p>
-      ${prChertezhiHtml(D.bez_koda.flatMap(g => g.fajly), "bk")}</section>` : ""}
+    ${psPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(o.nazvanie)}</span><h1>Проект: сроки и монтаж</h1>
+      <p class="pr-tusklo">Сроки плавают — здесь всегда последнее, что мы назначили. Поменялась дата — поменялась и тут.</p></div>
+    <section class="blk pr-blok"><h2>Ключевые даты</h2>
+      ${o.sroki.length ? `<div class="dm-spisok">${o.sroki.map(s => `<div class="dm-stroka" style="cursor:default">
+        <div class="dm-stroka-levo"><b>${escapeHtml(s.chto)}</b><small>${s.kto ? "назначил " + escapeHtml(s.kto) : ""}</small></div>
+        <div class="pr-ryad"><b>${rmDen(s.kogda)}</b>
+          <span class="pr-metka ${s.tochno ? "ok" : "zhd"}">${s.tochno ? "точная дата" : "ориентир"}</span></div></div>`).join("")}</div>`
+        : psPusto("Сроки по изделиям и монтажу")}</section>
+    ${(o.pomeshcheniya || []).length ? `<section class="blk pr-blok"><h2>Помещения объекта</h2>
+      <p class="pr-tusklo">Из плана проекта дизайнера — номера те же, что на чертежах.</p>
+      <div class="dm-pary">${o.pomeshcheniya.map(p => `<div class="dm-para"><span>Помещение ${p.nomer}</span>${escapeHtml(p.imya)}${p.ploshchad ? " · " + escapeHtml(p.ploshchad) + " м²" : ""}</div>`).join("")}</div></section>` : ""}
+    <section class="blk pr-blok"><h2>Условия монтажа</h2>
+      ${o.montazh.length ? `<div class="dm-spisok">${o.montazh.map(m => `<div class="dm-stroka" style="cursor:default">
+        <div class="dm-stroka-levo"><b>${escapeHtml(m.gde)}</b><small>${escapeHtml(m.chto)}</small></div></div>`).join("")}</div>`
+        : psPusto("Доступ, лифт, этаж и готовность помещений")}</section>
+    ${(o.dveri || []).length ? `<section class="blk pr-blok"><h2>Двери по проекту</h2>
+      <div class="pr-tabl"><table><thead><tr><th>Обозначение</th><th>Высота</th><th>Ширина</th></tr></thead><tbody>
+      ${o.dveri.map(d => `<tr><td>${escapeHtml(d.kod)}</td><td>${escapeHtml(d.vysota)}</td><td>${escapeHtml(d.shirina)}</td></tr>`).join("")}
+      </tbody></table></div></section>` : ""}
   </div>`;
-  prPrivyazat(app);
+  psPrivyazat(app);
 }
 
-function prChertezhiHtml(spisok, gruppa) {
-  const nov = prNovye().map(x => x.f.id);
-  if (!spisok.filter(f => !f.net_fajla).length) return `<p class="pr-tusklo">Здесь пока пусто.</p>`;
-  return `<div class="pr-chertezhi">` + spisok.filter(f => !f.net_fajla).map((f, i) => `<div class="pr-chertezh">
-      <div class="pr-ch-imya"><b>${escapeHtml(f.vid ? f.vid[0].toUpperCase() + f.vid.slice(1) : f.imya)}</b>
-        <small>${escapeHtml(f.imya)}${f.kogda ? " · " + rmDen(f.kogda) : ""}${f.kto ? " · " + escapeHtml(f.kto) : ""}</small></div>
-      ${nov.includes(f.id) ? `<span class="pr-metka nov">новый</span>` : ""}
-      <button class="btn ${nov.includes(f.id) ? "primary" : "ghost"}" data-pr-otkr="${gruppa}:${i}">${nov.includes(f.id) ? "Открыть и ознакомиться" : "Открыть"}</button>
-    </div>`).join("") + `</div>`;
-}
-
-/* окно изделия — как у заказчика: вкладки, ничего лишнего */
-const PR_OKNO = { ki: -1, v: "chertezhi" };
-function prIzdelie(app, ki) {
-  const k = PR.D.kartochki[ki];
-  if (!k) return prObekt(app);
-  PR_OKNO.ki = ki;
-  const pom = prPomeshchenie(k.gde), st = prSostoyanie(k);
-  const vkladki = [["chertezhi", "Чертежи", k.rabochka.length]];
-  if (k.pilot) vkladki.push(["vid", "Как выглядит", k.pilot.fajly.filter(f => !f.net_fajla).length]);
-  if (k.modeli && k.modeli.length) vkladki.push(["modeli", "Модели", k.modeli.length]);
-  vkladki.push(["vazhnoe", "Важно знать", (PR.D.vazhnoe || []).length]);
-  vkladki.push(["vopros", "Вопрос", 0]);
-  if (!vkladki.some(v => v[0] === PR_OKNO.v)) PR_OKNO.v = "chertezhi";
-  let telo = "";
-  if (PR_OKNO.v === "chertezhi") telo = prChertezhiHtml(k.rabochka, "rab") +
-    `<p class="pr-tusklo">Только действующие чертежи — прежние версии убраны, чтобы не делать по старому.</p>`;
-  else if (PR_OKNO.v === "vid") telo = `<div class="pr-vidy">${k.pilot.fajly.filter(f => !f.net_fajla).map((f, i) => `
-      <button class="pr-vid" data-pr-otkr="vid:${i}">${f.mini ? `<img data-pr-mini="${escapeHtml(f.mini)}" alt="">` : `<span>${f.tip === "pdf" ? "PDF" : "вид"}</span>`}</button>`).join("")}</div>
-    <p class="pr-tusklo">Согласованный пилот от ${rmDen(k.pilot.kogda)} — для понимания вида. Изготавливать по чертежам.</p>`;
-  else if (PR_OKNO.v === "modeli") telo = prChertezhiHtml(k.modeli, "mod") +
-    `<p class="pr-tusklo">Файлы в формате step и подобных — для ЧПУ и модели.</p>`;
-  else if (PR_OKNO.v === "vazhnoe") telo = prVazhnoeHtml();
-  else telo = `<p class="pr-tusklo">Что непонятно по этому изделию — напишите Юлии Евгеньевне, ответ придёт в сообщения.</p>
-    <div><button class="btn primary" data-pr-vopros="${ki}">Задать вопрос</button></div>`;
+/* ---- 3. Материалы, отделка и остатки ---- */
+function psMaterialy(app) {
+  const D = psD(), o = D.obekt;
+  const netu = D.kartochki.flatMap((k, ki) => (k.net_materialov || []).map(t => ({ ki, k, t })));
   app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}${pom.imya ? " · " + (pom.n ? "помещение " + escapeHtml(pom.n) + " · " : "") + escapeHtml(pom.imya) : ""}</span>
-      <h1>${escapeHtml(k.podpis)} · ${escapeHtml(prNazvanieKarty(k))}</h1>
-      <div><span class="pr-metka ${st.kl}">${st.tekst}</span></div></div>
-    <div class="pr-vkladki">${vkladki.map(v => `<button class="pr-vkladka${PR_OKNO.v === v[0] ? " tek" : ""}" data-pr-vkl="${v[0]}">${v[1]}${v[2] ? ` <i>${v[2]}</i>` : ""}</button>`).join("")}</div>
+    ${psPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(o.nazvanie)}</span><h1>Материалы и остатки</h1>
+      <p class="pr-tusklo">Общая отделка объекта и что сейчас лежит в цехе.</p></div>
+    <section class="blk pr-blok"><h2>Материалы и отделка мебели</h2>
+      ${o.materialy.length ? `<div class="dm-pary">${o.materialy.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>`
+        : psPusto("Корпус, фасады, кромка, цвет и образцы")}</section>
+    ${(o.otdelka || []).length ? `<section class="blk pr-blok"><h2>Отделка помещений по проекту</h2>
+      <p class="pr-tusklo">Полы, плинтусы и потолки — чтобы на монтаже не разойтись с отделкой.</p>
+      <div class="dm-pary">${o.otdelka.map(x => `<div class="dm-para"><span>${escapeHtml(x.gruppa)} · ${escapeHtml(x.kod)}</span>${escapeHtml(x.chto)}</div>`).join("")}</div></section>` : ""}
+    <section class="blk pr-blok"><h2>Расход и остатки</h2>
+      ${o.ostatki.length ? `<div class="dm-pary">${o.ostatki.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>`
+        : psPusto("Сколько материала в цехе и сколько нужно по объекту")}</section>
+    <section class="blk pr-blok"><h2>Чего не хватает по изделиям</h2>
+      ${netu.length ? `<div class="dm-spisok">${netu.map(x => `<button class="dm-stroka" data-ps-izd="${x.ki}">
+        <div class="dm-stroka-levo"><b>${escapeHtml(x.k.kod)} ${escapeHtml(x.k.nazvanie)}</b><small>${escapeHtml(x.t)}</small></div>
+        <span class="pr-metka nov">нет</span></button>`).join("")}</div>`
+        : `<p class="pr-tusklo">Ничего не отмечено. Отмечается в изделии, вкладка «Работа».</p>`}</section>
+  </div>`;
+  psPrivyazat(app);
+}
+
+/* ---- 4. Изделия объекта ---- */
+function psObekt(app) {
+  const D = psD();
+  const podhodit = k => PS.filtr === "vse" ? true
+    : PS.filtr === "net" ? (k.status === "net_dannyh" || k.status === "net_chertezha" || (k.net_materialov || []).length || (k.meshaet || []).length)
+    : PS.filtr === "est" ? (k.status === "est_chertezhi" || k.status === "razresheno")
+    : k.status === PS.filtr;
+  const spisok = D.kartochki.map((k, ki) => ({ k, ki })).filter(x => podhodit(x.k));
+  app.innerHTML = `<div class="pr">
+    ${psPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Изделия</h1>
+      <p class="pr-tusklo">Состав объекта одним списком: сразу видно, в каком состоянии изделие и чего ему не хватает.</p></div>
+    <div class="dm-chipy">${PS_FILTRY.map(f => `<button class="dm-chip${PS.filtr === f[0] ? " tek" : ""}" data-ps-filtr="${f[0]}">${f[1]}</button>`).join("")}</div>
+    <section class="blk pr-blok"><div class="dm-spisok">
+      ${spisok.length ? spisok.map(x => {
+        const s = psSost(x.k), pometki = [];
+        if (x.k.dokumenty.length) pometki.push("чертежей " + x.k.dokumenty.length);
+        if (x.k.pilot) pometki.push("вид есть");
+        if ((x.k.modeli || []).length) pometki.push("моделей " + x.k.modeli.length);
+        if (x.k.ispolnitel) pometki.push("делает " + x.k.ispolnitel);
+        if ((x.k.net_materialov || []).length) pometki.push("нет материалов");
+        if (x.k.kol > 1) pometki.push(x.k.kol + " шт.");
+        return `<button class="dm-stroka" data-ps-izd="${x.ki}">
+          <div class="dm-stroka-levo"><b>${escapeHtml(x.k.kod)} · ${escapeHtml(x.k.nazvanie)}</b>
+            <small>${escapeHtml([psPom(x.k)].concat(pometki).filter(Boolean).join(" · "))}</small></div>
+          <div class="pr-ryad"><span class="pr-metka ${s.k}">${s.t}</span>
+            ${x.k.srok ? `<small class="pr-tusklo">срок ${rmDen(x.k.srok)}</small>` : ""}</div></button>`;
+      }).join("") : `<p class="pr-tusklo">В этом состоянии изделий нет.</p>`}
+    </div></section>
+    ${(D.bez_koda || []).length ? `<section class="blk pr-blok"><h2>Чертежи без номера изделия</h2>
+      <p class="pr-tusklo">Конструктор не указала, к какому изделию. Уточняйте у Юлии Евгеньевны.</p>
+      ${psDokumentyHtml(D.bez_koda.flatMap(g => g.fajly).filter(f => !f.net_fajla).map(f => ({
+        vid: f.vid || "чертёж", imya: f.imya, kogda: String(f.kogda || "").slice(0, 10), kto: f.kto || "", bin: f.bin, tip: f.tip })), "bk")}</section>` : ""}
+  </div>`;
+  psPrivyazat(app);
+}
+
+/* ---- 5. Изделие ---- */
+function psIzdelie(app, ki) {
+  const D = psD(), k = D.kartochki[ki];
+  if (!k) return psObekt(app);
+  PS.ki = ki;
+  const s = psSost(k);
+  const vkladki = [["vid", "Как выглядит", (k.gabarity ? 1 : 0) + (k.vizualizacii || []).length + (k.pilot ? k.pilot.fajly.length : 0)],
+    ["chert", "Чертежи", k.dokumenty.length],
+    ["mat", "Материалы и фурнитура", k.materialy.length + k.furnitura.length + k.prilegayushchie.length],
+    ["rab", "Работа", (k.meshaet || []).length],
+    ["vopr", "Вопрос", 0]];
+  if (!vkladki.some(v => v[0] === PS.vkl)) PS.vkl = "vid";
+  let telo = "";
+  if (PS.vkl === "vid") telo = psVidHtml(k, ki);
+  else if (PS.vkl === "chert") telo = psChertezhiHtml(k, ki);
+  else if (PS.vkl === "mat") telo = psMaterialyHtml(k);
+  else if (PS.vkl === "rab") telo = psRabotaHtml(k, ki);
+  else telo = psVoprosHtml(k);
+  app.innerHTML = `<div class="pr">
+    ${psPlashka()}
+    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}${psPom(k) ? " · " + escapeHtml(psPom(k)) : ""}</span>
+      <h1>${escapeHtml(k.kod)} · ${escapeHtml(k.nazvanie)}${k.kol > 1 ? " — " + k.kol + " шт." : ""}</h1>
+      <div class="pr-ryad"><span class="pr-metka ${s.k}">${s.t}</span>
+        ${k.srok ? `<span class="pr-tusklo">срок ${rmDen(k.srok)}${k.srok_tochno ? "" : " (ориентир)"}</span>` : `<span class="pr-tusklo">срок не назначен</span>`}</div></div>
+    <div class="pr-vkladki">${vkladki.map(v => `<button class="pr-vkladka${PS.vkl === v[0] ? " tek" : ""}" data-ps-vkl="${v[0]}">${v[1]}${v[2] ? ` <i>${v[2]}</i>` : ""}</button>`).join("")}</div>
     <section class="blk pr-blok">${telo}</section>
   </div>`;
-  prPrivyazat(app, k);
+  psPrivyazat(app, ki);
+  const cv = document.getElementById("dm3d");
+  if (cv) dm3D(cv, k.gabarity);
 }
 
-function prVazhnoeHtml() {
-  const v = PR.D.vazhnoe || [];
-  if (!v.length) return `<p class="pr-tusklo">Пока нечего добавить: по этому объекту записей про материалы и отделку нет.</p>`;
-  return `<div class="pr-vazhnoe">` + v.map(x => `<div class="pr-zapis pr-${x.vid === "решено" ? "resheno" : x.vid === "обещано" ? "obeshchano" : "vopros"}">
-      <span class="pr-vid-zapisi">${escapeHtml(x.vid)}${x.kogda ? " · " + escapeHtml(String(x.kogda).slice(0, 10)) : ""}</span>
-      <div>${escapeHtml(x.tekst)}</div></div>`).join("") + `</div>`;
-}
-function prVazhnoe(app) {
-  app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}</span><h1>Важно знать</h1>
-      <p class="pr-tusklo">Материалы, отделка, фурнитура, замеры и монтаж — из решений и вопросов по объекту.</p></div>
-    <section class="blk pr-blok">${prVazhnoeHtml()}</section></div>`;
-  prPrivyazat(app);
-}
-function prZamery(app) {
-  const z = PR.D.zamery || [];
-  app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(PR.D.obekt)}</span><h1>Замеры и обмеры</h1>
-      <p class="pr-tusklo">По ним сверяют размеры на месте.</p></div>
-    <section class="blk pr-blok">${prChertezhiHtml(z, "zam")}</section></div>`;
-  prPrivyazat(app);
+function psVidHtml(k, ki) {
+  if (!k.gabarity && !(k.vizualizacii || []).length && !k.pilot)
+    return psPusto("Согласованный вид, визуализации и объёмная модель");
+  return `${k.gabarity ? `<h2>Объёмная модель изделия</h2>
+      <p class="pr-tusklo">Собрана из чертежа конструктора. Поверните пальцем или мышью.</p>
+      <canvas class="dm-3d" id="dm3d"></canvas>
+      <div class="pr-ryad"><div class="dm-chipy">
+        <button class="dm-chip" data-ps-vid3d="pered">Спереди</button>
+        <button class="dm-chip" data-ps-vid3d="bok">Сбоку</button>
+        <button class="dm-chip" data-ps-vid3d="ugol">Под углом</button></div>
+        <span class="pr-tusklo">${k.gabarity.sh} × ${k.gabarity.v} × ${k.gabarity.g} мм</span></div>` : ""}
+    ${(k.vizualizacii || []).length ? `<h2>Визуализации</h2>
+      <div class="pr-vidy">${k.vizualizacii.map((v, i) => `<button class="pr-vid" data-ps-viz="${ki}:${i}"><span>${escapeHtml(v)}</span></button>`).join("")}</div>` : ""}
+    ${k.pilot ? `<h2>Согласованный вид</h2>
+      <div class="pr-vidy">${k.pilot.fajly.map((f, i) => `<button class="pr-vid" data-ps-dok="${ki}:pilot:${i}">${f.mini
+        ? `<img data-pr-mini="${escapeHtml(f.mini)}" alt="">` : `<span>${f.tip === "pdf" ? "PDF" : "вид"}</span>`}</button>`).join("")}</div>
+      <p class="pr-tusklo">Пилот от ${rmDen(k.pilot.kogda)} — для понимания вида. Изготавливать по чертежам.</p>` : ""}`;
 }
 
-function prPrivyazat(app, k) {
-  app.querySelectorAll("[data-pr]").forEach(b => b.addEventListener("click", () => {
-    const e = b.dataset.pr;
-    if (e === "chat") return nav(() => renderChat(""));
-    nav(() => renderPr(e));
-  }));
-  app.querySelectorAll("[data-pr-izd]").forEach(b => b.addEventListener("click", () => nav(() => renderPr("izd", +b.dataset.prIzd))));
-  app.querySelectorAll("[data-pr-vkl]").forEach(b => b.addEventListener("click", () => { PR_OKNO.v = b.dataset.prVkl; prIzdelie(app, PR_OKNO.ki); }));
-  app.querySelectorAll("[data-pr-otkr]").forEach(b => b.addEventListener("click", () => {
-    const [gr, i] = b.dataset.prOtkr.split(":");
-    const spisok = (gr === "vid" ? k.pilot.fajly : gr === "rab" ? k.rabochka : gr === "mod" ? k.modeli
-      : gr === "zam" ? PR.D.zamery : PR.D.bez_koda.flatMap(g => g.fajly)).filter(f => !f.net_fajla);
-    const f = spisok[+i];
-    if (gr !== "vid" && !prOznakomlen().includes(f.id)) {
-      prOznakomlen(f.id);
-      prZashifrovat(JSON.stringify({ f: f.id, imya: f.imya, w: Date.now() })).then(sh => fetch(INBOX_URL, { method: "POST", body: JSON.stringify({
-        type: "stroka", list: "Производство_отметки", prefiksID: "ПО", znacheniya: { "Кто": chUid(), "Шифр": sh } }) })).catch(() => {});
-      setTimeout(() => renderPr(STATE.tekushchiy.e, STATE.tekushchiy.k), 300);
-    }
-    rmSmotret({ fajly: spisok.map(x => ({ imya: x.imya, tip: x.tip === "pdf" ? "pdf" : "img", mime: x.tip === "pdf" ? "application/pdf" : "image/jpeg",
-      poluchit: () => prFajl(x.bin) })) }, +i);
-  }));
-  app.querySelectorAll("[data-pr-vopros]").forEach(b => b.addEventListener("click", () => {
-    const kk = PR.D.kartochki[+b.dataset.prVopros];
-    if (!PR.D.chat_s_yuliey || !prEsliOleg()) { alert("Вопрос по изделию задаёт Олег — из своего пространства."); return; }
-    nav(() => renderChat(PR.D.chat_s_yuliey));
-    let n = 0;
-    const zhdat = setInterval(() => {
-      const pole = document.getElementById("chPole");
-      if (pole || ++n > 40) { clearInterval(zhdat); if (pole && !pole.value) { pole.value = `${PR.D.obekt}, ${kk.podpis} ${prNazvanieKarty(kk)}: `; pole.focus(); } }
-    }, 150);
-  }));
-  const zagr = async img => { try { img.src = URL.createObjectURL(new Blob([await prFajl(img.dataset.prMini)], { type: "image/jpeg" })); } catch (e) {} };
-  app.querySelectorAll("img[data-pr-mini]").forEach(zagr);
+function psDokumentyHtml(spisok, gruppa) {
+  if (!spisok.length) return "";
+  return `<div class="pr-chertezhi">${spisok.map((d, i) => `<div class="pr-chertezh">
+      <div class="pr-ch-imya"><b>${escapeHtml(d.vid ? d.vid[0].toUpperCase() + d.vid.slice(1) : d.imya)}</b>
+        <small>${escapeHtml(d.imya)}${d.kogda ? " · " + rmDen(d.kogda) : ""}${d.kto ? " · " + escapeHtml(d.kto) : ""}${d.listov ? " · листов " + d.listov : ""}</small></div>
+      ${d.novyj ? `<span class="pr-metka nov">новый</span>` : ""}
+      <button class="btn ${d.novyj ? "primary" : "ghost"}" data-ps-dok="${PS.ki}:${gruppa}:${i}">Открыть</button></div>`).join("")}</div>`;
 }
 
-/* посещаемость: заполняет начальник производства; зашифровано, вкладка «Посещаемость» */
+function psChertezhiHtml(k, ki) {
+  PS.ki = ki;
+  return `${k.dokumenty.length ? psDokumentyHtml(k.dokumenty, "chert") +
+      `<p class="pr-tusklo">Только действующие чертежи: прежние версии убраны, чтобы не сделать по старому.</p>`
+    : `<p class="pr-tusklo">Рабочего чертежа нет. Изделие в работу не запускаем — напишите Юлии Евгеньевне во вкладке «Вопрос».</p>`}
+    ${k.pilot ? `<h2>Согласованный пилот</h2>
+      <p class="pr-tusklo">На случай вопроса к виду: что именно согласовал заказчик.</p>
+      ${psDokumentyHtml(k.pilot.fajly, "pilot")}` : ""}
+    ${(k.modeli || []).length ? `<h2>Файлы для ЧПУ и моделей</h2>${psDokumentyHtml(k.modeli, "mod")}` : ""}
+    ${(k.zamery || []).length ? `<h2>Замеры с объекта</h2>${psDokumentyHtml(k.zamery.map(z => ({
+        vid: z.imya, imya: z.imya, kogda: z.kogda, kto: z.kto, bin: z.bin, tip: z.tip })), "zam")}` : ""}`;
+}
+
+function psMaterialyHtml(k) {
+  const net = k.furnitura.filter(f => !f.est).concat(k.prilegayushchie.filter(p => !p.est));
+  const vazhnoe = psDemo() ? [] : (psD().vazhnoe || []);
+  return `${k.materialy.length ? `<h2>Материалы и отделка</h2>
+      <div class="dm-pary">${k.materialy.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}${m.obrazec ? " · есть образец" : ""}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>`
+    : psPusto("Корпус, фасады, кромка, цвет и образец по этому изделию")}
+    ${k.furnitura.length ? `<h2>Фурнитура</h2><div class="pr-tabl"><table>
+      <thead><tr><th>Артикул</th><th>Что</th><th>Сколько</th><th>Есть в цехе</th></tr></thead><tbody>
+      ${k.furnitura.map(f => `<tr><td>${escapeHtml(f.art)}</td><td>${escapeHtml(f.chto)}</td><td>${f.kol}</td>
+        <td>${f.est ? `<span class="pr-metka ok">есть</span>` : `<span class="pr-metka nov">нет${f.kogda ? " · " + escapeHtml(f.kogda) : ""}</span>`}</td></tr>`).join("")}
+      </tbody></table></div>` : `<h2>Фурнитура</h2>${psPusto("Спецификация с артикулами")}`}
+    ${k.prilegayushchie.length ? `<h2>Что встраиваем и что рядом</h2>
+      <p class="pr-tusklo">Покупное и то, что даёт заказчик: без этих размеров изделие не собрать.</p>
+      <div class="pr-tabl"><table><thead><tr><th>Что</th><th>Чьё</th><th>На месте</th></tr></thead><tbody>
+      ${k.prilegayushchie.map(p => `<tr><td>${escapeHtml(p.chto)}</td><td>${escapeHtml(p.kto)}</td>
+        <td>${p.est ? `<span class="pr-metka ok">есть</span>` : `<span class="pr-metka nov">нет${p.kogda ? " · " + escapeHtml(p.kogda) : ""}</span>`}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    ${net.length ? `<p class="pr-tusklo">Не хватает ${net.length} позиций — отметить, чего нет, можно во вкладке «Работа».</p>` : ""}
+    ${vazhnoe.length ? `<h2>Важно знать по объекту</h2>
+      <div class="pr-vazhnoe">${vazhnoe.slice(0, 20).map(x => `<div class="pr-zapis pr-${x.vid === "решено" ? "resheno" : x.vid === "обещано" ? "obeshchano" : "vopros"}">
+        <span class="pr-vid-zapisi">${escapeHtml(x.vid)}${x.kogda ? " · " + escapeHtml(String(x.kogda).slice(0, 10)) : ""}</span>
+        <div>${escapeHtml(x.tekst)}</div></div>`).join("")}</div>` : ""}`;
+}
+
+function psRabotaHtml(k, ki) {
+  const pozicii = k.materialy.map(m => m.chto + ": " + m.znach).concat(k.furnitura.map(f => f.chto + " · " + f.art));
+  const mozhno = k.status !== "net_dannyh" && k.status !== "net_chertezha";
+  return `<h2>Разрешение и срок</h2>
+    ${k.razreshenie ? `<p class="pr-tusklo">Разрешила ${escapeHtml(k.razreshenie.kto)}, ${rmDen(k.razreshenie.kogda)}. Срок: ${k.srok ? rmDen(k.srok) + (k.srok_tochno ? "" : " (ориентир, может поменяться)") : "не назначен"}.</p>`
+      : psPusto("Разрешение в работу и срок по изделию")}
+    <h2>Кто делает</h2>
+    <div class="dm-chipy">${psD().lyudi.map(n => `<button class="dm-chip${k.ispolnitel === n ? " tek" : ""}" data-ps-kto="${ki}:${escapeHtml(n)}">${escapeHtml(n)}</button>`).join("")}</div>
+    <div class="pr-ryad">
+      ${k.gotovo ? `<span class="pr-metka ok">готово ${rmDen(k.gotovo)}</span>`
+        : k.vzyal ? `<button class="btn primary dm-bolshaya" data-ps-gotovo="${ki}">Отметить готовым</button>`
+        : mozhno ? `<button class="btn primary dm-bolshaya" data-ps-vzyal="${ki}">Взять в работу</button>`
+        : `<span class="pr-tusklo">Пока нет чертежей — в работу не берём.</span>`}
+    </div>
+    ${k.vzyal && !k.gotovo ? `<p class="pr-tusklo">Взяли ${rmDen(k.vzyal)}${k.ispolnitel ? ", делает " + escapeHtml(k.ispolnitel) : ""}.</p>` : ""}
+    <h2>Что мешает</h2>
+    ${(k.meshaet || []).length ? `<div class="pr-vazhnoe">${k.meshaet.map(m => `<div class="pr-zapis pr-vopros">
+      <span class="pr-vid-zapisi">${rmDen(m.kogda)}</span><div>${escapeHtml(m.tekst)}</div></div>`).join("")}</div>`
+      : `<p class="pr-tusklo">Ничего не мешает.</p>`}
+    <div class="dm-chipy">${["Ждём материал", "Ждём ответ", "Не сходится размер", "Нет места в цехе"].map(t =>
+      `<button class="dm-chip" data-ps-meshaet="${ki}:${escapeHtml(t)}">${t}</button>`).join("")}</div>
+    <h2>Чего нет из материалов</h2>
+    ${pozicii.length ? `<p class="pr-tusklo">Отметьте то, чего не хватает, — это увидим мы и подвезём.</p>
+      <div>${pozicii.map((p, i) => `<label class="dm-galka"><input type="checkbox" data-ps-net="${ki}:${i}"
+        ${(k.net_materialov || []).includes(p) ? "checked" : ""}><span>${escapeHtml(p)}</span></label>`).join("")}</div>`
+      : `<p class="pr-tusklo">Списка материалов по изделию пока нет — напишите своими словами, чего не хватает.</p>`}
+    ${(k.net_materialov || []).filter(t => !pozicii.includes(t)).map(t =>
+      `<div class="pr-zapis pr-vopros"><span class="pr-vid-zapisi">нет в цехе</span><div>${escapeHtml(t)}</div></div>`).join("")}
+    <textarea id="psSvoe" rows="2" placeholder="Чего-то нет в списке — напишите сюда"></textarea>
+    <div class="pr-ryad"><button class="btn ghost" data-ps-svoe="${ki}">Добавить</button>
+      <span class="pr-tusklo" id="psSost"></span></div>
+    ${(k.foto || []).length ? `<h2>Фото готового</h2><div class="pr-vidy">${k.foto.map(f => `<button class="pr-vid" style="cursor:default"><span>${escapeHtml(f.imya)}</span></button>`).join("")}</div>
+      <p class="pr-tusklo">Снято ${rmDen(k.foto[0].kogda)}, ${escapeHtml(k.foto[0].kto)}.</p>` : ""}`;
+}
+
+function psVoprosHtml(k) {
+  return `<h2>Написать по этому изделию</h2>
+    <p class="pr-tusklo">Письмо уйдёт в мессенджер уже подписанным изделием — искать и объяснять, о чём речь, не нужно.</p>
+    <div class="dm-chipy">${Object.entries(PS_KUDA).map(([k2, imya]) => `<button class="dm-chip${PS.kuda === k2 ? " tek" : ""}" data-ps-kuda="${k2}">${imya}</button>`).join("")}</div>
+    <textarea id="psVopros" rows="3" placeholder="Что непонятно по изделию"></textarea>
+    <div class="pr-ryad"><button class="btn primary" id="psOtpravit">Отправить</button>
+      <span class="pr-tusklo" id="psVoprSost"></span></div>
+    <p class="pr-tusklo">Начало письма подставится само: «${escapeHtml(psD().obekt.nazvanie)}, ${escapeHtml(k.kod)} ${escapeHtml(k.nazvanie)}: …»</p>`;
+}
+
+/* ---- 6. Посещаемость ---- */
 async function prZagruzitPosesh() {
   PR.posesh = false;
   try {
@@ -5472,427 +5752,211 @@ async function prZagruzitPosesh() {
     }
   } catch (e) {}
 }
-async function prPosesh(app) {
-  if (PR.posesh === null) { app.innerHTML = `<div class="empty-hint">Открываю…</div>`; await prZagruzitPosesh(); }
-  const bylo = PR.posesh && PR.posesh.d === prSegodnya() ? PR.posesh.l : null;
-  const S = PR.D.lyudi.map(n => { const x = bylo && bylo.find(y => y.n === n); return x ? { n, b: x.b, h: x.h } : { n, b: true, h: 8 }; });
-  const mozhno = prEsliOleg();
-  const itog = () => { const na = S.filter(x => x.b); return `На работе ${na.length} из ${S.length} · всего часов: ${na.reduce((s, x) => s + (+x.h || 0), 0)}`; };
+function psNovayaPosesh(vse, chasov) {
+  return { d: psD().segodnya, ob: psDemo() ? "demo" : (PR.D || {}).ob || "",
+           l: psD().lyudi.map(n => ({ n, b: !!vse, h: vse ? (chasov || 8) : 0 })) };
+}
+function psPosesh(app) {
+  const D = psD();
+  const tek = () => psDemo() ? DM.posesh : PR.posesh;
+  if (!tek() || tek().d !== D.segodnya) {
+    const nov = psNovayaPosesh(true, 8);
+    if (psDemo()) DM.posesh = nov; else PR.posesh = nov;
+  }
+  const P = tek(), S = P.l;
+  const mozhno = psDemo() || prEsliOleg();
+  const itog = () => { const na = S.filter(x => x.b); return `На работе ${na.length} из ${S.length} · всего часов ${na.reduce((s, x) => s + (+x.h || 0), 0)}`; };
   app.innerHTML = `<div class="pr">
-    <div class="pr-zag"><h1>Посещаемость</h1><p class="pr-tusklo">${rmDen(prSegodnya())}. ${mozhno ? "Отметьте, кто на работе и сколько часов отработал." : "Заполняет Олег, начальник производства."}${bylo ? " Сегодня уже сохранено — можно поправить." : ""}</p></div>
-    <section class="blk pr-blok"><div class="pr-tabl"><table><thead><tr><th>Кто</th><th>Сегодня</th><th>Часов</th></tr></thead><tbody>
-      ${S.map((x, i) => `<tr><td>${escapeHtml(x.n)}</td>
-        <td><span class="pr-perekl"><button id="prB${i}" aria-pressed="${x.b}" data-byl="${i}"${mozhno ? "" : " disabled"}>был</button><button id="prN${i}" aria-pressed="${!x.b}" data-nebyl="${i}"${mozhno ? "" : " disabled"}>не был</button></span></td>
-        <td><input class="pr-chasy" id="prCh${i}" type="number" inputmode="decimal" min="0" max="16" step="0.5" value="${x.b ? x.h : 0}" data-chasy="${i}"${x.b && mozhno ? "" : " disabled"}></td></tr>`).join("")}
-    </tbody></table></div>
-    <p class="pr-tusklo" id="prItog">${itog()}</p>
-    ${mozhno ? `<div class="pr-ryad"><button class="btn primary" id="prSohranit">Сохранить</button><span class="pr-tusklo" id="prSost"></span></div>` : ""}</section></div>`;
-  const perersovat = () => { S.forEach((x, i) => {
-    document.getElementById("prB" + i).setAttribute("aria-pressed", x.b); document.getElementById("prN" + i).setAttribute("aria-pressed", !x.b);
-    const ch = document.getElementById("prCh" + i); ch.disabled = !x.b || !mozhno; ch.value = x.b ? x.h : 0; });
-    document.getElementById("prItog").textContent = itog(); };
-  app.querySelectorAll("[data-byl]").forEach(b => b.addEventListener("click", () => { const x = S[+b.dataset.byl]; x.b = true; if (!+x.h) x.h = 8; perersovat(); }));
-  app.querySelectorAll("[data-nebyl]").forEach(b => b.addEventListener("click", () => { S[+b.dataset.nebyl].b = false; perersovat(); }));
-  app.querySelectorAll("[data-chasy]").forEach(inp => inp.addEventListener("input", () => { S[+inp.dataset.chasy].h = inp.value; document.getElementById("prItog").textContent = itog(); }));
-  const kn = document.getElementById("prSohranit");
+    ${psPlashka()}
+    <div class="pr-zag"><h1>Посещаемость</h1>
+      <p class="pr-tusklo">${rmDen(D.segodnya)}. ${mozhno ? "Нажмите на фамилию — значит, человека не было. Часы по умолчанию 8."
+        : "Заполняет Олег, начальник производства."}</p></div>
+    <section class="blk pr-blok">
+      ${mozhno ? `<div class="dm-chipy"><button class="dm-chip" data-ps-vse="8">Все по 8 часов</button>
+        <button class="dm-chip" data-ps-vse="10">Все по 10 часов</button>
+        <button class="dm-chip" data-ps-vse="0">Никого не было</button></div>` : ""}
+      <div>${S.map((x, i) => `<div class="dm-posesh-str${x.b ? "" : " net"}">
+        <button class="dm-imya" data-ps-perekl="${i}"${mozhno ? "" : " disabled"}>${escapeHtml(x.n)}</button>
+        ${x.b ? `<span class="dm-chasy"><button data-ps-ch="${i}:-1"${mozhno ? "" : " disabled"}>−</button><b id="psH${i}">${x.h}</b><button data-ps-ch="${i}:1"${mozhno ? "" : " disabled"}>+</button></span>`
+          : `<span class="pr-metka zhd">не был</span>`}</div>`).join("")}</div>
+      <p class="pr-tusklo" id="psItog">${itog()}</p>
+      ${mozhno ? `<div class="pr-ryad"><button class="btn primary dm-bolshaya" id="psSohr">Сохранить</button></div>` : ""}
+      <p class="pr-tusklo" id="psSohrSost"></p></section>
+  </div>`;
+  psPrivyazat(app);
+  const kn = document.getElementById("psSohr");
   if (kn) kn.addEventListener("click", async () => {
-    kn.disabled = true;
-    const sost = document.getElementById("prSost");
-    sost.textContent = "Сохраняю…";
+    const sost = document.getElementById("psSohrSost");
+    if (psDemo()) {
+      sost.textContent = "Сохранено — в демонстрации только на этой странице, никуда не ушло.";
+      setTimeout(() => nazadKnopkoy(), 800);
+      return;
+    }
+    kn.disabled = true; sost.textContent = "Сохраняю…";
     try {
-      const zapis = { d: prSegodnya(), ob: PR.D.ob, l: S.map(x => ({ n: x.n, b: x.b, h: x.b ? +x.h || 0 : 0 })), w: Date.now() };
+      const zapis = { d: D.segodnya, ob: (PR.D || {}).ob || "", w: Date.now(),
+                      l: S.map(x => ({ n: x.n, b: x.b, h: x.b ? +x.h || 0 : 0 })) };
       const res = await fetch(INBOX_URL, { method: "POST", body: JSON.stringify({ type: "stroka", list: "Посещаемость", prefiksID: "ПС",
         znacheniya: { "Кто": chUid(), "Шифр": await prZashifrovat(JSON.stringify(zapis)) } }) });
       const d = await res.json();
       if (!d.ok) throw new Error(d.error || "не принято");
       PR.posesh = zapis;
-      sost.textContent = "Сохранено.";
-      setTimeout(() => nazadKnopkoy(), 700);
+      const na = S.filter(x => x.b);
+      await psVMessendzher(`Посещаемость ${rmDen(D.segodnya)}: на работе ${na.length} из ${S.length}, часов ${na.reduce((s, x) => s + (+x.h || 0), 0)}.`
+        + (S.filter(x => !x.b).length ? " Не было: " + S.filter(x => !x.b).map(x => x.n).join(", ") + "." : ""));
+      sost.textContent = "Сохранено и отправлено Юлии Евгеньевне.";
+      setTimeout(() => nazadKnopkoy(), 800);
     } catch (e) { sost.textContent = "Не сохранилось: " + e.message + ". Попробуйте ещё раз."; kn.disabled = false; }
   });
 }
 
-/* знакомство при первом входе — три подсказки, один раз */
-function prZnakomstvo() {
-  let bylo = false; try { bylo = localStorage.getItem("pr_znakomstvo") === "1"; } catch (e) {}
-  if (bylo || !prEsliOleg() || document.querySelector(".pr-zn")) return;
-  const SHAGI = [
-    ["Олег, здесь теперь не только сообщения", "Добавилось всё, что нужно производству по объекту: рабочие чертежи, как выглядит изделие и посещаемость. Цен и переписки с заказчиком здесь нет. Сообщения — на прежнем месте."],
-    ["Каждый день", "Наверху — посещаемость: кто на работе и сколько часов. Под ней — «Что нового»: свежие рабочие чертежи, которые нужно посмотреть."],
-    ["По изделию", "Нажмите на объект, потом на изделие — на одной странице вид, рабочие чертежи и вопрос Юлии Евгеньевне, если что-то непонятно."]
-  ];
-  let n = 0;
-  const fon = document.createElement("div");
-  fon.className = "pr-zn";
-  document.body.appendChild(fon);
-  const pokazat = () => {
-    if (n >= SHAGI.length) { fon.remove(); try { localStorage.setItem("pr_znakomstvo", "1"); } catch (e) {} return; }
-    fon.innerHTML = `<div class="pr-zn-okno"><span class="pr-nad">Знакомство · ${n + 1} из ${SHAGI.length}</span><h2>${SHAGI[n][0]}</h2><p class="pr-tusklo">${SHAGI[n][1]}</p>
-      <div class="pr-ryad"><button class="btn primary" id="prZnDalee">${n < SHAGI.length - 1 ? "Дальше" : "Начать работу"}</button>
-      ${n < SHAGI.length - 1 ? `<button class="btn ghost" id="prZnPropustit">Пропустить</button>` : ""}</div></div>`;
-    document.getElementById("prZnDalee").onclick = () => { n++; pokazat(); };
-    const p = document.getElementById("prZnPropustit"); if (p) p.onclick = () => { n = SHAGI.length; pokazat(); };
-  };
-  pokazat();
+/* ---- открыть чертёж ---- */
+function psOtkryt(k, gruppa, i) {
+  const spisok = gruppa === "chert" ? k.dokumenty : gruppa === "pilot" ? (k.pilot ? k.pilot.fajly : [])
+    : gruppa === "mod" ? (k.modeli || []) : gruppa === "zam" ? (k.zamery || [])
+    : psD().bez_koda.flatMap(g => g.fajly).filter(f => !f.net_fajla);
+  const f = spisok[+i];
+  if (!f) return;
+  if (!f.bin) {                       // демонстрация: настоящих файлов нет, рисуем условный лист
+    dmSmotret((k.kod || "") + " · " + (f.vid || f.imya), (f.imya || "") + (f.kogda ? " · " + rmDen(f.kogda) : ""), f.listov || 1, k.gabarity);
+    return;
+  }
+  if (!prOznakomlen().includes(f.id)) {
+    prOznakomlen(f.id);
+    psOtmetit({ v: "otkryl", kod: k.kod, tekst: f.vid || f.imya, kogda: prSegodnya(), f: f.id }, "");
+    setTimeout(() => psPererisovat(), 300);
+  }
+  rmSmotret({ fajly: spisok.filter(x => x.bin).map(x => ({ imya: x.imya, tip: x.tip === "pdf" ? "pdf" : "img",
+    mime: x.tip === "pdf" ? "application/pdf" : "image/jpeg", poluchit: () => prFajl(x.bin) })) },
+    spisok.filter(x => x.bin).findIndex(x => x.bin === f.bin));
 }
 
-/* ---------------- ДЕМОНСТРАЦИЯ устройства производства (22.09.2026) ----------------
-   Мансур: «давай для примера подготовим всё, что я написал, только пока у нас будут
-   выдуманные факты, для демонстрации, чтобы выявить неудобства… только чтобы оттуда
-   из выдуманных данных никуда ничего не ушло и ничего у нас не пострадало от них».
-   Поэтому здесь всё нарочно отрезано от рабочей системы:
-     • данные — demo/proizvodstvo.json, в нём нет ни одного настоящего изделия, человека и срока;
-     • ни одной отправки наружу: ни в реестр, ни в мессенджер, ни в Телеграм (fetch тут один —
-       за самим файлом демонстрации);
-     • всё нажатое живёт в памяти открытой страницы и пропадает при обновлении;
-     • чертежи и объёмная модель рисуются прямо в окне, настоящих файлов демонстрация не трогает.
-   Разделы — по разбору Мансура: проект → изделие → работа → обратно к нам. */
-const DM_FAJL = "demo/proizvodstvo.json";
-const DM = { D: null, vkl: "vid", posesh: null, filtr: "vse", kuda: "yuliya" };
-const DM_SOST = {
-  net_dannyh:    { t: "нет данных", k: "zhd" },
-  net_chertezha: { t: "нет рабочего чертежа", k: "zhd" },
-  zhdet_zapuska: { t: "ждёт разрешения", k: "nov" },
-  razresheno:    { t: "разрешено — можно делать", k: "rab" },
-  v_rabote:      { t: "в работе", k: "rab" },
-  gotovo:        { t: "готово", k: "ok" }
-};
-const DM_FILTRY = [["vse", "Все"], ["v_rabote", "В работе"], ["razresheno", "Можно делать"],
-  ["zhdet_zapuska", "Ждут разрешения"], ["net", "Чего-то не хватает"], ["gotovo", "Готовы"]];
+/* ---- нажатия ---- */
+function psPrivyazat(app, ki) {
+  const D = psD();
+  const pererisovat = () => psPererisovat();
+  app.querySelectorAll("[data-ps]").forEach(b => b.addEventListener("click", () => {
+    const e = b.dataset.ps;
+    if (e === "vyjti") return nav(() => renderPr("home"));
+    if (e === "chat") return nav(() => renderChat(psDemo() ? "" : (PR.D || {}).chat_s_yuliey || ""));
+    if (e === "posesh-bystro") {
+      const nov = psNovayaPosesh(true, 8);
+      if (psDemo()) DM.posesh = nov; else PR.posesh = nov;
+      return psDemo() ? pererisovat() : nav(() => renderPr("posesh"));
+    }
+    nav(() => (psDemo() ? renderDemo(e) : renderPr(e)));
+  }));
+  app.querySelectorAll("[data-ps-izd]").forEach(b => b.addEventListener("click", () =>
+    nav(() => (psDemo() ? renderDemo("izd", +b.dataset.psIzd) : renderPr("izd", +b.dataset.psIzd)))));
+  app.querySelectorAll("[data-ps-vkl]").forEach(b => b.addEventListener("click", () => { PS.vkl = b.dataset.psVkl; psIzdelie(app, ki); }));
+  app.querySelectorAll("[data-ps-filtr]").forEach(b => b.addEventListener("click", () => { PS.filtr = b.dataset.psFiltr; psObekt(app); }));
+  app.querySelectorAll("[data-ps-vid3d]").forEach(b => b.addEventListener("click", () => {
+    const cv = document.getElementById("dm3d"); if (cv && cv.dmVid) cv.dmVid(b.dataset.psVid3d);
+  }));
+  app.querySelectorAll("[data-ps-dok]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.psDok.split(":");
+    psOtkryt(D.kartochki[+ch[0]], ch[1], ch[2]);
+  }));
+  app.querySelectorAll("[data-ps-viz]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.psViz.split(":"), k = D.kartochki[+ch[0]];
+    dmSmotret(k.kod + " · " + k.vizualizacii[+ch[1]], "визуализация", 1, k.gabarity);
+  }));
+  app.querySelectorAll("[data-ps-vzyal]").forEach(b => b.addEventListener("click", async () => {
+    const i = +b.dataset.psVzyal, k = D.kartochki[i];
+    k.vzyal = D.segodnya; k.status = "v_rabote";
+    await psOtmetit({ v: "vzyal", kod: k.kod, kogda: D.segodnya },
+      `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: взяли в работу${k.ispolnitel ? ", делает " + k.ispolnitel : ""}.`);
+    pererisovat();
+  }));
+  app.querySelectorAll("[data-ps-gotovo]").forEach(b => b.addEventListener("click", async () => {
+    const i = +b.dataset.psGotovo, k = D.kartochki[i];
+    k.gotovo = D.segodnya; k.status = "gotovo";
+    await psOtmetit({ v: "gotovo", kod: k.kod, kogda: D.segodnya },
+      `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: готово.`);
+    pererisovat();
+  }));
+  app.querySelectorAll("[data-ps-kto]").forEach(b => b.addEventListener("click", async () => {
+    const ch = b.dataset.psKto.split(":"), k = D.kartochki[+ch[0]];
+    k.ispolnitel = k.ispolnitel === ch[1] ? "" : ch[1];
+    await psOtmetit({ v: "kto", kod: k.kod, tekst: k.ispolnitel, kogda: D.segodnya },
+      k.ispolnitel ? `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: делает ${k.ispolnitel}.`
+        : `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: исполнитель снят.`);
+    pererisovat();
+  }));
+  app.querySelectorAll("[data-ps-meshaet]").forEach(b => b.addEventListener("click", async () => {
+    const ch = b.dataset.psMeshaet.split(":"), k = D.kartochki[+ch[0]];
+    k.meshaet.push({ tekst: ch[1], kogda: D.segodnya });
+    await psOtmetit({ v: "meshaet", kod: k.kod, tekst: ch[1], kogda: D.segodnya },
+      `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: мешает — ${ch[1]}.`);
+    pererisovat();
+  }));
+  app.querySelectorAll("[data-ps-net]").forEach(inp => inp.addEventListener("change", async () => {
+    const ch = inp.dataset.psNet.split(":"), k = D.kartochki[+ch[0]];
+    const pozicii = k.materialy.map(m => m.chto + ": " + m.znach).concat(k.furnitura.map(f => f.chto + " · " + f.art));
+    const p = pozicii[+ch[1]];
+    if (inp.checked) { if (!k.net_materialov.includes(p)) k.net_materialov.push(p); }
+    else k.net_materialov = k.net_materialov.filter(x => x !== p);
+    await psOtmetit({ v: inp.checked ? "net" : "est", kod: k.kod, tekst: p, kogda: D.segodnya },
+      inp.checked ? `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: нет в цехе — ${p}.`
+        : `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: ${p} — привезли, есть.`);
+  }));
+  app.querySelectorAll("[data-ps-svoe]").forEach(b => b.addEventListener("click", async () => {
+    const pole = document.getElementById("psSvoe");
+    if (!pole || !pole.value.trim()) return;
+    const k = D.kartochki[+b.dataset.psSvoe], tekst = pole.value.trim();
+    k.net_materialov.push(tekst);
+    const sost = document.getElementById("psSost");
+    if (sost) sost.textContent = psDemo() ? "В демонстрации никуда не уходит." : "Отправляю…";
+    await psOtmetit({ v: "net", kod: k.kod, tekst, kogda: D.segodnya },
+      `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: нет в цехе — ${tekst}.`);
+    pererisovat();
+  }));
+  app.querySelectorAll("[data-ps-kuda]").forEach(b => b.addEventListener("click", () => { PS.kuda = b.dataset.psKuda; psIzdelie(app, ki); }));
+  const otpr = document.getElementById("psOtpravit");
+  if (otpr) otpr.addEventListener("click", async () => {
+    const pole = document.getElementById("psVopros"), sost = document.getElementById("psVoprSost");
+    const k = D.kartochki[PS.ki] || {};
+    if (!pole || !pole.value.trim()) { sost.textContent = "Напишите вопрос — и станет видно, куда он уйдёт."; return; }
+    const tekst = `${D.obekt.nazvanie}, ${k.kod} ${k.nazvanie}: ${pole.value.trim()}`;
+    if (psDemo()) { sost.textContent = "В рабочем виде письмо ушло бы " + PS_KUDA[PS.kuda] + ". В демонстрации никуда не уходит."; return; }
+    sost.textContent = "Отправляю…";
+    const ok = await psVMessendzher(tekst, PS.kuda);
+    sost.textContent = ok ? "Отправлено " + PS_KUDA[PS.kuda] + " — ответ придёт в сообщения." : "Не отправилось, попробуйте ещё раз.";
+    if (ok) pole.value = "";
+  });
+  app.querySelectorAll("[data-ps-perekl]").forEach(b => b.addEventListener("click", () => {
+    const P = psDemo() ? DM.posesh : PR.posesh, x = P.l[+b.dataset.psPerekl];
+    x.b = !x.b; x.h = x.b ? (+x.h || 8) : 0; psPosesh(app);
+  }));
+  app.querySelectorAll("[data-ps-ch]").forEach(b => b.addEventListener("click", () => {
+    const ch = b.dataset.psCh.split(":"), P = psDemo() ? DM.posesh : PR.posesh, x = P.l[+ch[0]];
+    x.h = Math.max(0, Math.min(16, (+x.h || 0) + (+ch[1])));
+    document.getElementById("psH" + ch[0]).textContent = x.h;
+    const na = P.l.filter(y => y.b);
+    document.getElementById("psItog").textContent = `На работе ${na.length} из ${P.l.length} · всего часов ${na.reduce((s, y) => s + (+y.h || 0), 0)}`;
+  }));
+  app.querySelectorAll("[data-ps-vse]").forEach(b => b.addEventListener("click", () => {
+    const ch = +b.dataset.psVse, nov = psNovayaPosesh(ch > 0, ch);
+    if (psDemo()) DM.posesh = nov; else PR.posesh = nov;
+    psPosesh(app);
+  }));
+  const zagr = async img => { try { img.src = URL.createObjectURL(new Blob([await prFajl(img.dataset.prMini)], { type: "image/jpeg" })); } catch (e) {} };
+  app.querySelectorAll("img[data-pr-mini]").forEach(zagr);
+}
 
+/* ---- демонстрация: те же экраны на выдуманных данных ---- */
+const DM_FAJL = "demo/proizvodstvo.json";
+const DM = { D: null, posesh: null };
 async function dmZagruzit() {
   if (DM.D) return;
   DM.D = await (await fetch(DM_FAJL + "?" + Date.now())).json();
   DM.D.kartochki.forEach(k => {
     k.net_materialov = k.net_materialov || []; k.meshaet = k.meshaet || []; k.foto = k.foto || [];
-    k.dokumenty = k.dokumenty || []; k.materialy = k.materialy || []; k.furnitura = k.furnitura || [];
+    k.dokumenty = (k.dokumenty || []).filter(d => !d.pilot);
+    k.modeli = k.modeli || []; k.materialy = k.materialy || []; k.furnitura = k.furnitura || [];
     k.prilegayushchie = k.prilegayushchie || []; k.zamery = k.zamery || []; k.vizualizacii = k.vizualizacii || [];
-  });
-}
-function dmSost(k) { return DM_SOST[k.status] || DM_SOST.net_dannyh; }
-function dmPom(k) { return k.pom && k.pom.imya ? (k.pom.n ? "Помещение " + k.pom.n + " · " : "") + k.pom.imya : ""; }
-function dmNovoe() {
-  const out = [];
-  DM.D.kartochki.forEach((k, ki) => {
-    k.dokumenty.filter(d => d.novyj).forEach(d => out.push({ ki, k, chto: "новый чертёж: " + d.vid, kogda: d.kogda }));
-    if (k.razreshenie && k.razreshenie.kogda >= "2026-09-19") out.push({ ki, k, chto: "разрешено в работу", kogda: k.razreshenie.kogda });
-  });
-  return out.sort((a, b) => (a.kogda < b.kogda ? 1 : -1));
-}
-function dmPomehi() {
-  const out = [];
-  DM.D.kartochki.forEach((k, ki) => k.meshaet.forEach(m => out.push({ ki, k, m })));
-  return out;
-}
-function dmPlashka() {
-  return `<div class="dm-plashka"><span><b>Демонстрация.</b> Все данные здесь выдуманы — изделия, люди, сроки.
-    Ничего отсюда никуда не уходит: ни в реестр, ни заказчику, ни в цех.</span>
-    <button class="btn ghost" data-dm="vyjti">Выйти из демонстрации</button></div>`;
-}
-
-async function renderDemo(ekran, ki) {
-  ekran = ekran || "home";
-  STATE.tekushchiy = { v: "dm", e: ekran, k: ki };
-  const app = document.getElementById("app");
-  if (!DM.D) app.innerHTML = `<div class="empty-hint">Открываю демонстрацию…</div>`;
-  try { await dmZagruzit(); } catch (e) {
-    app.innerHTML = `<div class="empty-hint">Демонстрация не открылась: ${escapeHtml(String(e && e.message || e))}</div>`; return;
-  }
-  if (!STATE.tekushchiy || STATE.tekushchiy.v !== "dm") return;
-  if (ekran === "obekt") return dmObekt(app);
-  if (ekran === "izd") return dmIzdelie(app, +ki || 0);
-  if (ekran === "posesh") return dmPosesh(app);
-  if (ekran === "proekt") return dmProekt(app);
-  if (ekran === "materialy") return dmMaterialyObekta(app);
-  return dmGlavnaya(app);
-}
-
-/* ---- 1. Мой день: посещаемость, что в работе, что нового, что мешает ---- */
-function dmGlavnaya(app) {
-  const D = DM.D, nov = dmNovoe(), pom = dmPomehi();
-  const vRabote = D.kartochki.map((k, ki) => ({ k, ki })).filter(x => x.k.status === "v_rabote");
-  const sP = DM.posesh && DM.posesh.d === D.segodnya;
-  const bylo = sP ? DM.posesh.l.filter(x => x.b).length : 0;
-  const chasov = sP ? DM.posesh.l.reduce((n, x) => n + (+x.h || 0), 0) : 0;
-  app.innerHTML = `<div class="pr">
-    ${dmPlashka()}
-    <div class="pr-zag"><h1>Добрый день, Олег</h1>
-      <p class="pr-tusklo">${rmDen(D.segodnya)} · ${escapeHtml(D.obekt.nazvanie)}</p></div>
-
-    <section class="blk pr-blok pr-vazhno"><div class="pr-ryad"><h2>Посещаемость за сегодня</h2>
-      <span class="pr-metka ${sP ? "ok" : "nov"}">${sP ? "заполнено" : "не заполнено"}</span></div>
-      <p class="pr-tusklo">${sP ? `На работе ${bylo} из ${DM.posesh.l.length} · часов ${chasov}`
-        : `Вчера было ${D.vchera.byli} человек, ${D.vchera.chasov} часов. Отметить сегодняшний день — минута.`}</p>
-      <div class="pr-ryad">
-        <button class="btn primary" data-dm="posesh">${sP ? "Открыть и поправить" : "Отметить посещаемость"}</button>
-        ${sP ? "" : `<button class="btn ghost" data-dm="posesh-bystro">Все на работе по 8 часов</button>`}</div></section>
-
-    <section class="blk pr-blok"><div class="pr-ryad"><h2>Сегодня в работе</h2>
-      <span class="pr-metka rab">${vRabote.length}</span></div>
-      ${vRabote.length ? vRabote.map(x => `<div class="pr-novoe"><div>
-          <b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
-          <div class="pr-tusklo">${x.k.ispolnitel ? "делает " + escapeHtml(x.k.ispolnitel) + " · " : ""}взяли ${rmDen(x.k.vzyal)}${x.k.srok ? " · срок " + rmDen(x.k.srok) : ""}</div></div>
-          <div class="pr-ryad"><button class="btn primary" data-dm-gotovo="${x.ki}">Готово</button>
-          <button class="btn ghost" data-dm-izd="${x.ki}">Открыть</button></div></div>`).join("")
-        : `<p class="pr-tusklo">Сейчас в работе ничего нет. Откройте изделия и возьмите то, что разрешено.</p>`}</section>
-
-    <section class="blk pr-blok"><div class="pr-ryad"><h2>Что нового</h2>
-      ${nov.length ? `<span class="pr-metka nov">${nov.length}</span>` : ""}</div>
-      ${nov.length ? nov.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
-          <div class="pr-tusklo">${escapeHtml(x.chto)}, ${rmDen(x.kogda)}</div></div>
-          <button class="btn ghost" data-dm-izd="${x.ki}">Посмотреть</button></div>`).join("")
-        : `<p class="pr-tusklo">Новых чертежей и разрешений нет.</p>`}</section>
-
-    ${pom.length ? `<section class="blk pr-blok"><div class="pr-ryad"><h2>Что мешает</h2>
-      <span class="pr-metka nov">${pom.length}</span></div>
-      ${pom.map(x => `<div class="pr-novoe"><div><b>${escapeHtml(x.k.kod)}</b> ${escapeHtml(x.k.nazvanie)}
-        <div class="pr-tusklo">${escapeHtml(x.m.tekst)} · ${rmDen(x.m.kogda)}</div></div>
-        <button class="btn ghost" data-dm-izd="${x.ki}">Открыть</button></div>`).join("")}</section>` : ""}
-
-    <section class="pr-blok-bez"><h2>${escapeHtml(D.obekt.nazvanie)}</h2>
-      <div class="pr-setka pr-plitki">
-        <button class="pr-plitka" data-dm="obekt"><b>${D.kartochki.length}</b><span>Изделия: состояние и чертежи</span></button>
-        <button class="pr-plitka" data-dm="proekt"><b>${D.obekt.sroki.length}</b><span>Сроки и условия монтажа</span></button>
-        <button class="pr-plitka" data-dm="materialy"><b>${D.obekt.materialy.length}</b><span>Материалы объекта, расход и остатки</span></button>
-        <button class="pr-plitka" data-dm="chat"><b>·</b><span>Написать Юлии Евгеньевне или Игорю Михайловичу</span></button>
-      </div></section>
-  </div>`;
-  dmPrivyazat(app);
-}
-
-/* ---- 2. Проект: сроки и условия монтажа ---- */
-function dmProekt(app) {
-  const D = DM.D;
-  app.innerHTML = `<div class="pr">
-    ${dmPlashka()}
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Сроки и монтаж</h1>
-      <p class="pr-tusklo">Сроки плавают — здесь всегда последнее, что мы назначили. Поменялась дата — поменялась и тут.</p></div>
-    <section class="blk pr-blok"><h2>Ключевые даты</h2>
-      <div class="dm-spisok">${D.obekt.sroki.map(s => `<div class="dm-stroka" style="cursor:default">
-        <div class="dm-stroka-levo"><b>${escapeHtml(s.chto)}</b><small>назначил ${escapeHtml(s.kto)}</small></div>
-        <div class="pr-ryad"><b>${rmDen(s.kogda)}</b>
-          <span class="pr-metka ${s.tochno ? "ok" : "zhd"}">${s.tochno ? "точная дата" : "ориентир"}</span></div></div>`).join("")}</div></section>
-    <section class="blk pr-blok"><h2>Условия монтажа</h2>
-      <p class="pr-tusklo">Доступ, лифт, этаж и готовность помещений — по объекту и по комнатам.</p>
-      <div class="dm-spisok">${D.obekt.montazh.map(m => `<div class="dm-stroka" style="cursor:default">
-        <div class="dm-stroka-levo"><b>${escapeHtml(m.gde)}</b><small>${escapeHtml(m.chto)}</small></div></div>`).join("")}</div></section>
-  </div>`;
-  dmPrivyazat(app);
-}
-
-/* ---- 3. Материалы объекта, расход и остатки ---- */
-function dmMaterialyObekta(app) {
-  const D = DM.D;
-  const netu = D.kartochki.flatMap((k, ki) => k.net_materialov.map(t => ({ ki, k, t })));
-  app.innerHTML = `<div class="pr">
-    ${dmPlashka()}
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Материалы и остатки</h1>
-      <p class="pr-tusklo">Общая отделка объекта и что сейчас лежит в цехе.</p></div>
-    <section class="blk pr-blok"><h2>Материалы и отделка объекта</h2>
-      <div class="dm-pary">${D.obekt.materialy.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}</span>${escapeHtml(m.znach)}</div>`).join("")}</div></section>
-    <section class="blk pr-blok"><h2>Расход и остатки</h2>
-      <div class="dm-pary">${D.obekt.ostatki.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>
-      <p class="pr-tusklo">Остатки ведём и по объекту, и по изделию: в изделии отмечаете, чего не хватает, — сюда попадает общая нехватка.</p></section>
-    <section class="blk pr-blok"><h2>Чего не хватает по изделиям</h2>
-      ${netu.length ? `<div class="dm-spisok">${netu.map(x => `<button class="dm-stroka" data-dm-izd="${x.ki}">
-        <div class="dm-stroka-levo"><b>${escapeHtml(x.k.kod)} ${escapeHtml(x.k.nazvanie)}</b><small>${escapeHtml(x.t)}</small></div>
-        <span class="pr-metka nov">нет</span></button>`).join("")}</div>`
-        : `<p class="pr-tusklo">Ничего не отмечено. Отмечается в изделии, вкладка «Работа».</p>`}</section>
-  </div>`;
-  dmPrivyazat(app);
-}
-
-/* ---- 4. Изделия объекта: простой список со состоянием ---- */
-function dmObekt(app) {
-  const D = DM.D;
-  const podhodit = k => DM.filtr === "vse" ? true
-    : DM.filtr === "net" ? (k.status === "net_dannyh" || k.status === "net_chertezha" || k.net_materialov.length || k.meshaet.length)
-    : k.status === DM.filtr;
-  const spisok = D.kartochki.map((k, ki) => ({ k, ki })).filter(x => podhodit(x.k));
-  app.innerHTML = `<div class="pr">
-    ${dmPlashka()}
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(D.obekt.nazvanie)}</span><h1>Изделия</h1>
-      <p class="pr-tusklo">Состав объекта одним списком: сразу видно, в каком состоянии изделие и чего ему не хватает.</p></div>
-    <div class="dm-chipy">${DM_FILTRY.map(f => `<button class="dm-chip${DM.filtr === f[0] ? " tek" : ""}" data-dm-filtr="${f[0]}">${f[1]}</button>`).join("")}</div>
-    <section class="blk pr-blok"><div class="dm-spisok">
-      ${spisok.length ? spisok.map(x => {
-        const s = dmSost(x.k), pometki = [];
-        if (x.k.dokumenty.filter(d => !d.pilot).length) pometki.push("чертежей " + x.k.dokumenty.filter(d => !d.pilot).length);
-        if (x.k.pilot) pometki.push("вид есть");
-        if (x.k.ispolnitel) pometki.push("делает " + x.k.ispolnitel);
-        if (x.k.net_materialov.length) pometki.push("нет материалов");
-        if (x.k.kol > 1) pometki.push(x.k.kol + " шт.");
-        return `<button class="dm-stroka" data-dm-izd="${x.ki}">
-          <div class="dm-stroka-levo"><b>${escapeHtml(x.k.kod)} · ${escapeHtml(x.k.nazvanie)}</b>
-            <small>${escapeHtml([dmPom(x.k)].concat(pometki).filter(Boolean).join(" · "))}</small></div>
-          <div class="pr-ryad"><span class="pr-metka ${s.k}">${s.t}</span>
-            ${x.k.srok ? `<small class="pr-tusklo">срок ${rmDen(x.k.srok)}</small>` : ""}</div></button>`;
-      }).join("") : `<p class="pr-tusklo">В этом состоянии изделий нет.</p>`}
-    </div></section>
-  </div>`;
-  dmPrivyazat(app);
-}
-
-/* ---- 5. Изделие: как выглядит · чертежи · материалы · работа · вопрос ---- */
-function dmIzdelie(app, ki) {
-  const k = DM.D.kartochki[ki];
-  if (!k) return dmObekt(app);
-  const s = dmSost(k);
-  const chertezhi = k.dokumenty.filter(d => !d.pilot);
-  const vkladki = [["vid", "Как выглядит", (k.gabarity ? 1 : 0) + k.vizualizacii.length],
-    ["chert", "Чертежи", chertezhi.length],
-    ["mat", "Материалы и фурнитура", k.materialy.length + k.furnitura.length + k.prilegayushchie.length],
-    ["rab", "Работа", k.meshaet.length],
-    ["vopr", "Вопрос", 0]];
-  if (!vkladki.some(v => v[0] === DM.vkl)) DM.vkl = "vid";
-  let telo = "";
-  if (DM.vkl === "vid") telo = dmVidHtml(k, ki);
-  else if (DM.vkl === "chert") telo = dmChertezhiHtml(k, ki);
-  else if (DM.vkl === "mat") telo = dmMaterialyHtml(k);
-  else if (DM.vkl === "rab") telo = dmRabotaHtml(k, ki);
-  else telo = dmVoprosHtml(k);
-  app.innerHTML = `<div class="pr">
-    ${dmPlashka()}
-    <div class="pr-zag"><span class="pr-nad">${escapeHtml(DM.D.obekt.nazvanie)}${dmPom(k) ? " · " + escapeHtml(dmPom(k)) : ""}</span>
-      <h1>${escapeHtml(k.kod)} · ${escapeHtml(k.nazvanie)}${k.kol > 1 ? " — " + k.kol + " шт." : ""}</h1>
-      <div class="pr-ryad"><span class="pr-metka ${s.k}">${s.t}</span>
-        ${k.srok ? `<span class="pr-tusklo">срок ${rmDen(k.srok)}${k.srok_tochno ? "" : " (ориентир)"}</span>` : `<span class="pr-tusklo">срок не назначен</span>`}</div></div>
-    <div class="pr-vkladki">${vkladki.map(v => `<button class="pr-vkladka${DM.vkl === v[0] ? " tek" : ""}" data-dm-vkl="${v[0]}">${v[1]}${v[2] ? ` <i>${v[2]}</i>` : ""}</button>`).join("")}</div>
-    <section class="blk pr-blok">${telo}</section>
-  </div>`;
-  dmPrivyazat(app, ki);
-  const cv = document.getElementById("dm3d");
-  if (cv) dm3D(cv, k.gabarity);
-}
-
-function dmVidHtml(k, ki) {
-  if (!k.gabarity && !k.vizualizacii.length && !k.pilot)
-    return `<p class="pr-tusklo">По изделию пока нет ни модели, ни визуализаций, ни согласованного вида.</p>`;
-  return `${k.gabarity ? `<h2>Объёмная модель изделия</h2>
-      <p class="pr-tusklo">Собрана из чертежа конструктора. Поверните пальцем или мышью.</p>
-      <canvas class="dm-3d" id="dm3d"></canvas>
-      <div class="pr-ryad"><div class="dm-chipy">
-        <button class="dm-chip" data-dm-vid3d="pered">Спереди</button>
-        <button class="dm-chip" data-dm-vid3d="bok">Сбоку</button>
-        <button class="dm-chip" data-dm-vid3d="ugol">Под углом</button></div>
-        <span class="pr-tusklo">${k.gabarity.sh} × ${k.gabarity.v} × ${k.gabarity.g} мм</span></div>` : ""}
-    ${k.vizualizacii.length ? `<h2>Визуализации</h2>
-      <div class="pr-vidy">${k.vizualizacii.map((v, i) => `<button class="pr-vid" data-dm-viz="${ki}:${i}"><span>${escapeHtml(v)}</span></button>`).join("")}</div>` : ""}
-    ${k.pilot ? `<p class="pr-tusklo">Согласованный вид от ${rmDen(k.pilot.kogda)} — он же лежит во вкладке «Чертежи», чтобы можно было сверить.</p>` : ""}`;
-}
-
-function dmChertezhiHtml(k, ki) {
-  const chert = k.dokumenty.filter(d => !d.pilot), pilot = k.dokumenty.find(d => d.pilot);
-  return `${chert.length ? `<div class="pr-chertezhi">${chert.map((d, i) => `<div class="pr-chertezh">
-      <div class="pr-ch-imya"><b>${escapeHtml(d.vid[0].toUpperCase() + d.vid.slice(1))}</b>
-        <small>${escapeHtml(d.imya)} · ${rmDen(d.kogda)} · ${escapeHtml(d.kto)} · листов ${d.listov}</small></div>
-      ${d.novyj ? `<span class="pr-metka nov">новый</span>` : ""}
-      <button class="btn ${d.novyj ? "primary" : "ghost"}" data-dm-dok="${ki}:${i}">Открыть</button></div>`).join("")}</div>
-    <p class="pr-tusklo">Только действующие чертежи: прежние версии убраны, чтобы не сделать по старому.</p>`
-    : `<p class="pr-tusklo">Рабочего чертежа нет. Изделие в работу не запускаем — напишите Юлии Евгеньевне во вкладке «Вопрос».</p>`}
-    ${pilot ? `<h2>Согласованный пилот</h2>
-      <p class="pr-tusklo">На случай вопроса к виду: что именно согласовал заказчик.</p>
-      <div class="pr-chertezhi"><div class="pr-chertezh">
-        <div class="pr-ch-imya"><b>Согласованный пилот</b><small>${escapeHtml(pilot.imya)} · ${rmDen(pilot.kogda)} · листов ${pilot.listov}</small></div>
-        <button class="btn ghost" data-dm-dok="${ki}:pilot">Открыть</button></div></div>` : ""}
-    ${k.zamery.length ? `<h2>Замеры с объекта</h2><div class="pr-chertezhi">${k.zamery.map((z, i) => `<div class="pr-chertezh">
-        <div class="pr-ch-imya"><b>${escapeHtml(z.imya)}</b><small>${rmDen(z.kogda)} · ${escapeHtml(z.kto)}</small></div>
-        <button class="btn ghost" data-dm-dok="${ki}:zam${i}">Открыть</button></div>`).join("")}</div>` : ""}`;
-}
-
-function dmMaterialyHtml(k) {
-  const net = k.furnitura.filter(f => !f.est).concat(k.prilegayushchie.filter(p => !p.est));
-  return `${k.materialy.length ? `<h2>Материалы и отделка</h2>
-      <div class="dm-pary">${k.materialy.map(m => `<div class="dm-para"><span>${escapeHtml(m.chto)}${m.obrazec ? " · есть образец" : ""}</span>${escapeHtml(m.znach)}</div>`).join("")}</div>`
-    : `<p class="pr-tusklo">Материалы и отделка по изделию пока не заведены.</p>`}
-    ${k.furnitura.length ? `<h2>Фурнитура</h2><div class="pr-tabl"><table>
-      <thead><tr><th>Артикул</th><th>Что</th><th>Сколько</th><th>Есть в цехе</th></tr></thead><tbody>
-      ${k.furnitura.map(f => `<tr><td>${escapeHtml(f.art)}</td><td>${escapeHtml(f.chto)}</td><td>${f.kol}</td>
-        <td>${f.est ? `<span class="pr-metka ok">есть</span>` : `<span class="pr-metka nov">нет${f.kogda ? " · " + escapeHtml(f.kogda) : ""}</span>`}</td></tr>`).join("")}
-      </tbody></table></div>` : ""}
-    ${k.prilegayushchie.length ? `<h2>Что встраиваем и что рядом</h2>
-      <p class="pr-tusklo">Покупное и то, что даёт заказчик: без этих размеров изделие не собрать.</p>
-      <div class="pr-tabl"><table><thead><tr><th>Что</th><th>Чьё</th><th>На месте</th></tr></thead><tbody>
-      ${k.prilegayushchie.map(p => `<tr><td>${escapeHtml(p.chto)}</td><td>${escapeHtml(p.kto)}</td>
-        <td>${p.est ? `<span class="pr-metka ok">есть</span>` : `<span class="pr-metka nov">нет${p.kogda ? " · " + escapeHtml(p.kogda) : ""}</span>`}</td></tr>`).join("")}
-      </tbody></table></div>` : ""}
-    ${net.length ? `<p class="pr-tusklo">Не хватает ${net.length} позиций — отметить, чего нет, можно во вкладке «Работа».</p>` : ""}`;
-}
-
-function dmRabotaHtml(k, ki) {
-  const pozicii = k.materialy.map(m => m.chto + ": " + m.znach)
-    .concat(k.furnitura.map(f => f.chto + " · " + f.art));
-  const mozhno = k.status === "razresheno" || k.status === "v_rabote";
-  return `<h2>Разрешение и срок</h2>
-    ${k.razreshenie ? `<p class="pr-tusklo">Разрешила ${escapeHtml(k.razreshenie.kto)}, ${rmDen(k.razreshenie.kogda)}. Срок: ${k.srok ? rmDen(k.srok) + (k.srok_tochno ? "" : " (ориентир, может поменяться)") : "не назначен"}.</p>`
-      : `<p class="pr-tusklo">Разрешения в работу нет — запускать нельзя.</p>`}
-    <h2>Кто делает</h2>
-    <div class="dm-chipy">${DM.D.lyudi.map(n => `<button class="dm-chip${k.ispolnitel === n ? " tek" : ""}" data-dm-kto="${ki}:${escapeHtml(n)}">${escapeHtml(n)}</button>`).join("")}</div>
-    <div class="pr-ryad">
-      ${k.gotovo ? `<span class="pr-metka ok">готово ${rmDen(k.gotovo)}</span>`
-        : k.vzyal ? `<button class="btn primary dm-bolshaya" data-dm-gotovo="${ki}">Отметить готовым</button>`
-        : mozhno ? `<button class="btn primary dm-bolshaya" data-dm-vzyal="${ki}">Взять в работу</button>`
-        : `<span class="pr-tusklo">Взять в работу можно, когда изделие разрешили.</span>`}
-    </div>
-    ${k.vzyal && !k.gotovo ? `<p class="pr-tusklo">Взяли ${rmDen(k.vzyal)}${k.ispolnitel ? ", делает " + escapeHtml(k.ispolnitel) : ""}.</p>` : ""}
-    <h2>Что мешает</h2>
-    ${k.meshaet.length ? `<div class="pr-vazhnoe">${k.meshaet.map(m => `<div class="pr-zapis pr-vopros">
-      <span class="pr-vid-zapisi">${rmDen(m.kogda)}</span><div>${escapeHtml(m.tekst)}</div></div>`).join("")}</div>`
-      : `<p class="pr-tusklo">Ничего не мешает.</p>`}
-    <div class="dm-chipy">${["Ждём материал", "Ждём ответ", "Не сходится размер", "Нет места в цехе"].map(t =>
-      `<button class="dm-chip" data-dm-meshaet="${ki}:${escapeHtml(t)}">${t}</button>`).join("")}</div>
-    <h2>Чего нет из материалов</h2>
-    <p class="pr-tusklo">Отметьте то, чего не хватает, — это увидим мы и подвезём.</p>
-    <div>${pozicii.map((p, i) => `<label class="dm-galka"><input type="checkbox" data-dm-net="${ki}:${i}"
-      ${k.net_materialov.includes(p) ? "checked" : ""}><span>${escapeHtml(p)}</span></label>`).join("")}</div>
-    <textarea id="dmSvoe" rows="2" placeholder="Чего-то нет в списке — напишите сюда"></textarea>
-    <div><button class="btn ghost" data-dm-svoe="${ki}">Добавить</button></div>
-    ${k.foto.length ? `<h2>Фото готового</h2><div class="pr-vidy">${k.foto.map(f => `<button class="pr-vid" style="cursor:default"><span>${escapeHtml(f.imya)}</span></button>`).join("")}</div>
-      <p class="pr-tusklo">Снято ${rmDen(k.foto[0].kogda)}, ${escapeHtml(k.foto[0].kto)}.</p>` : ""}`;
-}
-
-function dmVoprosHtml(k) {
-  const KUDA = [["yuliya", "Юлии Евгеньевне"], ["igor", "Игорю Михайловичу"], ["gruppa", "В группу объекта"]];
-  return `<h2>Написать по этому изделию</h2>
-    <p class="pr-tusklo">Письмо уйдёт в мессенджер уже подписанным изделием — искать и объяснять, о чём речь, не нужно.</p>
-    <div class="dm-chipy">${KUDA.map(x => `<button class="dm-chip${DM.kuda === x[0] ? " tek" : ""}" data-dm-kuda="${x[0]}">${x[1]}</button>`).join("")}</div>
-    <textarea id="dmVopros" rows="3" placeholder="Что непонятно по изделию"></textarea>
-    <div class="pr-ryad"><button class="btn primary" id="dmOtpravit">Отправить</button>
-      <span class="pr-tusklo" id="dmVoprSost"></span></div>
-    <p class="pr-tusklo">Начало письма подставится само: «${escapeHtml(DM.D.obekt.nazvanie)}, ${escapeHtml(k.kod)} ${escapeHtml(k.nazvanie)}: …»</p>`;
-}
-
-/* ---- 6. Посещаемость: главное, что заполняют каждый день ---- */
-function dmNovayaPosesh(vse, chasov) {
-  return { d: DM.D.segodnya, l: DM.D.lyudi.map(n => ({ n, b: !!vse, h: vse ? (chasov || 8) : 0 })) };
-}
-function dmItogPosesh() {
-  const na = DM.posesh.l.filter(x => x.b);
-  return `На работе ${na.length} из ${DM.posesh.l.length} · всего часов ${na.reduce((s, x) => s + (+x.h || 0), 0)}`;
-}
-function dmPosesh(app) {
-  if (!DM.posesh || DM.posesh.d !== DM.D.segodnya) DM.posesh = dmNovayaPosesh(true, 8);
-  const S = DM.posesh.l;
-  app.innerHTML = `<div class="pr">
-    ${dmPlashka()}
-    <div class="pr-zag"><h1>Посещаемость</h1>
-      <p class="pr-tusklo">${rmDen(DM.D.segodnya)}. Нажмите на фамилию — значит, человека не было. Часы по умолчанию 8.</p></div>
-    <section class="blk pr-blok">
-      <div class="dm-chipy"><button class="dm-chip" data-dm-vse="8">Все по 8 часов</button>
-        <button class="dm-chip" data-dm-vse="10">Все по 10 часов</button>
-        <button class="dm-chip" data-dm-vse="0">Никого не было</button></div>
-      <div>${S.map((x, i) => `<div class="dm-posesh-str${x.b ? "" : " net"}">
-        <button class="dm-imya" data-dm-perekl="${i}">${escapeHtml(x.n)}</button>
-        ${x.b ? `<span class="dm-chasy"><button data-dm-ch="${i}:-1">−</button><b id="dmH${i}">${x.h}</b><button data-dm-ch="${i}:1">+</button></span>`
-          : `<span class="pr-metka zhd">не был</span>`}</div>`).join("")}</div>
-      <p class="pr-tusklo" id="dmItog">${dmItogPosesh()}</p>
-      <div class="pr-ryad"><button class="btn primary dm-bolshaya" id="dmSohr">Сохранить</button></div>
-      <p class="pr-tusklo" id="dmSohrSost"></p></section>
-  </div>`;
-  dmPrivyazat(app);
-  document.getElementById("dmSohr").addEventListener("click", () => {
-    document.getElementById("dmSohrSost").textContent = "Сохранено — в демонстрации только на этой странице, никуда не ушло.";
-    setTimeout(() => nazadKnopkoy(), 800);
+    if (k.pilot && !k.pilot.fajly) k.pilot.fajly = [{ vid: "согласованный пилот", imya: k.kod + " пилот.pdf",
+      kogda: k.pilot.kogda, kto: "Ольга", listov: k.pilot.listov || 1 }];
   });
 }
 
@@ -5948,7 +6012,7 @@ function dm3D(cv, g) {
   risovat();
 }
 
-/* ---- просмотр листа: условный чертёж рисуется прямо в окне ---- */
+/* ---- условный лист: нужен только демонстрации, где настоящих файлов нет ---- */
 function dmSmotret(zagolovok, podpis, listov, gab) {
   let list = 1;
   const fon = document.createElement("div");
@@ -5999,83 +6063,28 @@ function dmSmotret(zagolovok, podpis, listov, gab) {
   return fon;
 }
 
-/* ---- нажатия. Ни одного обращения наружу: всё меняется только в памяти ---- */
-function dmPrivyazat(app, ki) {
-  const perersovat = () => renderDemo(STATE.tekushchiy.e, STATE.tekushchiy.k);
-  app.querySelectorAll("[data-dm]").forEach(b => b.addEventListener("click", () => {
-    const e = b.dataset.dm;
-    if (e === "vyjti") return nav(() => (prMozhet() ? renderPr("home") : renderHome()));
-    if (e === "chat") return nav(() => renderChat(""));
-    if (e === "posesh-bystro") { DM.posesh = dmNovayaPosesh(true, 8); return perersovat(); }
-    nav(() => renderDemo(e));
-  }));
-  app.querySelectorAll("[data-dm-izd]").forEach(b => b.addEventListener("click", () => nav(() => renderDemo("izd", +b.dataset.dmIzd))));
-  app.querySelectorAll("[data-dm-vkl]").forEach(b => b.addEventListener("click", () => { DM.vkl = b.dataset.dmVkl; dmIzdelie(app, ki); }));
-  app.querySelectorAll("[data-dm-filtr]").forEach(b => b.addEventListener("click", () => { DM.filtr = b.dataset.dmFiltr; dmObekt(app); }));
-  app.querySelectorAll("[data-dm-vid3d]").forEach(b => b.addEventListener("click", () => {
-    const cv = document.getElementById("dm3d"); if (cv && cv.dmVid) cv.dmVid(b.dataset.dmVid3d);
-  }));
-  app.querySelectorAll("[data-dm-dok]").forEach(b => b.addEventListener("click", () => {
-    const chasti = b.dataset.dmDok.split(":"), k = DM.D.kartochki[+chasti[0]], chto = chasti[1];
-    if (chto === "pilot") { const p = k.dokumenty.find(d => d.pilot); dmSmotret(k.kod + " · согласованный пилот", p.imya + " · " + rmDen(p.kogda), p.listov, k.gabarity); return; }
-    if (chto.indexOf("zam") === 0) { const z = k.zamery[+chto.slice(3)]; dmSmotret(k.kod + " · " + z.imya, rmDen(z.kogda) + " · " + z.kto, 1, k.gabarity); return; }
-    const d = k.dokumenty.filter(x => !x.pilot)[+chto];
-    dmSmotret(k.kod + " · " + d.vid, d.imya + " · " + rmDen(d.kogda) + " · " + d.kto, d.listov, k.gabarity);
-  }));
-  app.querySelectorAll("[data-dm-viz]").forEach(b => b.addEventListener("click", () => {
-    const ch = b.dataset.dmViz.split(":"), k = DM.D.kartochki[+ch[0]];
-    dmSmotret(k.kod + " · " + k.vizualizacii[+ch[1]], "визуализация", 1, k.gabarity);
-  }));
-  app.querySelectorAll("[data-dm-vzyal]").forEach(b => b.addEventListener("click", () => {
-    const k = DM.D.kartochki[+b.dataset.dmVzyal];
-    k.vzyal = DM.D.segodnya; k.status = "v_rabote"; perersovat();
-  }));
-  app.querySelectorAll("[data-dm-gotovo]").forEach(b => b.addEventListener("click", () => {
-    const k = DM.D.kartochki[+b.dataset.dmGotovo];
-    k.gotovo = DM.D.segodnya; k.status = "gotovo"; perersovat();
-  }));
-  app.querySelectorAll("[data-dm-kto]").forEach(b => b.addEventListener("click", () => {
-    const ch = b.dataset.dmKto.split(":"), k = DM.D.kartochki[+ch[0]];
-    k.ispolnitel = k.ispolnitel === ch[1] ? "" : ch[1]; perersovat();
-  }));
-  app.querySelectorAll("[data-dm-meshaet]").forEach(b => b.addEventListener("click", () => {
-    const ch = b.dataset.dmMeshaet.split(":");
-    DM.D.kartochki[+ch[0]].meshaet.push({ tekst: ch[1], kogda: DM.D.segodnya }); perersovat();
-  }));
-  app.querySelectorAll("[data-dm-net]").forEach(inp => inp.addEventListener("change", () => {
-    const ch = inp.dataset.dmNet.split(":"), k = DM.D.kartochki[+ch[0]];
-    const pozicii = k.materialy.map(m => m.chto + ": " + m.znach).concat(k.furnitura.map(f => f.chto + " · " + f.art));
-    const p = pozicii[+ch[1]];
-    if (inp.checked) { if (!k.net_materialov.includes(p)) k.net_materialov.push(p); }
-    else k.net_materialov = k.net_materialov.filter(x => x !== p);
-  }));
-  app.querySelectorAll("[data-dm-svoe]").forEach(b => b.addEventListener("click", () => {
-    const pole = document.getElementById("dmSvoe");
-    if (pole && pole.value.trim()) { DM.D.kartochki[+b.dataset.dmSvoe].net_materialov.push(pole.value.trim()); perersovat(); }
-  }));
-  app.querySelectorAll("[data-dm-kuda]").forEach(b => b.addEventListener("click", () => { DM.kuda = b.dataset.dmKuda; dmIzdelie(app, ki); }));
-  const otpr = document.getElementById("dmOtpravit");
-  if (otpr) otpr.addEventListener("click", () => {
-    const pole = document.getElementById("dmVopros"), sost = document.getElementById("dmVoprSost");
-    const kuda = { yuliya: "Юлии Евгеньевне", igor: "Игорю Михайловичу", gruppa: "в группу объекта" }[DM.kuda];
-    sost.textContent = pole && pole.value.trim()
-      ? "В рабочем виде письмо ушло бы " + kuda + ". В демонстрации никуда не уходит."
-      : "Напишите вопрос — и станет видно, куда он уйдёт.";
-  });
-  app.querySelectorAll("[data-dm-perekl]").forEach(b => b.addEventListener("click", () => {
-    const x = DM.posesh.l[+b.dataset.dmPerekl];
-    x.b = !x.b; x.h = x.b ? (+x.h || 8) : 0; dmPosesh(app);
-  }));
-  app.querySelectorAll("[data-dm-ch]").forEach(b => b.addEventListener("click", () => {
-    const ch = b.dataset.dmCh.split(":"), x = DM.posesh.l[+ch[0]];
-    x.h = Math.max(0, Math.min(16, (+x.h || 0) + (+ch[1])));
-    document.getElementById("dmH" + ch[0]).textContent = x.h;
-    document.getElementById("dmItog").textContent = dmItogPosesh();
-  }));
-  app.querySelectorAll("[data-dm-vse]").forEach(b => b.addEventListener("click", () => {
-    const ch = +b.dataset.dmVse;
-    DM.posesh = dmNovayaPosesh(ch > 0, ch); dmPosesh(app);
-  }));
+/* знакомство при первом входе — три подсказки, один раз */
+function prZnakomstvo() {
+  let bylo = false; try { bylo = localStorage.getItem("pr_znakomstvo") === "1"; } catch (e) {}
+  if (bylo || !prEsliOleg() || document.querySelector(".pr-zn")) return;
+  const SHAGI = [
+    ["Олег, здесь теперь не только сообщения", "Добавилось всё, что нужно производству по объекту: изделия со состоянием, рабочие чертежи, как выглядит изделие и посещаемость. Цен и переписки с заказчиком здесь нет."],
+    ["Каждый день", "Наверху — посещаемость: кто на работе и сколько часов. Под ней — что сегодня в работе, что нового и что мешает."],
+    ["По изделию", "Откройте изделие: вид, чертежи, материалы и раздел «Работа» — там «взял в работу», «готово», кто делает и чего не хватает. Всё, что вы отмечаете, сразу уходит сообщением Юлии Евгеньевне."]
+  ];
+  let n = 0;
+  const fon = document.createElement("div");
+  fon.className = "pr-zn";
+  document.body.appendChild(fon);
+  const pokazat = () => {
+    if (n >= SHAGI.length) { fon.remove(); try { localStorage.setItem("pr_znakomstvo", "1"); } catch (e) {} return; }
+    fon.innerHTML = `<div class="pr-zn-okno"><span class="pr-nad">Знакомство · ${n + 1} из ${SHAGI.length}</span><h2>${SHAGI[n][0]}</h2><p class="pr-tusklo">${SHAGI[n][1]}</p>
+      <div class="pr-ryad"><button class="btn primary" id="prZnDalee">${n < SHAGI.length - 1 ? "Дальше" : "Начать работу"}</button>
+      ${n < SHAGI.length - 1 ? `<button class="btn ghost" id="prZnPropustit">Пропустить</button>` : ""}</div></div>`;
+    document.getElementById("prZnDalee").onclick = () => { n++; pokazat(); };
+    const p = document.getElementById("prZnPropustit"); if (p) p.onclick = () => { n = SHAGI.length; pokazat(); };
+  };
+  pokazat();
 }
 
 function vyjtiIzProfilya() {
