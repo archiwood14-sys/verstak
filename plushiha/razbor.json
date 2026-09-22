@@ -1,0 +1,511 @@
+{
+ "objekt": {
+  "nazvanie": "Плющиха",
+  "opisanie": "квартира на Плющихе (Тружеников переулок)",
+  "data_dokumentacii": ""
+ },
+ "pomeshcheniya": [
+  {
+   "nomer": 1,
+   "imya": "Прихожая",
+   "ploshchad": "14.75",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 2,
+   "imya": "Гардеробная",
+   "ploshchad": "9.74",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 3,
+   "imya": "Кабинет",
+   "ploshchad": "24.72",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 4,
+   "imya": "Гостевой санузел",
+   "ploshchad": "6.54",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 5,
+   "imya": "Кухня",
+   "ploshchad": "32.04",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 6,
+   "imya": "Гостиная-столовая",
+   "ploshchad": "61.50",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 7,
+   "imya": "Мастер-гардероб",
+   "ploshchad": "19.64",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 8,
+   "imya": "Детская",
+   "ploshchad": "19.76",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 9,
+   "imya": "Гардеробная",
+   "ploshchad": "5.73",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 10,
+   "imya": "Мастер-спальня",
+   "ploshchad": "17.29",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 11,
+   "imya": "Душевая",
+   "ploshchad": "2.97",
+   "list": "",
+   "iz_plana": true
+  },
+  {
+   "nomer": 12,
+   "imya": "Мастер санузел",
+   "ploshchad": "1.60",
+   "list": "",
+   "iz_plana": true
+  }
+ ],
+ "sopostavlenie": [
+  {
+   "pom": 0,
+   "kod": "ИП1",
+   "nazvanie": "стеновые панели",
+   "ii": "ИП1",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП2",
+   "nazvanie": "гардероб при входе",
+   "ii": "ИП2",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП3",
+   "nazvanie": "стеллаж в гостиной",
+   "ii": "ИП3",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП4",
+   "nazvanie": "стол обеденный",
+   "ii": "ИП4",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП5",
+   "nazvanie": "ширма",
+   "ii": "ИП5",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП6",
+   "nazvanie": "кабинет",
+   "ii": "ИП6",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП9.3",
+   "nazvanie": "кабинет",
+   "ii": "ИП9.3",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП10",
+   "nazvanie": "мастер-спальня",
+   "ii": "ИП10",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП11",
+   "nazvanie": "мастер-спальня",
+   "ii": "ИП11",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП10.1",
+   "nazvanie": "навесная тумбочка мастер-спальни",
+   "ii": "ИП10.1",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП10.2",
+   "nazvanie": "напольная тумбочка мастер-спальни",
+   "ii": "ИП10.2",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП12",
+   "nazvanie": "шкаф и панель мастер-СУ",
+   "ii": "ИП12",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП12.1",
+   "nazvanie": "зеркальный шкаф мастер-СУ",
+   "ii": "ИП12.1",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП13",
+   "nazvanie": "гардероб детский",
+   "ii": "ИП13",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП14",
+   "nazvanie": "шкаф в детской",
+   "ii": "ИП14",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП15",
+   "nazvanie": "стол в детской",
+   "ii": "ИП15",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП16",
+   "nazvanie": "шкаф зеркальный гостевой СУ",
+   "ii": "ИП16",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП17",
+   "nazvanie": "шкаф в гостевом СУ",
+   "ii": "ИП17",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП7",
+   "nazvanie": "Шкаф",
+   "ii": "ИП7",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП8",
+   "nazvanie": "Стеллаж",
+   "ii": "ИП8",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП9",
+   "nazvanie": "Шкаф со стеновыми панелями",
+   "ii": "ИП9",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП9.2",
+   "nazvanie": "Панели и стол",
+   "ii": "ИП9.2",
+   "uverennost": "уверенно",
+   "gde": ""
+  },
+  {
+   "pom": 0,
+   "kod": "ИП9.1",
+   "nazvanie": "Кабинет",
+   "ii": "ИП9.1",
+   "uverennost": "уверенно",
+   "gde": ""
+  }
+ ],
+ "tolko_u_yulii": [],
+ "zagolovki_albuma": [
+  "MAKE YOUR HOME BETTER",
+  "",
+  "",
+  "The underlying principle of my work is to",
+  "",
+  "",
+  "FURNITURE LAYOUT",
+  "",
+  "DOWNLOAD LAYOUT",
+  "",
+  "CONCEPT",
+  "FURNITURE IN PROJECT",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "CONCEPT",
+  "Lamp",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "CONCEPT",
+  "Floor Lamp",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "Floor Lamp",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "CONCEPT",
+  "FURNITURE IN PROJECT",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "CONCEPT",
+  "FURNITURE IN PROJECT",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "CONCEPT",
+  "FURNITURE IN PROJECT",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "CONCEPT",
+  "",
+  "",
+  "",
+  "",
+  "FURNITURE IN PROJECT",
+  "",
+  "",
+  "CONCEPT",
+  "FURNITURE IN PROJECT",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "yn_design",
+  "Studio Yunona Nezvankina.com",
+  ""
+ ],
+ "izdeliya_vse": [
+  {
+   "kod": "ИП1",
+   "nazvanie": "стеновые панели",
+   "gde": ""
+  },
+  {
+   "kod": "ИП2",
+   "nazvanie": "гардероб при входе",
+   "gde": ""
+  },
+  {
+   "kod": "ИП3",
+   "nazvanie": "стеллаж в гостиной",
+   "gde": ""
+  },
+  {
+   "kod": "ИП4",
+   "nazvanie": "стол обеденный",
+   "gde": ""
+  },
+  {
+   "kod": "ИП5",
+   "nazvanie": "ширма",
+   "gde": ""
+  },
+  {
+   "kod": "ИП6",
+   "nazvanie": "кабинет",
+   "gde": ""
+  },
+  {
+   "kod": "ИП9.3",
+   "nazvanie": "кабинет",
+   "gde": ""
+  },
+  {
+   "kod": "ИП10",
+   "nazvanie": "мастер-спальня",
+   "gde": ""
+  },
+  {
+   "kod": "ИП11",
+   "nazvanie": "мастер-спальня",
+   "gde": ""
+  },
+  {
+   "kod": "ИП10.1",
+   "nazvanie": "навесная тумбочка мастер-спальни",
+   "gde": ""
+  },
+  {
+   "kod": "ИП10.2",
+   "nazvanie": "напольная тумбочка мастер-спальни",
+   "gde": ""
+  },
+  {
+   "kod": "ИП12",
+   "nazvanie": "шкаф и панель мастер-СУ",
+   "gde": ""
+  },
+  {
+   "kod": "ИП12.1",
+   "nazvanie": "зеркальный шкаф мастер-СУ",
+   "gde": ""
+  },
+  {
+   "kod": "ИП13",
+   "nazvanie": "гардероб детский",
+   "gde": ""
+  },
+  {
+   "kod": "ИП14",
+   "nazvanie": "шкаф в детской",
+   "gde": ""
+  },
+  {
+   "kod": "ИП15",
+   "nazvanie": "стол в детской",
+   "gde": ""
+  },
+  {
+   "kod": "ИП16",
+   "nazvanie": "шкаф зеркальный гостевой СУ",
+   "gde": ""
+  },
+  {
+   "kod": "ИП17",
+   "nazvanie": "шкаф в гостевом СУ",
+   "gde": ""
+  },
+  {
+   "kod": "ИП7",
+   "nazvanie": "Шкаф",
+   "gde": ""
+  },
+  {
+   "kod": "ИП8",
+   "nazvanie": "Стеллаж",
+   "gde": ""
+  },
+  {
+   "kod": "ИП9",
+   "nazvanie": "Шкаф со стеновыми панелями",
+   "gde": ""
+  },
+  {
+   "kod": "ИП9.2",
+   "nazvanie": "Панели и стол",
+   "gde": ""
+  },
+  {
+   "kod": "ИП9.1",
+   "nazvanie": "Кабинет",
+   "gde": ""
+  }
+ ],
+ "vsego": {
+  "listov_rd": 15,
+  "listov_si": 0,
+  "stranic_albuma": 98
+ },
+ "dokumenty": [
+  {
+   "t": "План проекта",
+   "p": "15 листов · планы, экспликация, развёртки",
+   "pref": "rd",
+   "n": 15
+  }
+ ],
+ "bez_modeli": true
+}

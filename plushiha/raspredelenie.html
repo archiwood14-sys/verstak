@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Архивуд · распределение визуализаций</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baskervville&display=swap" rel="stylesheet">
+<style>
+  :root { --fon: #faf0e6; --karta: #fff; --tekst: #262420; --tusklo: #8a7a6a; --liniya: #e9dfd5; --akcent: #c18048; --akcent-t: #9c6333;
+    --ok: #4f9a6e; --vnim: #b98424; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fon); color: var(--tekst); font: 15px/1.5 Arial, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: "Baskervville", serif; font-weight: 400; margin: 0; }
+  .obertka { max-width: 1280px; margin: 0 auto; padding: calc(12px + env(safe-area-inset-top)) 16px 80px; }
+  .verh { display: flex; align-items: center; gap: 18px; padding: 8px 0 16px; border-bottom: 1px solid rgba(193,128,72,.25); }
+  .verh img { height: 52px; width: auto; }
+  .nadpis { font-family: "Baskervville", serif; font-size: 13px; letter-spacing: 4px; text-transform: uppercase; color: var(--akcent); }
+  .verh h1 { font-size: 32px; line-height: 1.1; }
+  .zag { font-family: "Baskervville", serif; font-size: 13px; letter-spacing: 3.5px; text-transform: uppercase; color: var(--akcent);
+    display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; }
+  .zag::after { content: ""; flex: 1; height: 1px; background: rgba(193,128,72,.3); }
+  .blok { background: var(--karta); border: 1px solid var(--liniya); border-radius: 16px; padding: 16px 18px; }
+  details.blok > summary { cursor: pointer; list-style: none; font-family: "Baskervville", serif; font-size: 20px; }
+  details.blok > summary::-webkit-details-marker { display: none; }
+  details.blok > summary::after { content: "  ·  свернуть"; font: 12px Arial, sans-serif; color: var(--tusklo); }
+  details.blok:not([open]) > summary::after { content: "  ·  раскрыть"; }
+  .kak ol { margin: 10px 0 0; padding-left: 20px; } .kak li { margin: 6px 0; }
+  .kak .storony { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 10px 0 0; font-size: 14.5px; }
+  .kak .storony b { color: var(--akcent); }
+  .dok { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .dok-k { background: var(--karta); border: 1px solid var(--liniya); border-radius: 14px; padding: 8px; cursor: zoom-in; text-align: left; font: inherit; color: inherit; }
+  .dok-k img { width: 100%; aspect-ratio: 1.41; object-fit: cover; object-position: top; border-radius: 9px; background: #f3e9df; display: block; }
+  .dok-k b { display: block; font-size: 14px; margin: 6px 2px 0; }
+  .dok-k small { display: block; color: var(--tusklo); font-size: 12.5px; margin: 0 2px 2px; }
+  .tabl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tabl th { text-align: left; font-weight: 400; color: var(--tusklo); font-size: 12.5px; border-bottom: 1px solid var(--liniya); padding: 6px 8px; }
+  .tabl td { border-bottom: 1px solid var(--liniya); padding: 7px 8px; vertical-align: top; }
+  .obertka-tabl { overflow-x: auto; }
+  .progress { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .polosa { flex: 1; min-width: 200px; height: 8px; background: #f0e4d6; border-radius: 99px; overflow: hidden; }
+  .polosa i { display: block; height: 100%; background: var(--akcent); border-radius: 99px; transition: width .5s; }
+  .progress b { font-family: Arial, sans-serif; font-weight: 600; font-size: 24px; }
+  body { font-variant-numeric: lining-nums; }
+  .filtry { display: flex; gap: 7px; flex-wrap: wrap; margin: 12px 0; }
+  .f { border: 1px solid rgba(193,128,72,.4); background: #fff; color: var(--akcent); border-radius: 999px; padding: 7px 13px; font: 13.5px Arial, sans-serif; cursor: pointer; min-height: 36px; }
+  .f.vybr { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+  .stranica { background: var(--karta); border: 1px solid var(--liniya); border-left: 3px solid transparent; border-radius: 16px; padding: 14px; margin-bottom: 12px;
+    display: grid; grid-template-columns: minmax(260px, 420px) 1fr; gap: 16px; }
+  .stranica.gotova { border-left-color: var(--ok); }
+  @media (max-width: 760px) { .stranica { grid-template-columns: 1fr; } }
+  .kartinka img { width: 100%; border-radius: 10px; display: block; cursor: zoom-in; border: 1px solid var(--liniya); background: #f3e9df; }
+  .kartinka .pod { font-size: 12.5px; color: var(--tusklo); margin-top: 5px; }
+  .model { font-size: 13.5px; color: var(--tusklo); background: #fbf6f0; border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; }
+  .model b { color: var(--tekst); font-weight: 600; }
+  .pole-zag { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--tusklo); margin: 10px 0 5px; }
+  select, input[type=text] { width: 100%; border: 1px solid var(--liniya); border-radius: 10px; padding: 9px 10px; font: 14.5px Arial, sans-serif; background: #fff; color: var(--tekst); }
+  .chipy { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ch { border: 1px solid var(--liniya); background: #fff; border-radius: 9px; padding: 6px 10px; font: 13.5px Arial, sans-serif; cursor: pointer; min-height: 34px; color: var(--tekst); }
+  .ch.on { background: var(--akcent); color: #fff; border-color: var(--akcent); }
+  .ch.model { border-style: dashed; }
+  .ch small { opacity: .75; margin-left: 4px; }
+  .drugie { margin-top: 6px; }
+  .pod-zag { font-size: 12px; color: var(--tusklo); margin: 8px 0 4px; }
+  .drugie summary { cursor: pointer; font-size: 13px; color: var(--tusklo); }
+  .niz { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .sohr { background: var(--akcent); color: #fff; border: none; border-radius: 12px; padding: 10px 20px; font: 700 14.5px Arial, sans-serif; cursor: pointer; min-height: 42px; }
+  .sohr:disabled { opacity: .5; }
+  .sost { font-size: 13px; color: var(--tusklo); } .sost.ok { color: var(--ok); }
+  .v-musor { margin-left: auto; background: none; border: 1px solid var(--liniya); color: var(--tusklo); border-radius: 12px; padding: 9px 14px;
+    font: 13.5px Arial, sans-serif; cursor: pointer; min-height: 40px; }
+  .v-musor:hover { border-color: #c9503f; color: #c9503f; }
+  .vernut { background: #fff; border: 1px solid var(--akcent); color: var(--akcent); border-radius: 12px; padding: 9px 16px; font: 700 14px Arial, sans-serif; cursor: pointer; min-height: 40px; }
+  .stranica.v-musore { opacity: .75; border-left-color: #c9503f; }
+  .lupa { position: fixed; inset: 0; background: rgba(38,36,32,.9); z-index: 50; display: flex; flex-direction: column; }
+  .lupa-verh { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; color: #fff; }
+  .lupa-telo { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 0 10px 14px; }
+  .lupa-telo img { max-width: 100%; border-radius: 8px; background: #fff; }
+  .lupa-telo img.krupno { max-width: none; width: 200%; }
+  .lupa-listy { display: flex; gap: 5px; overflow-x: auto; padding: 0 14px 10px; }
+  .lupa-listy .tonk { min-width: 38px; padding: 6px 8px; }
+  .lupa-listy .tonk.tek { background: #c18048; border-color: #c18048; }
+  .lupa-telo.lenta { display: block; position: relative; }
+  .list-lenty { max-width: 1200px; margin: 0 auto 16px; }
+  .list-lenty img { width: 100%; max-width: none; display: block; border-radius: 8px; background: #fff; }
+  .lupa-telo.lenta.krupno .list-lenty { max-width: none; width: 180%; }
+  .list-podp { color: #e9dfd5; font-size: 13px; margin: 4px 0 6px; }
+  .tonk { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 8px 14px; font: 13px Arial, sans-serif; cursor: pointer; }
+  .pusto { color: var(--tusklo); padding: 40px 10px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="obertka">
+  <header class="verh">
+    <img src="logo.png" alt="Архивуд">
+    <div><div class="nadpis">Распределение визуализаций</div><h1 id="obekt">…</h1></div>
+  </header>
+
+  <div class="zag">Как работать</div>
+  <details class="blok kak" id="kak" open>
+    <summary>Задача: каждая визуализация — на своём месте</summary>
+    <p>В альбоме <span id="vsegoStr">…</span> страниц. Каждой нужно указать <b>помещение</b>, <b>сторону</b> и <b>изделия</b>, которые на ней видны. Тогда в карточке
+      каждого изделия будут правильные картинки, а производство и монтаж увидят, как оно выглядит и где стоит.</p>
+    <ol>
+      <li id="shagModel">Модель уже посмотрела все страницы и предложила помещение и изделия — это видно в бежевой плашке «модель предложила»
+        и пунктирными рамками. Это черновик: ему нельзя верить без проверки.</li>
+      <li>Откройте нужное помещение фильтром сверху. Рядом — документы для работы: рабочая документация, список изделий,
+        весь альбом. Нажмите на картинку, чтобы увеличить.</li>
+      <li>Для каждой страницы выберите помещение, сторону и отметьте ВСЕ изделия, которые видно, — двери и плинтус тоже,
+        тегов сколько угодно. Изделия выбранного помещения идут первыми, ниже — все остальные изделия объекта.</li>
+      <li>Нажмите «Сохранить». Страница помечается зелёной полосой, и робот больше никогда не переназначает её сам — ваше слово
+        сильнее машины. Сохранённое сразу видно здесь; в карточки изделий уходит в течение часа.</li>
+    </ol>
+    <p>Если визуализация не нужна вовсе (обложка, материалы, повтор) — нажмите «Удалить». Она пропадёт из распределения
+      и из карточек изделий; вернуть можно в фильтре «Удалённые».</p>
+    <div class="storony">
+      <b>А</b><span>стена, в которой вход в помещение</span>
+      <b>Б</b><span>следующая стена по часовой стрелке от входа</span>
+      <b>В</b><span>стена напротив входа</span>
+      <b>Г</b><span>оставшаяся стена</span>
+      <b>Общий вид</b><span>видно две стены и больше, или помещение целиком</span>
+      <b>Деталь</b><span>крупный план изделия, узла или материала</span>
+      <b>Не знаю</b><span>сторону можно не выбирать — сохранится как «не указана», добавите позже</span>
+    </div>
+  </details>
+
+  <div class="zag">Документы для работы</div>
+  <div class="dok" id="dok"></div>
+  <details class="blok" style="margin-top:10px">
+    <summary>Помещения и изделия: сверка рабочей документации и вашего списка</summary>
+    <div class="obertka-tabl" id="sverka"></div>
+  </details>
+
+  <div class="zag">Альбом визуализаций</div>
+  <div class="blok progress"><b id="gotovo">0</b><span id="gotovoTekst">из 72 распределено</span><div class="polosa"><i id="polosa" style="width:0"></i></div>
+    <span class="pole-zag" style="margin:0">Кто распределяет</span>
+    <select id="kto" style="width:auto"><option>Юлия Евгеньевна</option><option>Мансур</option></select></div>
+  <div class="filtry" id="filtrPom"></div>
+  <div class="filtry" id="filtrSost"></div>
+  <div id="spisok"><div class="pusto">Загружаю альбом…</div></div>
+</div>
+
+<script>
+"use strict";
+const MOSTIK = "https://script.google.com/macros/s/AKfycbzOiAJDQYpEbfrSioBqxFj2McrOhiAGRgLDzWTAuSEuHxvQRbDWt3YVfKddD5S4jkZueA/exec";
+const REESTR = "1knWGXV91BYbMhMmwd_G1adOYv2krRUAjH6Y6ZxzzlvU";
+const LIST = "Визуализации_привязка";
+let OBEKT = "Ильинка";   // берётся из razbor.json — одна страница на все объекты
+const STORONY = ["А", "Б", "В", "Г", "Общий вид", "Деталь"];
+const MUSOR = "в мусор";
+const BEZ_STORONY = "не указана";   // 14.09.2026 Мансур: сохранять можно и без стороны — Юлия не всегда знает сторону   // страница не нужна: не распределяется и не попадает в изделия
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const S = { v: null, r: null, pom: [], izd: [], filtrPom: "", filtrSost: "ne", lupaSpisok: [], lupaN: 0 };
+
+function csvStroki(t) {
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; }
+    else if (c !== "\r") f += c;
+  }
+  if (f || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+
+async function start() {
+  try {
+    [S.v, S.r] = await Promise.all([
+      fetch("vizualizacii.json?" + Date.now()).then(r => r.json()),
+      fetch("razbor.json?" + Date.now()).then(r => r.json()),
+    ]);
+  } catch (e) { document.getElementById("spisok").innerHTML = `<div class="pusto">Не удалось загрузить альбом. Обновите страницу.</div>`; return; }
+  S.pom = S.r.pomeshcheniya.map(p => p.imya);
+  OBEKT = (S.r.objekt && S.r.objekt.nazvanie) || OBEKT;
+  document.getElementById("obekt").textContent = OBEKT;
+  document.getElementById("vsegoStr").textContent = S.v.stranicy.length;
+  if (S.r.bez_modeli) {   // Медное Озеро: распределяет человек, подсказок модели нет
+    document.getElementById("shagModel").textContent = "Подсказок нет — всё решаете вы. Над каждой страницей показано, что на ней напечатано (обычно название помещения).";
+  }
+  document.title = "Архивуд · распределение визуализаций · " + OBEKT;
+  const pomPoNomeru = Object.fromEntries(S.r.pomeshcheniya.map(p => [p.nomer, p.imya]));
+  // изделия: пары документации и списка Юлии + то, что есть только у Юлии
+  S.izd = S.r.sopostavlenie.map(z => ({ kod: z.ii || z.kod, nazv: z.nazvanie, pom: pomPoNomeru[z.pom] || "" }));
+  for (const z of S.r.tolko_u_yulii) {
+    const m = String(z.chto).match(/пом[а-я]*\s*(\d)/i);
+    S.izd.push({ kod: z.kod, nazv: z.chto.replace(/\s*-\s*пом.*$/i, ""), pom: m ? (pomPoNomeru[+m[1]] || "") : "" });
+  }
+  // 14.09.2026 Мансур: на визуализации могут быть двери, плинтус — «всё, что у нас есть»
+  const norm = k => String(k).toUpperCase().replace(/\s+/g, "");
+  for (const i of (S.r.izdeliya_vse || [])) {
+    const est = S.izd.find(x => norm(x.kod) === norm(i.kod));
+    if (est) { if (!est.nazv) est.nazv = i.nazvanie; continue; }
+    const pom = S.pom.find(p => (i.gde || "").toLowerCase().includes(p.toLowerCase())) || "";
+    S.izd.push({ kod: i.kod, nazv: i.nazvanie, pom });
+  }
+  for (const s of S.v.stranicy) {                 // коды, которые модель видела, но которых нет в списке
+    for (const k of [...(s.kody || []), ...(s.kody_modeli || [])]) if (!S.izd.some(i => i.kod === k)) S.izd.push({ kod: k, nazv: "", pom: "" });
+    s._pom = s.pomeshchenie || ""; s._st = s.storona || ""; s._kody = (s.kody || []).slice(); s._kom = s.kommentariy || "";
+    s._gotova = s.kto_privyazal === "человек" && !!s.storona;
+    s._musor = s.storona === MUSOR;
+  }
+  try { document.getElementById("kto").value = localStorage.getItem("raspr_kto") || "Юлия Евгеньевна"; } catch (e) {}
+  document.getElementById("kto").onchange = e => { try { localStorage.setItem("raspr_kto", e.target.value); } catch (x) {} };
+  await podtyanutPravki();
+  dokumenty();
+  risovat();
+}
+
+// сохранённое сегодня видно сразу, не дожидаясь часового пересчёта
+async function podtyanutPravki() {
+  try {
+    const t = await (await fetch(`https://docs.google.com/spreadsheets/d/${REESTR}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(LIST)}&_=${Date.now()}`, { cache: "no-store" })).text();
+    const rows = csvStroki(t);
+    const h = rows[0] || [], k = n => h.indexOf(n);
+    if (k("Страница") < 0) return;
+    for (const r of rows.slice(1)) {
+      if ((k("Объект") >= 0 ? r[k("Объект")] : "") !== OBEKT && !(OBEKT === "Ильинка" && !(r[k("Объект")] || ""))) continue;
+      const s = S.v.stranicy.find(x => x.fajl === r[k("Страница")]);
+      if (!s) continue;
+      s._st = r[k("Сторона")] || "";
+      s._musor = s._st === MUSOR;
+      s._pom = s._musor ? "" : (r[k("Помещение")] || s._pom);
+      s._kody = (r[k("Изделия")] || "").split(",").map(x => x.trim()).filter(Boolean);
+      s._kom = r[k("Комментарий")] || ""; s._kto = r[k("Кто поправил")] || "";
+      s._gotova = !!s._st; s.kto_privyazal = s._st ? "человек" : "модель";   // «Вернуть» — снова не распределена
+      if (!s._st) { s._pom = s.pomeshchenie_modeli || s.pomeshchenie || ""; s._kody = (s.kody_modeli || []).slice(); }
+    }
+  } catch (e) {}
+}
+
+function dokumenty() {
+  const listy = (pref, n) => Array.from({ length: n }, (_, i) => `listy/${pref}-${String(i + 1).padStart(2, "0")}.jpg`);
+  const D = (S.r.dokumenty ? S.r.dokumenty.filter(x => x.n).map(x => ({ t: x.t, p: x.p, img: listy(x.pref, x.n) })) : [
+    { t: "План маркировки мебели", p: "рабочая документация, лист 10 · где что стоит", img: ["listy/rd-10.jpg"] },
+    { t: "Ведомость мебели и оборудования", p: "рабочая документация, лист 11 · коды ИНД", img: ["listy/rd-11.jpg"] },
+    { t: "Список изделий Юлии", p: "5 листов · коды ИИ", img: listy("si", 5) },
+    { t: "Рабочая документация целиком", p: `${S.r.vsego.listov_rd} листов · от ${S.r.objekt.data_dokumentacii}`, img: listy("rd", S.r.vsego.listov_rd) },
+  ]).concat([{ t: "Альбом визуализаций целиком", p: `${S.v.stranicy.length} страниц — все подряд`, img: S.v.stranicy.map(s => "vizual/" + s.fajl) }]);
+  document.getElementById("dok").innerHTML = D.map((d, n) => `<button class="dok-k" data-n="${n}"><img src="${d.img[0]}" alt="" loading="lazy"><b>${esc(d.t)}</b><small>${esc(d.p)}</small></button>`).join("");
+  document.querySelectorAll(".dok-k").forEach(b => b.onclick = () => lupa(D[+b.dataset.n].img, 0, D[+b.dataset.n].t));
+  const pom = S.r.pomeshcheniya.map(p => `<tr><td>${p.nomer}</td><td>${esc(p.imya)}</td><td>${esc(p.ploshchad)} м²</td><td>${
+    S.izd.filter(i => i.pom === p.imya).map(i => `<b>${esc(i.kod)}</b> ${esc(i.nazv)}`).join("<br>") || "—"}</td></tr>`).join("");
+  const bez = S.izd.filter(i => !i.pom);
+  document.getElementById("sverka").innerHTML = `<table class="tabl"><tr><th>№</th><th>Помещение</th><th>Площадь</th><th>Изделия</th></tr>${pom}
+    ${bez.length ? `<tr><td></td><td>Помещение не указано</td><td></td><td>${bez.map(i => `<b>${esc(i.kod)}</b> ${esc(i.nazv)}`).join("<br>")}</td></tr>` : ""}</table>
+    ${S.r.tolko_u_yulii && S.r.tolko_u_yulii.length ? `<p style="font-size:13px;color:var(--tusklo)">Пары ИНД (документация) — ИИ (ваш список) сопоставлены по номеру и названию. ${S.r.sopostavlenie.filter(z => z.uverennost !== "уверенно").map(z => esc(z.kod) + " — " + esc(z.uverennost)).join("; ")}</p>` : ""}`;
+}
+
+function podhodit(s) {
+  if (S.filtrSost === "musor") return s._musor;
+  if (s._musor) return false;               // выброшенные — только в «Мусоре»
+  if (S.filtrPom === "bez" && s._pom) return false;
+  if (S.filtrPom && S.filtrPom !== "bez" && s._pom !== S.filtrPom) return false;
+  if (S.filtrSost === "ne" && s._gotova) return false;
+  if (S.filtrSost === "da" && !s._gotova) return false;
+  return true;
+}
+
+function risovat() {
+  const st = S.v.stranicy, gotovo = st.filter(s => s._gotova).length;
+  document.getElementById("gotovo").textContent = gotovo;
+  document.getElementById("gotovoTekst").textContent = `из ${st.length} распределено`;
+  document.getElementById("polosa").style.width = (100 * gotovo / st.length) + "%";
+  const kolvo = f => st.filter(s => { const b = [S.filtrPom, S.filtrSost]; f(); const r = podhodit(s); [S.filtrPom, S.filtrSost] = b; return r; }).length;
+  document.getElementById("filtrPom").innerHTML = [["", "Все помещения"], ...S.pom.map(p => [p, p]), ["bez", "Без помещения"]].map(([k, n]) =>
+    `<button class="f${S.filtrPom === k ? " vybr" : ""}" data-pom="${esc(k)}">${esc(n)} · ${kolvo(() => { S.filtrPom = k; })}</button>`).join("");
+  document.getElementById("filtrSost").innerHTML = [["ne", "Ещё не распределены"], ["da", "Распределены"], ["", "Все страницы"], ["musor", "Удалённые"]].map(([k, n]) =>
+    `<button class="f${S.filtrSost === k ? " vybr" : ""}" data-sost="${k}">${n} · ${kolvo(() => { S.filtrSost = k; })}</button>`).join("");
+  document.querySelectorAll("[data-pom]").forEach(b => b.onclick = () => { S.filtrPom = b.dataset.pom; risovat(); });
+  document.querySelectorAll("[data-sost]").forEach(b => b.onclick = () => { S.filtrSost = b.dataset.sost; risovat(); });
+  const vidno = st.filter(podhodit);
+  S.lupaSpisok = vidno.map(s => "vizual/" + s.fajl);
+  document.getElementById("spisok").innerHTML = vidno.map((s, n) => kartochka(s, n)).join("") || `<div class="pusto">В этой группе страниц нет.</div>`;
+  vidno.forEach(s => privyazat(s));
+}
+
+function chipIzd(s, i) {
+  return `<button class="ch${s._kody.includes(i.kod) ? " on" : ""}${(s.kody_modeli || []).includes(i.kod) ? " model" : ""}" data-kod="${esc(i.kod)}">${esc(i.kod)}${i.nazv ? `<small>${esc(i.nazv.slice(0, 26))}</small>` : ""}</button>`;
+}
+function kartochka(s, n) {
+  if (s._musor) return `<div class="stranica v-musore" id="s-${esc(s.fajl)}">
+    <div class="kartinka"><img src="vizual/${esc(s.fajl)}" loading="lazy" alt="страница ${s.stranica}" data-n="${n}">
+      <div class="pod">страница альбома ${s.stranica} · удалена${s._kto ? ": " + esc(s._kto) : ""}</div></div>
+    <div><div class="model">Эта визуализация удалена — она не распределяется и не попадает в карточки изделий. Если удалили по ошибке — верните.${s._kom ? " Комментарий: " + esc(s._kom) : ""}</div>
+      <div class="niz"><button class="vernut">Вернуть</button><span class="sost" data-sost-str></span></div></div></div>`;
+  const svoi = S.izd.filter(i => i.pom && i.pom === s._pom), drugie = S.izd.filter(i => !(i.pom && i.pom === s._pom));
+  return `<div class="stranica${s._gotova ? " gotova" : ""}" id="s-${esc(s.fajl)}">
+    <div class="kartinka"><img src="vizual/${esc(s.fajl)}" loading="lazy" alt="страница ${s.stranica}" data-n="${n}">
+      <div class="pod">страница альбома ${s.stranica}${s.tip ? " · " + esc(s.tip) : ""}${s._gotova ? " · распределено" + (s._kto ? ": " + esc(s._kto) : "") : ""}</div></div>
+    <div>
+      ${S.r.bez_modeli ? (s.chto_vidno ? `<div class="model">${esc(s.chto_vidno)}</div>` : "")
+        : `<div class="model"><b>Модель предложила:</b> ${esc(s.pomeshchenie_modeli || s.pomeshchenie || "помещение не определила")}${(s.kody_modeli || []).length ? " · " + esc(s.kody_modeli.join(", ")) : ""}${s.uverennost ? " · уверенность " + esc(s.uverennost) : ""}.
+        ${esc((s.chto_vidno || "").slice(0, 240))}</div>`}
+      <div class="pole-zag">Помещение</div>
+      <select data-pole="pom"><option value="">— не помещение (обложка, материалы, общий план) —</option>${S.pom.map(p => `<option${p === s._pom ? " selected" : ""}>${esc(p)}</option>`).join("")}</select>
+      <div class="pole-zag">Сторона — если знаете${s._st === BEZ_STORONY ? " · сейчас не указана" : ""}</div>
+      <div class="chipy">${STORONY.map(x => `<button class="ch${s._st === x ? " on" : ""}" data-st="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+      <div class="pole-zag">Изделия на этой странице — отметьте все, что видно (двери, плинтус тоже)</div>
+      ${svoi.length ? `<div class="pod-zag">этого помещения</div><div class="chipy" data-gruppa="svoi">${svoi.map(i => chipIzd(s, i)).join("")}</div>` : ""}
+      <div class="pod-zag">${svoi.length ? "остальные изделия объекта" : "все изделия объекта"} · ${drugie.length}</div>
+      <div class="chipy" data-gruppa="drugie">${drugie.map(i => chipIzd(s, i)).join("")}</div>
+      <div class="pole-zag">Комментарий</div>
+      <input type="text" data-pole="kom" value="${esc(s._kom)}" placeholder="например: зеркало ИИ10 на этой стене над тумбой">
+      <div class="niz"><button class="sohr">Сохранить</button><span class="sost" data-sost-str>${s._gotova ? "Сохранено." : ""}</span>
+        <button class="v-musor" title="Визуализация не нужна — убрать её из распределения">Удалить</button></div>
+    </div></div>`;
+}
+
+function privyazat(s) {
+  const el = document.getElementById("s-" + s.fajl);
+  if (!el) return;
+  el.querySelector("img").onclick = e => lupa(S.lupaSpisok, +e.target.dataset.n, "Альбом визуализаций");
+  if (s._musor) { el.querySelector(".vernut").onclick = () => vMusor(s, false); return; }
+  el.querySelector(".v-musor").onclick = () => vMusor(s, true);
+  const pomechat = () => { const x = el.querySelector("[data-sost-str]"); x.className = "sost"; x.textContent = "не сохранено"; };
+  el.querySelector('[data-pole="pom"]').onchange = e => {
+    s._pom = e.target.value;
+    const nov = document.createElement("div"); nov.innerHTML = kartochka(s, +el.querySelector("img").dataset.n);
+    el.replaceWith(nov.firstElementChild); privyazat(s); pomechat_(s);
+  };
+  el.querySelectorAll("[data-st]").forEach(b => b.onclick = () => {
+    s._st = s._st === b.dataset.st ? "" : b.dataset.st;
+    el.querySelectorAll("[data-st]").forEach(x => x.classList.toggle("on", x.dataset.st === s._st)); pomechat();
+  });
+  el.querySelectorAll("[data-kod]").forEach(b => b.onclick = () => {
+    const k = b.dataset.kod, i = s._kody.indexOf(k);
+    if (i >= 0) s._kody.splice(i, 1); else s._kody.push(k);
+    el.querySelectorAll(`[data-kod="${CSS.escape(k)}"]`).forEach(x => x.classList.toggle("on", s._kody.includes(k))); pomechat();
+  });
+  el.querySelector('[data-pole="kom"]').oninput = e => { s._kom = e.target.value; pomechat(); };
+  el.querySelector(".sohr").onclick = () => sohranit(s, el);
+}
+function pomechat_(s) { const el = document.getElementById("s-" + s.fajl); if (el) { const x = el.querySelector("[data-sost-str]"); x.className = "sost"; x.textContent = "не сохранено"; } }
+
+// В мусор и обратно — обычная правка: сторона «в мусор», без помещения и изделий
+async function vMusor(s, vybrosit) {
+  const el = document.getElementById("s-" + s.fajl), sost = el.querySelector("[data-sost-str]");
+  sost.className = "sost"; sost.textContent = vybrosit ? "Удаляю…" : "Возвращаю…";
+  const kto = document.getElementById("kto").value;
+  try {
+    const otv = await (await fetch(MOSTIK, { method: "POST", body: JSON.stringify({ type: "stroka", list: LIST, prefiksID: "ВИЗ",
+      klyuchPovtora: { "Страница": s.fajl, "Сторона": vybrosit ? MUSOR : "" },
+      znacheniya: { "Страница": s.fajl, "Лист альбома": String(s.stranica), "Помещение": vybrosit ? "" : (s.pomeshchenie_modeli || s.pomeshchenie || ""),
+        "Сторона": vybrosit ? MUSOR : "", "Изделия": vybrosit ? "" : (s.kody_modeli || []).join(", "), "Было у модели": (s.kody_modeli || []).join(", "),
+        "Комментарий": s._kom || "", "Кто поправил": kto, "Когда": new Date().toISOString().slice(0, 16).replace("T", " "), "Объект": OBEKT } }) })).json();
+    if (!otv.ok) throw new Error(otv.error || "не принято");
+    s._musor = vybrosit; s._kto = kto;
+    if (vybrosit) { s._st = MUSOR; s._pom = ""; s._kody = []; s._gotova = true; s.kto_privyazal = "человек"; }
+    else { s._st = ""; s._gotova = false; s._pom = s.pomeshchenie_modeli || s.pomeshchenie || ""; s._kody = (s.kody_modeli || []).slice(); }
+    risovat();
+  } catch (e) { sost.textContent = "Не получилось: " + e.message; }
+}
+
+async function sohranit(s, el) {
+  el = document.getElementById("s-" + s.fajl) || el;
+  const knopka = el.querySelector(".sohr"), sost = el.querySelector("[data-sost-str]");
+  knopka.disabled = true; sost.className = "sost"; sost.textContent = "Сохраняю…";
+  const kto = document.getElementById("kto").value;
+  try {
+    const otv = await (await fetch(MOSTIK, { method: "POST", body: JSON.stringify({ type: "stroka", list: LIST, prefiksID: "ВИЗ",
+      klyuchPovtora: { "Страница": s.fajl, "Сторона": s._st || BEZ_STORONY, "Изделия": s._kody.join(", ") },
+      znacheniya: { "Страница": s.fajl, "Лист альбома": String(s.stranica), "Помещение": s._pom, "Сторона": s._st || BEZ_STORONY, "Изделия": s._kody.join(", "),
+        "Было у модели": (s.kody_modeli || []).join(", "), "Комментарий": s._kom, "Кто поправил": kto,
+        "Когда": new Date().toISOString().slice(0, 16).replace("T", " "), "Объект": OBEKT } }) })).json();
+    if (!otv.ok) throw new Error(otv.error || "не принято");
+    if (!s._st) s._st = BEZ_STORONY;
+    s._gotova = true; s._kto = kto; s.kto_privyazal = "человек";
+    sost.className = "sost ok"; sost.textContent = s._st === BEZ_STORONY ? "Сохранено без стороны — её можно добавить позже." : "Сохранено.";
+    el.classList.add("gotova");
+    const st = S.v.stranicy, gotovo = st.filter(x => x._gotova).length;
+    document.getElementById("gotovo").textContent = gotovo;
+    document.getElementById("polosa").style.width = (100 * gotovo / st.length) + "%";
+  } catch (e) { sost.textContent = "Не сохранилось: " + e.message; }
+  knopka.disabled = false;
+}
+
+// 14.09.2026 Мансур: документ со многими листами — весь на одной ленте: прокручивать,
+// а кнопками с номерами быстро переходить к нужному листу
+function lupa(spisok, n, zag) {
+  const f = document.createElement("div");
+  f.className = "lupa";
+  const mnogo = spisok.length > 1;
+  f.innerHTML = `<div class="lupa-verh"><span>${esc(zag)}${mnogo ? " · " + spisok.length + " листов" : ""}</span><span>
+      <button class="tonk" data-k="1">Крупнее</button> <button class="tonk" data-z="1">Закрыть</button></span></div>
+    ${mnogo ? `<div class="lupa-listy">${spisok.map((_, i) => `<button class="tonk" data-l="${i}">${i + 1}</button>`).join("")}</div>` : ""}
+    <div class="lupa-telo lenta">${spisok.map((src, i) => `<div class="list-lenty" data-n="${i}">
+      ${mnogo ? `<div class="list-podp">Лист ${i + 1} из ${spisok.length}</div>` : ""}<img loading="lazy" src="${esc(src)}" alt=""></div>`).join("")}</div>`;
+  document.body.appendChild(f);
+  const telo = f.querySelector(".lupa-telo");
+  const k = i => { const el = telo.querySelector(`[data-n="${i}"]`); if (el) telo.scrollTop = el.offsetTop - 6; };
+  const tekushchiy = () => { let t = 0; telo.querySelectorAll("[data-n]").forEach(el => { if (el.offsetTop - 80 <= telo.scrollTop) t = +el.dataset.n; }); return t; };
+  f.querySelectorAll("[data-l]").forEach(b => b.onclick = () => k(+b.dataset.l));
+  telo.onscroll = () => { const t = tekushchiy(); f.querySelectorAll("[data-l]").forEach(b => b.classList.toggle("tek", +b.dataset.l === t)); };
+  f.querySelector("[data-k]").onclick = () => telo.classList.toggle("krupno");
+  const zakryt = () => { f.remove(); document.removeEventListener("keydown", klav); };
+  f.querySelector("[data-z]").onclick = zakryt;
+  const klav = e => { if (e.key === "Escape") zakryt(); if (e.key === "ArrowRight") k(Math.min(spisok.length - 1, tekushchiy() + 1)); if (e.key === "ArrowLeft") k(Math.max(0, tekushchiy() - 1)); };
+  document.addEventListener("keydown", klav);
+  setTimeout(() => k(n), 30);
+}
+
+start();
+</script>
+</body>
+</html>
