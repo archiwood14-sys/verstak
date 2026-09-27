@@ -3476,8 +3476,11 @@ function rmPismo(p, kuda) {
   if (!p) return;
   const gruppy = (RM.D.gruppy || []).map(g =>
     `<option value="${escapeHtml(g.klyuch)}"${g.klyuch === kuda ? " selected" : ""}>${escapeHtml(g.nazvanie)}</option>`).join("");
+  // 27.09.2026: step и dwg приходят в одной присылке с пилотом — заказчику они не нужны,
+  // поэтому галочка снята и подписано, для кого этот файл
   const fajly = p.fajly.filter(f => !f.net_fajla).map((f, i) =>
-    `<label class="rm-galka"><input type="checkbox" data-i="${i}" checked> ${escapeHtml(f.imya)}</label>`).join("");
+    `<label class="rm-galka"><input type="checkbox" data-i="${i}"${f.model ? "" : " checked"}> ${escapeHtml(f.imya)}${
+      f.model ? ` <small class="rm-tusklo">— другой формат, для нас и для ЧПУ</small>` : ""}</label>`).join("");
   // 14.09.2026: пилот без номера (дверь в гостевую) — Юлия сама указывает, какое это изделие
   const bezKoda = !p.kody.length;
   const izdOpc = bezKoda ? (RM.D.izdeliya || []).slice()
