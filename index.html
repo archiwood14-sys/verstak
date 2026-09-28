@@ -939,6 +939,38 @@
   .rm-punkt.peredan { border-left-color: var(--ok); }
   .rm-zhdem { border-left:3px solid var(--accent); }
   .rm-stop { border:1px solid var(--warn); border-radius:12px; padding:10px 12px; }
+  /* карточка изделия у Юлии: образ изделия, сводка и переписка как чат (28.09.2026) */
+  .izd-shapka { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+  .izd-obraz { width:86px; height:86px; border-radius:16px; overflow:hidden; background:var(--surface-2);
+               display:grid; place-items:center; flex:none; border:1px solid var(--line); }
+  .izd-obraz img { width:100%; height:100%; object-fit:cover; }
+  .izd-obraz span { font-family:Baskervville, Georgia, serif; font-size: calc(22px * var(--shrift)); color:var(--muted); }
+  .izd-obraz-mal { width:54px; height:54px; border-radius:12px; margin-bottom:6px; }
+  .izd-obraz-mal span { font-size: calc(14px * var(--shrift)); }
+  .izd-shapka-telo { flex:1; min-width:220px; display:flex; flex-direction:column; gap:6px; }
+  .izd-svodka { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .izd-plitka { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 12px;
+                display:flex; flex-direction:column; min-width:96px; }
+  .izd-plitka b { font-size: calc(19px * var(--shrift)); line-height:1.1; }
+  .izd-plitka span { font-size: calc(12px * var(--shrift)); color:var(--muted); }
+  .izd-plitka.trevoga { border-color:var(--warn); }
+  .izd-plitka.zhdem { border-color:var(--accent); }
+  /* переписка как чат */
+  .rm-chat { display:flex; flex-direction:column; gap:12px; }
+  .rm-rep { display:flex; gap:10px; align-items:flex-start; }
+  .rm-rep.nash { flex-direction:row-reverse; }
+  .rm-ava { width:36px; height:36px; border-radius:50%; flex:none; display:grid; place-items:center;
+            color:#fff; font-size: calc(13px * var(--shrift)); font-weight:700; }
+  .rm-puzyr { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:10px 13px;
+              max-width:min(680px, 82%); display:flex; flex-direction:column; gap:4px; }
+  .rm-rep.nash .rm-puzyr { background:var(--surface-2); }
+  .rm-puzyr .kto { font-size: calc(12.5px * var(--shrift)); color:var(--muted); display:flex; gap:8px; flex-wrap:wrap; }
+  .rm-puzyr .kto b { color:var(--ink); font-weight:600; }
+  .rm-puzyr .tekst { white-space:pre-wrap; word-break:break-word; }
+  .rm-puzyr .nizhe { font-size: calc(12px * var(--shrift)); display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .rm-otdano { color:var(--ok); } .rm-ne-otdano { color:var(--warn); }
+  .rm-puzyr.vopros { border-left:3px solid var(--accent); }
+  .rm-chat-fajl { font-size: calc(12.5px * var(--shrift)); color:var(--muted); }
   /* пространство производства (18.09.2026) */
   .pr { display:flex; flex-direction:column; gap:16px; max-width:1100px; margin:0 auto; }
   .pr h1 { margin:0; font-family:Baskervville, Georgia, serif; font-weight:400; font-size: calc(30px * var(--shrift)); text-wrap:balance; }
@@ -1851,6 +1883,72 @@ function rmPismoKonstruktoru(kod) {
           + `. Отметьте, пожалуйста, что из списка уже вошло.\n` : "");
 }
 
+
+/* Образ изделия — маленькая картинка, как аватарка (28.09.2026, просьба Мансура).
+   Берём первое, что есть: визуализация → вид из пилота → лист чертежа. Если ничего нет — код. */
+async function rmObrazIzdeliya(kod) {
+  const el = document.querySelector(`[data-obraz="${CSS.escape(kod)}"]`);
+  if (!el) return;
+  try {
+    const vizy = await rmVizualizacii(RM_OBEKT, kod);
+    if (vizy.length) { el.innerHTML = `<img src="${escapeHtml(vizy[0].url)}" alt="">`; return; }
+  } catch (e) {}
+  const pachki = rmPachkiIzdeliya(kod, true);
+  for (const p of pachki) {
+    const f = (p.fajly || []).find(x => x.mini);
+    if (!f) continue;
+    try {
+      const b = await rmFajl(f.mini);
+      el.innerHTML = `<img src="${URL.createObjectURL(new Blob([b], { type: "image/jpeg" }))}" alt="">`;
+      return;
+    } catch (e) {}
+  }
+}
+function rmCvetImeni(imya) {
+  let n = 0;
+  for (const ch of String(imya || "?")) n = (n * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${n} 45% 42%)`;
+}
+function rmInicialy(imya) {
+  const ch = String(imya || "?").replace(/[^\p{L}\s]/gu, " ").trim().split(/\s+/).filter(Boolean);
+  return ((ch[0] || "?")[0] + (ch[1] ? ch[1][0] : "")).toUpperCase();
+}
+/* Переписка по изделию как чат: видно, кто что сказал и кто вмешался (28.09.2026).
+   Мансур: «пускай пачка корректировок выглядит так, как будто это чат». */
+function rmChatHtml(kod) {
+  const u = rmPachkaIzdeliya(kod);
+  if (!u) return `<div class="rm-tusklo">По этому изделию переписки с заказчиком пока нет.</div>`;
+  const punkty = (u.punkty || []).filter(p => (p.tekst || "").trim() || p.fajl);
+  const konstr = (u.ot_konstruktora || []).map(o => ({ kogda: o.kogda, kto: o.kto, tekst: o.tekst,
+    nash: false, konstruktor: true }));
+  const vse = punkty.concat(konstr).sort((a, b) => String(a.kogda).localeCompare(String(b.kogda)));
+  const rep = p => `<div class="rm-rep${p.nash ? " nash" : ""}">
+      <div class="rm-ava" style="background:${rmCvetImeni(p.kto)}">${escapeHtml(rmInicialy(p.kto))}</div>
+      <div class="rm-puzyr">
+        <div class="kto"><b>${escapeHtml(p.kto || "")}</b><span>${rmDen(p.kogda)} ${String(p.kogda).slice(11, 16)}</span>
+          ${p.konstruktor ? `<span>конструктор</span>` : ""}</div>
+        ${p.tekst ? `<div class="tekst">${escapeHtml(p.tekst)}</div>` : ""}
+        ${p.fajl ? `<div class="rm-chat-fajl">файл: ${escapeHtml(p.fajl)}</div>` : ""}
+        ${p.nash || p.konstruktor ? "" : `<div class="nizhe">${p.peredano_konstruktoru
+            ? `<span class="rm-otdano">передано конструктору ${rmDen(p.peredano_konstruktoru)}</span>`
+            : `<span class="rm-ne-otdano">конструктору не передано</span>`}
+          ${p.po_hodu ? `<span class="rm-tusklo">привязано по ходу разговора</span>` : ""}</div>`}
+      </div></div>`;
+  const voprosy = (u.voprosy || []).map(v => `<div class="rm-rep nash">
+      <div class="rm-ava" style="background:${rmCvetImeni("Мы")}">МЫ</div>
+      <div class="rm-puzyr vopros"><div class="kto"><b>Наш вопрос заказчику</b><span>${rmDen(v.sprosili)}</span>
+        <span>${v.dney} дн. без ответа</span></div>
+        <div class="tekst">${escapeHtml(v.vopros)}</div></div></div>`).join("");
+  const schet = rmPachkaSchet(kod);
+  return `${schet.nePeredano ? `<div class="rm-vnutr rm-stop"><b>Не отправлять новую версию:</b>
+      ${schet.nePeredano} ${schet.nePeredano === 1 ? "пункт" : "пунктов"} конструктор ещё не получала.
+      Соберите их одним письмом.</div>` : ""}
+    <div class="rm-chat">${voprosy}${vse.map(rep).join("")}</div>
+    ${(u.novye_versii || []).length ? `<div class="rm-gruppa">После замечаний конструктор присылала</div>
+      ${u.novye_versii.map(v => `<div class="rm-zapis"><span class="rm-data">${rmDen(v.kogda)}</span>
+        <div>${escapeHtml(v.imya)}</div><small class="rm-tusklo">проверьте, что из пачки уже вошло</small></div>`).join("")}` : ""}`;
+}
+
 /* ---------------- экран ---------------- */
 async function renderRabocheeMesto(app) {
   if (!app) return;   // app — это блок рабочего места на экране объекта
@@ -2173,6 +2271,7 @@ function rmSpisokIzdeliy(el) {
     if (pch.nePeredano) meta.push("не передано конструктору · " + pch.nePeredano);
     if (vmeste.length) meta.push("один чертёж с " + vmeste.join(", "));
     return `<button class="item-card rm-izd" data-code="${escapeHtml(i.kod)}">
+      <div class="izd-obraz izd-obraz-mal" data-obraz="${escapeHtml(i.kod)}"><span>${escapeHtml(i.kod)}</span></div>
       <div class="code">${escapeHtml(i.kod)}</div>
       <div class="nm">${escapeHtml(i.nazvanie || "")}</div>
       <div class="room">${escapeHtml(i.gde || "")}</div>
@@ -2182,6 +2281,7 @@ function rmSpisokIzdeliy(el) {
   }).join("");
   el.innerHTML = `<div class="item-grid">${kartochki}</div>`;
   el.querySelectorAll(".rm-izd").forEach(b => b.addEventListener("click", () => nav(() => renderItem(b.dataset.code))));
+  (RM.D.izdeliya || []).forEach(i => rmObrazIzdeliya(i.kod));
   const poisk = document.getElementById("search");
   if (poisk && poisk.value) filterGrid(poisk.value);
 }
@@ -2389,7 +2489,7 @@ async function renderIzdelieMO(code, it, rec) {
   const pachka = rmPachkaSchet(kod);
   if (pachka.vsego || pachka.zhdem) {
     razdely = rmRazdel(`Пачка корректировок${pachka.nePeredano ? " · " + pachka.nePeredano + " не передано" : ""}`,
-      pachka.vsego + pachka.zhdem, rmPachkaHtml(kod), pachka.nePeredano > 0 || pachka.zhdem > 0) + razdely;
+      pachka.vsego + pachka.zhdem, rmChatHtml(kod), pachka.nePeredano > 0 || pachka.zhdem > 0) + razdely;
   }
   const vizy = await rmVizualizacii(RM_OBEKT, kod);
   if (vizy.length) razdely += rmRazdel("Визуализации", vizy.length, rmVizHtml(vizy), true);
@@ -2400,17 +2500,37 @@ async function renderIzdelieMO(code, it, rec) {
       `<div><a class="file-link" href="${escapeHtml(f["Ссылка на Диск"] || "#")}" target="_blank" rel="noopener">${escapeHtml(f["Имя файла"] || "")}</a></div>`).join(""), false);
   }
 
+  // 28.09.2026. Раньше карточка была простым списком разделов. Мансур: «у заказчиков и то лучше
+  // выглядит… у Юлии информации больше, пусть будет распределено красиво». Сверху — образ изделия,
+  // название, состояние и сводка цифрами: версии, вопросы, пачка, молчание заказчика.
+  const pch = rmPachkaSchet(kod);
+  const vsegoVopr = rmChisloVoprosov(posl);
+  const svodka = [
+    pachki.length ? { n: pachki.length, t: pachki.length === 1 ? "версия чертежа" : "версий чертежа", k: "" } : null,
+    vsegoVopr ? { n: vsegoVopr, t: "вопросов по чертежу", k: "" } : null,
+    pch.vsego ? { n: pch.vsego, t: "сообщений по изделию", k: "" } : null,
+    pch.nePeredano ? { n: pch.nePeredano, t: "не передано конструктору", k: "trevoga" } : null,
+    pch.zhdem ? { n: pch.zhdem, t: "ждём ответа заказчика", k: "zhdem" } : null,
+  ].filter(Boolean);
   app.innerHTML = `<div class="item-detail-wrap">
+    <div class="izd-shapka">
+      <div class="izd-obraz" data-obraz="${escapeHtml(kod)}"><span>${escapeHtml(kod)}</span></div>
+      <div class="izd-shapka-telo">
     <div class="item-head">
       <span class="code-chip mono">${escapeHtml(kod)}</span>
       <h1>${escapeHtml(it ? it["Название"] : "")}</h1>
     </div>
     <div class="item-desc">${it && bezMetrazha(it["Где стоит"]) ? "Стоит в помещении «" + escapeHtml(bezMetrazha(it["Где стоит"])) + "» · " : ""}${escapeHtml(RM_OBEKT)}</div>
     <div class="rm-st ${st.cls} rm-st-bolshoy">${escapeHtml(st.tekst)}</div>
+        ${svodka.length ? `<div class="izd-svodka">${svodka.map(x =>
+          `<div class="izd-plitka ${x.k}"><b>${x.n}</b><span>${escapeHtml(x.t)}</span></div>`).join("")}</div>` : ""}
+      </div>
+    </div>
     ${knopki ? `<div class="rm-knopki">${knopki}</div>` : ""}
     <div class="rm-sost" data-sost="${escapeHtml(posl ? posl.id : "")}"></div>
     ${razdely}
   </div>`;
+  rmObrazIzdeliya(kod);
   app.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () =>
     rmSmotret(pachki.find(p => p.id === el.dataset.pachka), +el.dataset.i)));
   app.querySelectorAll("[data-pismo]").forEach(el => el.addEventListener("click", () =>
