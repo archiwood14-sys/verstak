@@ -939,6 +939,21 @@
   .rm-punkt.peredan { border-left-color: var(--ok); }
   .rm-zhdem { border-left:3px solid var(--accent); }
   .rm-stop { border:1px solid var(--warn); border-radius:12px; padding:10px 12px; }
+  /* разделы: одинаковые карточки, на телефоне — плитки со своей страницей (28.09.2026) */
+  .razdel-karta { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:0; overflow:hidden; }
+  .razdel-karta > summary { padding:14px 16px; display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
+  .razdel-karta > summary::-webkit-details-marker { display:none; }
+  .razdel-karta > summary .cnt { margin-left:auto; }
+  .razdel-karta .rm-razdel-telo { padding:0 16px 16px; }
+  .razdel-plitka { width:100%; display:flex; align-items:center; gap:10px; text-align:left; font:inherit; color:inherit;
+                   background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:15px 16px;
+                   min-height:58px; cursor:pointer; }
+  .razdel-plitka .rz-zag { flex:1; }
+  .razdel-plitka .cnt { margin-left:auto; }
+  .razdel-plitka .chev { color:var(--muted); font-size:20px; }
+  .razdel-plitka:hover { border-color:var(--accent); }
+  .razdel-stranica .rm-razdel-telo { padding:0; }
+  .item-detail-wrap { display:flex; flex-direction:column; gap:12px; }
   /* карточка изделия у Юлии: образ изделия, сводка и переписка как чат (28.09.2026) */
   .izd-shapka { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
   .izd-obraz { width:86px; height:86px; border-radius:16px; overflow:hidden; background:var(--surface-2);
@@ -1388,6 +1403,7 @@ function po_opisaniyu(op) {
   if (op.v === "dok") return () => renderDokumenty(op.obj);
   if (op.v === "pr") return () => renderPr(op.e, op.k);
   if (op.v === "dm") return () => renderDemo(op.e, op.k);
+  if (op.v === "razdel") return () => { const o = op.otkuda; if (o && o.v === "item") renderItem(o.code); };
   return null;
 }
 
@@ -1533,9 +1549,24 @@ function loadSnapshotRaw() {
   return { objects: d.objects, items: d.items, soglasRows: d.soglasRows, files: d.files || [], blockData: d.blockData };
 }
 
+// 28.09.2026 Мансур: «с приложения убираем Захарьевскую, она нам не нужна, заводим её в архив,
+// и больше не видим нигде в приложении упоминание о ней». Работы по объекту завершены летом.
+// Режем в одном месте — на входе данных: тогда объект пропадает разом из списков, сводок,
+// «требует внимания», обязательств, поиска и карточек. В реестре и в переписке всё остаётся.
+const V_ARHIVE = ["Захарьевская"];
+function vArhive(imya) {
+  return V_ARHIVE.some(x => String(imya || "").trim().toLowerCase().includes(x.toLowerCase()));
+}
+
 function buildIndices(raw) {
-  STATE.objects = raw.objects;
-  STATE.items = raw.items;
+  STATE.objects = (raw.objects || []).filter(o => !vArhive(o["Название"]));
+  STATE.items = (raw.items || []).filter(it => !vArhive(it["Объект"]));
+  raw.items = STATE.items;
+  for (const t of Object.keys(raw.blockData || {})) {
+    raw.blockData[t] = (raw.blockData[t] || []).filter(r => !vArhive(r["Объект"]));
+  }
+  raw.soglasRows = (raw.soglasRows || []).filter(r => !vArhive(r["Объект"]));
+  raw.files = (raw.files || []).filter(f => !vArhive(f["Объект"]));
 
   const soglas = {};
   raw.soglasRows.forEach(r => { if (r["Код"]) soglas[normCode(r["Код"])] = r; });
@@ -2427,14 +2458,49 @@ function rmNapechatano(v) {
   const m = String(v.chto_vidno || "").match(/напечатано: «([^»]+)»/);
   return m && !/ПРОЕКТ/.test(m[1]) ? m[1].charAt(0) + m[1].slice(1).toLowerCase() : "";
 }
+/* Разделы по всему приложению устроены одинаково (28.09.2026).
+   Мансур: «разделы, что можно развернуть, должны быть в одном виде; на десктопе просто
+   разворачивается в карточку, а на телефоне открывается другая страница; и так по всему
+   приложению, а не только по одному проекту».
+   На широком экране — карточка-аккордеон, на узком — плитка, которая уводит на свою страницу.
+   Содержимое раздела запоминается здесь же, чтобы страница могла его показать. */
+const RAZDELY = { spisok: [], otkuda: null };
+function uzkiyEkran() {
+  try { return window.matchMedia("(max-width: 760px)").matches; } catch (e) { return false; }
+}
 function rmRazdel(zagolovok, schet, soderzhimoe, otkryt) {
-  return `<details class="acc rm-razdel"${otkryt ? " open" : ""}>
-    <summary>${zagolovok}${schet !== null ? ` <span class="cnt">${schet}</span>` : ""}<span class="chev">▸</span></summary>
+  const n = RAZDELY.spisok.length;
+  RAZDELY.spisok.push({ n, zagolovok, schet, html: soderzhimoe });
+  const cnt = schet !== null && schet !== undefined ? `<span class="cnt">${schet}</span>` : "";
+  if (uzkiyEkran()) {
+    return `<button class="razdel-plitka" data-razdel="${n}">
+      <span class="rz-zag">${zagolovok}</span>${cnt}<span class="chev">›</span></button>`;
+  }
+  return `<details class="acc rm-razdel razdel-karta"${otkryt ? " open" : ""}>
+    <summary>${zagolovok}${cnt}<span class="chev">▸</span></summary>
     <div class="rm-razdel-telo">${soderzhimoe}</div></details>`;
+}
+/* Страница одного раздела — для телефона. Возврат кнопкой «назад» ведёт туда, откуда пришли. */
+function renderRazdel(n) {
+  const r = RAZDELY.spisok[+n];
+  const app = document.getElementById("app");
+  if (!r) { app.innerHTML = `<div class="empty-hint">Раздел не найден. Откройте изделие заново.</div>`; return; }
+  STATE.tekushchiy = { v: "razdel", n: +n, otkuda: RAZDELY.otkuda };
+  app.innerHTML = `<div class="item-detail-wrap razdel-stranica">
+    <div class="item-head"><h1>${r.zagolovok}${r.schet !== null && r.schet !== undefined ? ` <span class="cnt">${r.schet}</span>` : ""}</h1></div>
+    <div class="rm-razdel-telo">${r.html}</div></div>`;
+  if (RAZDELY.privyazat) { try { RAZDELY.privyazat(app); } catch (e) {} }
+}
+function razdelyPrivyazat(app, privyazat) {
+  RAZDELY.privyazat = privyazat || null;
+  RAZDELY.otkuda = STATE.tekushchiy ? Object.assign({}, STATE.tekushchiy) : null;
+  app.querySelectorAll("[data-razdel]").forEach(b => b.addEventListener("click", () =>
+    nav(() => renderRazdel(b.dataset.razdel))));
 }
 
 async function renderIzdelieMO(code, it, rec) {
   const app = document.getElementById("app");
+  RAZDELY.spisok = [];
   app.innerHTML = `<div class="item-detail-wrap"><div class="rm-pusto">Собираю всё по изделию…</div></div>`;
   rmVybrat(it ? it["Объект"] : RM_OBEKT);
   if (!RM.D) { try { await rmAvtoVhod(); } catch (e) {} }
@@ -2531,20 +2597,25 @@ async function renderIzdelieMO(code, it, rec) {
     ${razdely}
   </div>`;
   rmObrazIzdeliya(kod);
-  app.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () =>
-    rmSmotret(pachki.find(p => p.id === el.dataset.pachka), +el.dataset.i)));
-  app.querySelectorAll("[data-pismo]").forEach(el => el.addEventListener("click", () =>
-    rmPismo(pachki.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
-  app.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
-    rmOtmetit(pachki.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
-  app.querySelectorAll("[data-otmenit]").forEach(el => el.addEventListener("click", () =>
-    rmOtmenitOtpravku(pachki.find(p => p.id === el.dataset.otmenit), el)));
-  app.querySelectorAll("[data-viz]").forEach(el => el.addEventListener("click", () =>
-    rmSmotret({ fajly: vizy.map(v => ({ imya: `${kod} · ${v.pomeshchenie || "визуализация"}`, tip: "kartinka", mime: "image/jpeg",
-      poluchit: async () => (await fetch(v.url)).arrayBuffer() })) }, +el.dataset.viz)));
-  rmOtvetyPrivyazat(app, pachki);
-  rmTolkoYuliya(app);   // письма и отметки — только у Юлии
-  rmMiniatyury(app);
+  // одни и те же нажатия работают и в карточке, и на отдельной странице раздела
+  const privyazat = (gde) => {
+    gde.querySelectorAll("[data-fajl]").forEach(el => el.addEventListener("click", () =>
+      rmSmotret(pachki.find(p => p.id === el.dataset.pachka), +el.dataset.i)));
+    gde.querySelectorAll("[data-pismo]").forEach(el => el.addEventListener("click", () =>
+      rmPismo(pachki.find(p => p.id === el.dataset.pismo), el.dataset.kuda || "zakazchik")));
+    gde.querySelectorAll("[data-status]").forEach(el => el.addEventListener("click", () =>
+      rmOtmetit(pachki.find(p => p.id === el.dataset.pachka), el.dataset.status, el)));
+    gde.querySelectorAll("[data-otmenit]").forEach(el => el.addEventListener("click", () =>
+      rmOtmenitOtpravku(pachki.find(p => p.id === el.dataset.otmenit), el)));
+    gde.querySelectorAll("[data-viz]").forEach(el => el.addEventListener("click", () =>
+      rmSmotret({ fajly: vizy.map(v => ({ imya: `${kod} · ${v.pomeshchenie || "визуализация"}`, tip: "kartinka", mime: "image/jpeg",
+        poluchit: async () => (await fetch(v.url)).arrayBuffer() })) }, +el.dataset.viz)));
+    rmOtvetyPrivyazat(gde, pachki);
+    rmTolkoYuliya(gde);   // письма и отметки — только у Юлии
+    rmMiniatyury(gde);
+  };
+  privyazat(app);
+  razdelyPrivyazat(app, privyazat);
 }
 
 /* ---------------- уведомления на телефон (11.09.2026) ----------------
@@ -4916,6 +4987,7 @@ function renderDraftArea(recId, blok, r, kod, relatedFiles) {
 }
 
 function renderObligations(objFilter) {
+  RAZDELY.spisok = [];
   STATE.tekushchiy = { v: "oblig", obj: objFilter || "" };
   const app = document.getElementById("app");
   const vseSyroe = (STATE.blocks["Б9_Обязательства"] || []).filter(r => !objFilter || r["Объект"] === objFilter);
@@ -4930,10 +5002,7 @@ function renderObligations(objFilter) {
         return ka[1].localeCompare(kb[1]);
       });
     if (!rows.length) return "";
-    return `<details class="acc" open>
-      <summary>${label} <span class="cnt">${rows.length}</span><span class="chev">▸</span></summary>
-      <div style="padding:14px 15px">${cardGrid(rows, "Б9_Обязательства", showObj)}</div>
-    </details>`;
+    return rmRazdel(label, rows.length, cardGrid(rows, "Б9_Обязательства", showObj), true);
   }).join("");
 
   const objLinks = !objFilter && STATE.objectNames.length
@@ -4950,6 +5019,7 @@ function renderObligations(objFilter) {
     </div>
   `;
   wireCards(app);
+  razdelyPrivyazat(app, (gde) => wireCards(gde));
 }
 
 /* ---------------- главная страница: без объекта ---------------- */
@@ -5119,6 +5189,7 @@ function renderObjectFinance(objName) {
 }
 
 function renderItem(code) {
+  RAZDELY.spisok = [];
 
   STATE.tekushchiy = { v: "item", code };
   const app = document.getElementById("app");
@@ -5207,10 +5278,7 @@ function renderItem(code) {
         <div class="body">${dateHtml}<div class="txt">${escapeHtml(r[b.textCol] || "")}</div>
         ${src ? `<div class="src">${escapeHtml(src)}</div>` : ""}</div></div>`;
     }).join("");
-    sections += `<details class="acc" ${b.openByDefault ? "open" : ""}>
-      <summary>${b.label} <span class="cnt">${rows.length}</span><span class="chev">▸</span></summary>
-      ${entries}
-    </details>`;
+    sections += rmRazdel(b.label, rows.length, entries, !!b.openByDefault);
   }
 
   app.innerHTML = `
@@ -5248,6 +5316,12 @@ function renderItem(code) {
         Внутри превью на claude.ai сеть закрыта — поиск работает на настоящем сайте.</div>`;
     });
   if (pole) pole.addEventListener("input", () => pokazat_nahodki(kodDlyaDosye, pole.value));
+  razdelyPrivyazat(app, (gde) => {
+    gde.querySelectorAll(".attn-card[data-attn], .rec-card[data-rec]").forEach(b => b.addEventListener("click", () => {
+      const item = (STATE.attnList || [])[+b.dataset.attn];
+      if (item) openRecordModal(item.r["Номер записи"], item.blok);
+    }));
+  });
 }
 
 /* ---------------- свежесть ---------------- */
