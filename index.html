@@ -949,19 +949,27 @@
   .razdel-kn:hover { border-color:var(--accent); }
   .razdel-kn.vazhno { border-color:var(--accent); }
   .razdel-kn.vazhno b { color:var(--accent); }
-  .razdel-okno-fon { position:fixed; inset:0; background:rgba(38,36,32,.5); z-index:90; display:flex;
-                     align-items:center; justify-content:center; padding:20px; }
-  .razdel-okno { background:var(--surface); border-radius:18px; box-shadow:var(--shadow); width:100%;
-                 max-width:920px; max-height:86vh; display:flex; flex-direction:column; overflow:hidden; }
-  .razdel-okno-verh { display:flex; align-items:center; gap:12px; justify-content:space-between;
-                      padding:16px 20px; border-bottom:1px solid var(--line); }
-  .razdel-okno-verh h3 { margin:0; font-family:Baskervville, Georgia, serif; font-weight:400;
-                         font-size: calc(21px * var(--shrift)); }
-  .razdel-okno-telo { padding:18px 20px 22px; overflow:auto; }
+  /* окно раздела — тот же вид, что окно изделия у заказчика: снизу на телефоне, по центру на
+     компьютере, шапка с названием и круглая кнопка «Закрыть» (28.09.2026) */
+  .razdel-okno-fon { position:fixed; inset:0; background:rgba(24,20,16,.45); z-index:90; display:flex;
+                     align-items:flex-end; justify-content:center; }
+  .razdel-okno { background:var(--bg); width:100%; max-width:min(860px,100vw); max-height:92vh; max-height:92dvh;
+                 border-radius:20px 20px 0 0; display:flex; flex-direction:column; overflow:hidden; min-width:0;
+                 padding-bottom:env(safe-area-inset-bottom); }
+  .razdel-okno > * { min-width:0; max-width:100%; }
+  @media (min-width:760px) { .razdel-okno-fon { align-items:center; } .razdel-okno { border-radius:20px; max-height:86vh; } }
+  .razdel-okno-verh { display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+                      padding:16px 18px 12px; border-bottom:1px solid var(--line); background:var(--surface); flex:0 0 auto; }
+  .razdel-okno-verh .zag { display:flex; flex-direction:column; gap:4px; min-width:0; }
+  .razdel-okno-verh .zag b { font-family:Baskervville, Georgia, serif; font-weight:400;
+                             font-size: calc(19px * var(--shrift)); }
+  .razdel-okno-verh .zag small { color:var(--muted); font-size: calc(13px * var(--shrift)); }
+  .razdel-okno-zakryt { flex:0 0 auto; background:var(--line); border:0; border-radius:999px; padding:9px 16px;
+                        font: inherit; font-size: calc(14px * var(--shrift)); cursor:pointer; color:var(--ink); }
+  .razdel-okno-zakryt:hover { background:#e3dbcd; }
+  .razdel-okno-telo { padding:16px 18px 24px; overflow:auto; overscroll-behavior:contain; min-width:0; }
   body.okno-otkryto { overflow:hidden; }
   @media (max-width: 760px) {
-    .razdel-okno-fon { padding:0; align-items:stretch; }
-    .razdel-okno { max-width:none; max-height:none; height:100%; border-radius:0; }
     .razdely-setka { grid-template-columns:repeat(auto-fit, minmax(min(150px,45%),1fr)); }
     .razdel-kn { min-height:92px; padding:14px; }
   }
@@ -991,7 +999,9 @@
   .izd-shapka-telo { flex:1; min-width:220px; display:flex; flex-direction:column; gap:6px; }
   .izd-svodka { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
   .izd-plitka { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px 12px;
-                display:flex; flex-direction:column; min-width:96px; }
+                display:flex; flex-direction:column; min-width:96px; font:inherit; color:inherit;
+                text-align:left; cursor:pointer; }
+  .izd-plitka:hover { border-color:var(--accent); }
   .izd-plitka b { font-size: calc(19px * var(--shrift)); line-height:1.1; }
   .izd-plitka span { font-size: calc(12px * var(--shrift)); color:var(--muted); }
   .izd-plitka.trevoga { border-color:var(--warn); }
@@ -2513,8 +2523,11 @@ function razdelOkno(n) {
   fon.className = "razdel-okno-fon";
   fon.innerHTML = `<div class="razdel-okno">
       <div class="razdel-okno-verh">
-        <h3>${r.zagolovok}${r.schet !== null && r.schet !== undefined ? ` <span class="cnt">${r.schet}</span>` : ""}</h3>
-        <button class="btn ghost" data-zakryt="1">Закрыть</button>
+        <div class="zag">
+          <b>${r.zagolovok}${r.schet !== null && r.schet !== undefined ? ` <span class="cnt">${r.schet}</span>` : ""}</b>
+          ${RAZDELY.podpis ? `<small>${escapeHtml(RAZDELY.podpis)}</small>` : ""}
+        </div>
+        <button class="razdel-okno-zakryt" data-zakryt="1">Закрыть</button>
       </div>
       <div class="razdel-okno-telo">${r.html}</div>
     </div>`;
@@ -2537,10 +2550,15 @@ function renderRazdel(n) {
     <div class="rm-razdel-telo">${r.html}</div></div>`;
   if (RAZDELY.privyazat) { try { RAZDELY.privyazat(app); } catch (e) {} }
 }
-function razdelyPrivyazat(app, privyazat) {
+function razdelyPrivyazat(app, privyazat, podpis) {
   RAZDELY.privyazat = privyazat || null;
+  RAZDELY.podpis = podpis || "";
   RAZDELY.otkuda = STATE.tekushchiy ? Object.assign({}, STATE.tekushchiy) : null;
   app.querySelectorAll("[data-razdel]").forEach(b => b.addEventListener("click", () => razdelOkno(b.dataset.razdel)));
+  app.querySelectorAll("[data-svodka]").forEach(b => b.addEventListener("click", () => {
+    const r = RAZDELY.spisok.find(x => String(x.zagolovok).includes(b.dataset.svodka));
+    if (r) razdelOkno(r.n);
+  }));
 }
 
 async function renderIzdelieMO(code, it, rec) {
@@ -2616,12 +2634,14 @@ async function renderIzdelieMO(code, it, rec) {
   // название, состояние и сводка цифрами: версии, вопросы, пачка, молчание заказчика.
   const pch = rmPachkaSchet(kod);
   const vsegoVopr = rmChisloVoprosov(posl);
+  // 28.09.2026 Мансур: «если они не кликабельные и не несут информации, зачем они нужны?».
+  // Теперь каждая цифра ведёт в свой раздел — по ней и открывается нужное окно.
   const svodka = [
-    pachki.length ? { n: pachki.length, t: pachki.length === 1 ? "версия чертежа" : "версий чертежа", k: "" } : null,
-    vsegoVopr ? { n: vsegoVopr, t: "вопросов по чертежу", k: "" } : null,
-    pch.vsego ? { n: pch.vsego, t: "сообщений по изделию", k: "" } : null,
-    pch.nePeredano ? { n: pch.nePeredano, t: "не передано конструктору", k: "trevoga" } : null,
-    pch.zhdem ? { n: pch.zhdem, t: "ждём ответа заказчика", k: "zhdem" } : null,
+    pachki.length ? { n: pachki.length, t: pachki.length === 1 ? "версия чертежа" : "версий чертежа", k: "", idet: "Чертежи" } : null,
+    vsegoVopr ? { n: vsegoVopr, t: "вопросов по чертежу", k: "", idet: "Открытые вопросы" } : null,
+    pch.vsego ? { n: pch.vsego, t: "сообщений по изделию", k: "", idet: "Пачка корректировок" } : null,
+    pch.nePeredano ? { n: pch.nePeredano, t: "не передано конструктору", k: "trevoga", idet: "Пачка корректировок" } : null,
+    pch.zhdem ? { n: pch.zhdem, t: "ждём ответа заказчика", k: "zhdem", idet: "Пачка корректировок" } : null,
   ].filter(Boolean);
   app.innerHTML = `<div class="item-detail-wrap">
     <div class="izd-shapka">
@@ -2634,7 +2654,7 @@ async function renderIzdelieMO(code, it, rec) {
     <div class="item-desc">${it && bezMetrazha(it["Где стоит"]) ? "Стоит в помещении «" + escapeHtml(bezMetrazha(it["Где стоит"])) + "» · " : ""}${escapeHtml(RM_OBEKT)}</div>
     <div class="rm-st ${st.cls} rm-st-bolshoy">${escapeHtml(st.tekst)}</div>
         ${svodka.length ? `<div class="izd-svodka">${svodka.map(x =>
-          `<div class="izd-plitka ${x.k}"><b>${x.n}</b><span>${escapeHtml(x.t)}</span></div>`).join("")}</div>` : ""}
+          `<button class="izd-plitka ${x.k}" data-svodka="${escapeHtml(x.idet)}"><b>${x.n}</b><span>${escapeHtml(x.t)}</span></button>`).join("")}</div>` : ""}
       </div>
     </div>
     ${knopki ? `<div class="rm-knopki">${knopki}</div>` : ""}
@@ -2660,7 +2680,7 @@ async function renderIzdelieMO(code, it, rec) {
     rmMiniatyury(gde);
   };
   privyazat(app);
-  razdelyPrivyazat(app, privyazat);
+  razdelyPrivyazat(app, privyazat, `${kod}${it && it["Название"] ? " · " + it["Название"] : ""}`);
 }
 
 /* ---------------- уведомления на телефон (11.09.2026) ----------------
