@@ -935,6 +935,10 @@
   /* пространство «только мессенджер» — всё остальное приложение скрыто */
   .tolko-chat #sbMoiOtvety, .tolko-chat .sb-razdel, .tolko-chat #sidebarObjects, .tolko-chat #fabBtn { display: none !important; }
 
+  .rm-punkt { border-left:3px solid var(--warn); }
+  .rm-punkt.peredan { border-left-color: var(--ok); }
+  .rm-zhdem { border-left:3px solid var(--accent); }
+  .rm-stop { border:1px solid var(--warn); border-radius:12px; padding:10px 12px; }
   /* пространство производства (18.09.2026) */
   .pr { display:flex; flex-direction:column; gap:16px; max-width:1100px; margin:0 auto; }
   .pr h1 { margin:0; font-family:Baskervville, Georgia, serif; font-weight:400; font-size: calc(30px * var(--shrift)); text-wrap:balance; }
@@ -1775,6 +1779,48 @@ function rmNazvanie(kod) {
   return i ? i.nazvanie + (bezMetrazha(i.gde) ? " (" + bezMetrazha(i.gde) + ")" : "") : "";
 }
 
+
+/* ---- Пачка корректировок по изделию (28.09.2026) ----
+   Мансур: «конструктору выгоднее вносить пачками… нужно проследить, что она внесла эти
+   корректировки, чтобы каждый раз не отправлять и не поправлять». Связки собирает svyazki.py:
+   что заказчик написал в ответ на наше письмо (в том числе реплаем на файл чертежа),
+   на что мы ещё ждём ответа и что уже передано конструктору. */
+function rmPachkaIzdeliya(kod) {
+  return ((RM.D && RM.D.svyazki) || {})[kod] || null;
+}
+function rmPachkaHtml(kod) {
+  const u = rmPachkaIzdeliya(kod);
+  if (!u) return `<div class="rm-tusklo">По этому изделию переписки с заказчиком пока нет.</div>`;
+  const otZak = (u.punkty || []).filter(p => !p.nash && (p.tekst || "").length > 2);
+  const nePeredano = otZak.filter(p => !p.peredano_konstruktoru && (p.tekst || "").length > 25);
+  const vopr = u.voprosy || [];
+  const strochka = p => `<div class="rm-zapis rm-punkt${p.peredano_konstruktoru ? " peredan" : ""}">
+      <span class="rm-data">${rmDen(p.kogda)} · ${escapeHtml(p.kto || "")}</span>
+      <div>${escapeHtml(p.tekst || (p.fajl ? "файл: " + p.fajl : ""))}</div>
+      <small class="rm-tusklo">${p.peredano_konstruktoru
+        ? "передано конструктору " + rmDen(p.peredano_konstruktoru)
+        : "конструктору не передано"}${p.po_hodu ? " · привязано по ходу разговора" : ""}</small>
+    </div>`;
+  return `${nePeredano.length ? `<div class="rm-vnutr rm-stop"><b>Не отправлять новую версию:</b>
+      в пачке ${nePeredano.length} ${nePeredano.length === 1 ? "пункт" : "пунктов"}, которые конструктор ещё не получала.
+      Отдайте их одним письмом, а не по одному.</div>` : ""}
+    ${vopr.length ? `<div class="rm-gruppa">Ждём ответа заказчика — ${vopr.length}</div>
+      ${vopr.map(v => `<div class="rm-zapis rm-zhdem"><span class="rm-data">спросили ${rmDen(v.sprosili)} · ${v.dney} дн.</span>
+        <div>${escapeHtml(v.vopros)}</div></div>`).join("")}` : ""}
+    ${otZak.length ? `<div class="rm-gruppa">От заказчика и смежников — ${otZak.length}</div>${otZak.map(strochka).join("")}` : ""}
+    ${(u.novye_versii || []).length ? `<div class="rm-gruppa">После корректировок конструктор присылала</div>
+      ${u.novye_versii.map(v => `<div class="rm-zapis"><span class="rm-data">${rmDen(v.kogda)}</span>
+        <div>${escapeHtml(v.imya)}</div><small class="rm-tusklo">проверьте, вошли ли пункты пачки</small></div>`).join("")}` : ""}`;
+}
+function rmPachkaSchet(kod) {
+  const u = rmPachkaIzdeliya(kod);
+  if (!u) return { vsego: 0, nePeredano: 0, zhdem: 0 };
+  const otZak = (u.punkty || []).filter(p => !p.nash && (p.tekst || "").length > 2);
+  return { vsego: otZak.length,
+           nePeredano: otZak.filter(p => !p.peredano_konstruktoru && (p.tekst || "").length > 25).length,
+           zhdem: (u.voprosy || []).length };
+}
+
 /* ---------------- экран ---------------- */
 async function renderRabocheeMesto(app) {
   if (!app) return;   // app — это блок рабочего места на экране объекта
@@ -2071,6 +2117,9 @@ function rmSpisokIzdeliy(el) {
     const meta = [];
     if (pachki.length) meta.push("версий " + pachki.length);
     if (vopr) meta.push("вопросов " + vopr);
+    const pch = rmPachkaSchet(i.kod);
+    if (pch.zhdem) meta.push("ждём ответа · " + pch.zhdem);
+    if (pch.nePeredano) meta.push("не передано конструктору · " + pch.nePeredano);
     if (vmeste.length) meta.push("один чертёж с " + vmeste.join(", "));
     return `<button class="item-card rm-izd" data-code="${escapeHtml(i.kod)}">
       <div class="code">${escapeHtml(i.kod)}</div>
@@ -2285,6 +2334,11 @@ async function renderIzdelieMO(code, it, rec) {
       sOtvetami.forEach(p => p.otvety_zakazchika.forEach(z => rmOtvetyVidel(z.id)));
     }
     razdely += rmRazdel("Что на чертеже", null, rmChtoNaChertezheHtml(posl), false);
+  }
+  const pachka = rmPachkaSchet(kod);
+  if (pachka.vsego || pachka.zhdem) {
+    razdely = rmRazdel(`Пачка корректировок${pachka.nePeredano ? " · " + pachka.nePeredano + " не передано" : ""}`,
+      pachka.vsego + pachka.zhdem, rmPachkaHtml(kod), pachka.nePeredano > 0 || pachka.zhdem > 0) + razdely;
   }
   const vizy = await rmVizualizacii(RM_OBEKT, kod);
   if (vizy.length) razdely += rmRazdel("Визуализации", vizy.length, rmVizHtml(vizy), true);
