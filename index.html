@@ -1808,6 +1808,9 @@ function rmPachkaHtml(kod) {
       ${vopr.map(v => `<div class="rm-zapis rm-zhdem"><span class="rm-data">спросили ${rmDen(v.sprosili)} · ${v.dney} дн.</span>
         <div>${escapeHtml(v.vopros)}</div></div>`).join("")}` : ""}
     ${otZak.length ? `<div class="rm-gruppa">От заказчика и смежников — ${otZak.length}</div>${otZak.map(strochka).join("")}` : ""}
+    ${(u.ot_konstruktora || []).length ? `<div class="rm-gruppa">Что отвечала конструктор — ${u.ot_konstruktora.length}</div>
+      ${u.ot_konstruktora.slice(-6).map(o => `<div class="rm-zapis"><span class="rm-data">${rmDen(o.kogda)} · ${escapeHtml(o.kto)}</span>
+        <div>${escapeHtml(o.tekst)}</div></div>`).join("")}` : ""}
     ${(u.novye_versii || []).length ? `<div class="rm-gruppa">После корректировок конструктор присылала</div>
       ${u.novye_versii.map(v => `<div class="rm-zapis"><span class="rm-data">${rmDen(v.kogda)}</span>
         <div>${escapeHtml(v.imya)}</div><small class="rm-tusklo">проверьте, вошли ли пункты пачки</small></div>`).join("")}` : ""}`;
@@ -1819,6 +1822,33 @@ function rmPachkaSchet(kod) {
   return { vsego: otZak.length,
            nePeredano: otZak.filter(p => !p.peredano_konstruktoru && (p.tekst || "").length > 25).length,
            zhdem: (u.voprosy || []).length };
+}
+
+
+/* Письмо конструктору пачкой (28.09.2026).
+   Мансур: «то, что нужно передать конструктору, нужно учесть и подготовить обязательства
+   конструктору, как мы отправляем заказчикам информацию по пилотам и вопросам к ним, только
+   фактами: что есть, то и передаём». Поэтому текст собирается из непереданных пунктов пачки
+   дословно — кто сказал и когда, без наших пересказов. */
+function rmPismoKonstruktoru(kod) {
+  const u = rmPachkaIzdeliya(kod);
+  if (!u) return "";
+  const punkty = (u.punkty || []).filter(p => !p.nash && !p.peredano_konstruktoru && (p.tekst || "").length > 25);
+  if (!punkty.length) return "";
+  const nazv = rmNazvanie(kod) || "";
+  const stroki = punkty.map((p, i) => `${i + 1}. ${p.tekst}\n   — ${p.kto}, ${rmDen(p.kogda)}`);
+  const zhdem = (u.voprosy || []).filter(v => v.dney >= 0);
+  return `${kod}${nazv ? " — " + nazv : ""}\n\n`
+    + `Корректировки от заказчика и смежников, которые нужно внести:\n\n${stroki.join("\n\n")}\n\n`
+    + (zhdem.length
+        ? `Наши вопросы, на которые заказчик пока не ответил (${zhdem.length}):\n`
+          + zhdem.map((v, i) => `${i + 1}. ${v.vopros}`).join("\n")
+          + `\n\nПока ответов нет — вносим только то, что выше.\n`
+        : "")
+    + (u.novye_versii && u.novye_versii.length
+        ? `\nПосле этих замечаний от вас приходило: `
+          + u.novye_versii.map(v => `${v.imya} (${rmDen(v.kogda)})`).join(", ")
+          + `. Отметьте, пожалуйста, что из списка уже вошло.\n` : "");
 }
 
 /* ---------------- экран ---------------- */
@@ -2059,6 +2089,26 @@ function rmVnimanie() {
       `${z.otvety.some(o => o.fajly.length) ? ", есть файлы" : ""}. Рассмотреть, отметить «Принято в работу» и передать конструктору, что нужно.` })));
   P.filter(p => p.status === "korrektirovki").forEach(p => out.push({ tip: "pachka", metka: "заказчик вернул с корректировками", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — передать корректировки конструктору.` }));
+  // 28.09.2026. Пачки корректировок: без этого они лежали в карточке изделия, куда Юлия
+  // заходит не каждый день, а «Требует внимания» — её главный экран.
+  const svyazki = (RM.D && RM.D.svyazki) || {};
+  for (const [kod, u] of Object.entries(svyazki)) {
+    const schet = rmPachkaSchet(kod);
+    const pachkaIzd = rmPachkiIzdeliya(kod)[0] || null;
+    if (schet.nePeredano) {
+      out.push({ tip: "konstruktor", metka: "корректировки не переданы конструктору", kod, pachka: pachkaIzd,
+        tekst: `${kod} ${nazv(kod)} — ${schet.nePeredano} ${schet.nePeredano === 1 ? "пункт" : "пунктов"} от заказчика и смежников `
+          + `конструктор ещё не получала. Передайте пачкой одним письмом.`
+          + ((u.novye_versii || []).length ? ` После замечаний она уже присылала новую версию — проверьте, что вошло.` : ""),
+        pismo: rmPismoKonstruktoru(kod) });
+    }
+    const dolgo = (u.voprosy || []).filter(v => v.dney >= 3);
+    if (dolgo.length) {
+      out.push({ tip: "pachka", metka: "заказчик не отвечает", kod, pachka: pachkaIzd,
+        tekst: `${kod} ${nazv(kod)} — ${dolgo.length} ${dolgo.length === 1 ? "вопрос" : "вопросов"} без ответа `
+          + `${Math.max(...dolgo.map(v => v.dney))} дн. Пока ответов нет, конструктору вносить нечего.` });
+    }
+  }
   P.filter(p => p.status === "zhdet" && !p.staraya_versiya && !vzyato.has(p.id)).forEach(p => out.push({ tip: "pachka", metka: p.vOcheredi ? "письмо отправляется" : "пилот ждёт отправки заказчику", kod: p.kody.join(", "), pachka: p,
     tekst: `${p.kody.map(k => k + " " + nazv(k)).join("; ") || p.zagolovok} — прислан ${rmDen(p.kogda)}, заказчику ещё не отправлен.` }));
   return out;
@@ -2072,9 +2122,9 @@ function rmPokazatVnimanie(el, vnim) {
       ${v.kod ? `<div class="code">${escapeHtml(v.kod)}</div>` : ""}
       <div class="txt">${escapeHtml(v.tekst)}</div>
       <div class="attn-knopki">
-        ${v.pismo && RM.klyuchParol ? `<button class="btn primary" data-vnim-pismo="${i}">Написать конструктору</button>` : ""}
+        ${v.pismo && v.pachka && RM.klyuchParol ? `<button class="btn primary" data-vnim-pismo="${i}">Передать конструктору пачкой</button>` : ""}
         ${v.pachka && !v.pachka.kody.length && v.pachka.status === "zhdet" && !v.pachka.vOcheredi && RM.klyuchParol ? `<button class="btn primary" data-vnim-zak="${i}">Указать изделие и отправить заказчику</button>` : ""}
-        ${v.pachka && v.pachka.kody.length ? `<button class="btn ghost" data-vnim-otkryt="${i}">Открыть изделие</button>` : ""}
+        ${(v.pachka && v.pachka.kody.length) || v.kod ? `<button class="btn ghost" data-vnim-otkryt="${i}">Открыть изделие</button>` : ""}
       </div></div>`).join("")}${reestr.join("")}</div>`;
   el.querySelectorAll("[data-vnim-zak]").forEach(b => b.addEventListener("click", () => rmPismo(vnim[+b.dataset.vnimZak].pachka, "zakazchik")));
   el.querySelectorAll("[data-vnim-pismo]").forEach(b => b.addEventListener("click", () => {
@@ -2084,8 +2134,9 @@ function rmPokazatVnimanie(el, vnim) {
     if (t) t.value = v.pismo;
   }));
   el.querySelectorAll("[data-vnim-otkryt]").forEach(b => b.addEventListener("click", () => {
-    const k = vnim[+b.dataset.vnimOtkryt].pachka.kody[0];
-    nav(() => renderItem(k));
+    const v = vnim[+b.dataset.vnimOtkryt];
+    const k = (v.pachka && v.pachka.kody[0]) || String(v.kod || "").split(",")[0].trim();
+    if (k) nav(() => renderItem(k));
   }));
   el.querySelectorAll(".attn-card[data-attn]").forEach(b => b.addEventListener("click", () => {
     const item = (STATE.attnList || [])[+b.dataset.attn];
