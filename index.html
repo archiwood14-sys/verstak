@@ -939,7 +939,33 @@
   .rm-punkt.peredan { border-left-color: var(--ok); }
   .rm-zhdem { border-left:3px solid var(--accent); }
   .rm-stop { border:1px solid var(--warn); border-radius:12px; padding:10px 12px; }
-  /* разделы: одинаковые карточки, на телефоне — плитки со своей страницей (28.09.2026) */
+  /* разделы: выразительные плитки и окно по нажатию (28.09.2026) */
+  .razdely-setka { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(210px,100%),1fr)); gap:12px; }
+  .razdel-kn { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px 18px;
+               display:flex; flex-direction:column; gap:6px; align-items:flex-start; text-align:left;
+               font:inherit; color:inherit; cursor:pointer; min-height:104px; justify-content:space-between; }
+  .razdel-kn b { font-family:Arial, sans-serif; font-weight:600; font-size: calc(30px * var(--shrift)); line-height:1; }
+  .razdel-kn span { font-size: calc(13px * var(--shrift)); color:var(--muted); line-height:1.3; }
+  .razdel-kn:hover { border-color:var(--accent); }
+  .razdel-kn.vazhno { border-color:var(--accent); }
+  .razdel-kn.vazhno b { color:var(--accent); }
+  .razdel-okno-fon { position:fixed; inset:0; background:rgba(38,36,32,.5); z-index:90; display:flex;
+                     align-items:center; justify-content:center; padding:20px; }
+  .razdel-okno { background:var(--surface); border-radius:18px; box-shadow:var(--shadow); width:100%;
+                 max-width:920px; max-height:86vh; display:flex; flex-direction:column; overflow:hidden; }
+  .razdel-okno-verh { display:flex; align-items:center; gap:12px; justify-content:space-between;
+                      padding:16px 20px; border-bottom:1px solid var(--line); }
+  .razdel-okno-verh h3 { margin:0; font-family:Baskervville, Georgia, serif; font-weight:400;
+                         font-size: calc(21px * var(--shrift)); }
+  .razdel-okno-telo { padding:18px 20px 22px; overflow:auto; }
+  body.okno-otkryto { overflow:hidden; }
+  @media (max-width: 760px) {
+    .razdel-okno-fon { padding:0; align-items:stretch; }
+    .razdel-okno { max-width:none; max-height:none; height:100%; border-radius:0; }
+    .razdely-setka { grid-template-columns:repeat(auto-fit, minmax(min(150px,45%),1fr)); }
+    .razdel-kn { min-height:92px; padding:14px; }
+  }
+  /* прежний вид разделов (оставлен для мест, где список уместнее) */
   .razdel-karta { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:0; overflow:hidden; }
   .razdel-karta > summary { padding:14px 16px; display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
   .razdel-karta > summary::-webkit-details-marker { display:none; }
@@ -2468,19 +2494,39 @@ const RAZDELY = { spisok: [], otkuda: null };
 function uzkiyEkran() {
   try { return window.matchMedia("(max-width: 760px)").matches; } catch (e) { return false; }
 }
-function rmRazdel(zagolovok, schet, soderzhimoe, otkryt) {
+function rmRazdel(zagolovok, schet, soderzhimoe, vazhno) {
   const n = RAZDELY.spisok.length;
   RAZDELY.spisok.push({ n, zagolovok, schet, html: soderzhimoe });
-  const cnt = schet !== null && schet !== undefined ? `<span class="cnt">${schet}</span>` : "";
-  if (uzkiyEkran()) {
-    return `<button class="razdel-plitka" data-razdel="${n}">
-      <span class="rz-zag">${zagolovok}</span>${cnt}<span class="chev">›</span></button>`;
-  }
-  return `<details class="acc rm-razdel razdel-karta"${otkryt ? " open" : ""}>
-    <summary>${zagolovok}${cnt}<span class="chev">▸</span></summary>
-    <div class="rm-razdel-telo">${soderzhimoe}</div></details>`;
+  const chislo = (schet === null || schet === undefined) ? "·" : schet;
+  return `<button class="razdel-kn${vazhno ? " vazhno" : ""}" data-razdel="${n}">
+      <b>${chislo}</b><span>${zagolovok}</span></button>`;
 }
-/* Страница одного раздела — для телефона. Возврат кнопкой «назад» ведёт туда, откуда пришли. */
+/* Раздел открывается окном: на компьютере — поверх страницы, на телефоне — во весь экран.
+   28.09.2026 Мансур: «мне не нужны выпадающие списки, нужны внятные выразительные разделы,
+   по которым я кликаю и открывается окошко, где информация и я могу с ней работать». */
+function razdelOkno(n) {
+  const r = RAZDELY.spisok[+n];
+  if (!r) return;
+  const bylo = document.querySelector(".razdel-okno-fon");
+  if (bylo) bylo.remove();
+  const fon = document.createElement("div");
+  fon.className = "razdel-okno-fon";
+  fon.innerHTML = `<div class="razdel-okno">
+      <div class="razdel-okno-verh">
+        <h3>${r.zagolovok}${r.schet !== null && r.schet !== undefined ? ` <span class="cnt">${r.schet}</span>` : ""}</h3>
+        <button class="btn ghost" data-zakryt="1">Закрыть</button>
+      </div>
+      <div class="razdel-okno-telo">${r.html}</div>
+    </div>`;
+  document.body.appendChild(fon);
+  document.body.classList.add("okno-otkryto");
+  const zakryt = () => { fon.remove(); document.body.classList.remove("okno-otkryto"); };
+  fon.querySelector("[data-zakryt]").addEventListener("click", zakryt);
+  fon.addEventListener("click", e => { if (e.target === fon) zakryt(); });
+  if (RAZDELY.privyazat) { try { RAZDELY.privyazat(fon); } catch (e) {} }
+  return fon;
+}
+/* Страница раздела — на случай возврата по ссылке (окно закрылось, человек нажал «назад»). */
 function renderRazdel(n) {
   const r = RAZDELY.spisok[+n];
   const app = document.getElementById("app");
@@ -2494,8 +2540,7 @@ function renderRazdel(n) {
 function razdelyPrivyazat(app, privyazat) {
   RAZDELY.privyazat = privyazat || null;
   RAZDELY.otkuda = STATE.tekushchiy ? Object.assign({}, STATE.tekushchiy) : null;
-  app.querySelectorAll("[data-razdel]").forEach(b => b.addEventListener("click", () =>
-    nav(() => renderRazdel(b.dataset.razdel))));
+  app.querySelectorAll("[data-razdel]").forEach(b => b.addEventListener("click", () => razdelOkno(b.dataset.razdel)));
 }
 
 async function renderIzdelieMO(code, it, rec) {
@@ -2594,7 +2639,7 @@ async function renderIzdelieMO(code, it, rec) {
     </div>
     ${knopki ? `<div class="rm-knopki">${knopki}</div>` : ""}
     <div class="rm-sost" data-sost="${escapeHtml(posl ? posl.id : "")}"></div>
-    ${razdely}
+    <div class="razdely-setka">${razdely}</div>
   </div>`;
   rmObrazIzdeliya(kod);
   // одни и те же нажатия работают и в карточке, и на отдельной странице раздела
@@ -5014,7 +5059,7 @@ function renderObligations(objFilter) {
     <div class="item-detail-wrap">
     <div class="item-head"><h1>${objFilter ? escapeHtml(objFilter) + " — " : ""}Мои обязательства</h1></div>
     ${objLinks}
-    ${gruppy || '<div class="empty-hint">Разбирать нечего — всё либо выполнено, либо уже прокомментировано.</div>'}
+    ${gruppy ? `<div class="razdely-setka">${gruppy}</div>` : '<div class="empty-hint">Разбирать нечего — всё либо выполнено, либо уже прокомментировано.</div>'}
     ${skrytoPodpis(vseSyroe.length, vse.length)}
     </div>
   `;
