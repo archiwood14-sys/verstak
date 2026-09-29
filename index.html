@@ -6009,7 +6009,8 @@ function psVidHtml(k, ki) {
     ${k.pilot ? `<h2>Согласованный вид</h2>
       <div class="pr-vidy">${k.pilot.fajly.map((f, i) => `<button class="pr-vid" data-ps-dok="${ki}:pilot:${i}">${f.mini
         ? `<img data-pr-mini="${escapeHtml(f.mini)}" alt="">` : `<span>${f.tip === "pdf" ? "PDF" : "вид"}</span>`}</button>`).join("")}</div>
-      <p class="pr-tusklo">Пилот от ${rmDen(k.pilot.kogda)} — для понимания вида. Изготавливать по чертежам.</p>` : ""}`;
+      <p class="pr-tusklo">Как изделие выглядит в согласованном виде — только чтобы понимать, что делаем.
+        Работаем по рабочим чертежам.</p>` : ""}`;
 }
 
 function psDokumentyHtml(spisok, gruppa) {
@@ -6026,9 +6027,6 @@ function psChertezhiHtml(k, ki) {
   return `${k.dokumenty.length ? psDokumentyHtml(k.dokumenty, "chert") +
       `<p class="pr-tusklo">Только действующие чертежи: прежние версии убраны, чтобы не сделать по старому.</p>`
     : `<p class="pr-tusklo">Рабочего чертежа нет. Изделие в работу не запускаем — напишите Юлии Евгеньевне во вкладке «Вопрос».</p>`}
-    ${k.pilot ? `<h2>Согласованный пилот</h2>
-      <p class="pr-tusklo">На случай вопроса к виду: что именно согласовал заказчик.</p>
-      ${psDokumentyHtml(k.pilot.fajly, "pilot")}` : ""}
     ${(k.modeli || []).length ? `<h2>Файлы для ЧПУ и моделей</h2>${psDokumentyHtml(k.modeli, "mod")}` : ""}
     ${(k.zamery || []).length ? `<h2>Замеры с объекта</h2>${psDokumentyHtml(k.zamery.map(z => ({
         vid: z.imya, imya: z.imya, kogda: z.kogda, kto: z.kto, bin: z.bin, tip: z.tip })), "zam")}` : ""}`;
