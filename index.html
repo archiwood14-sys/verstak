@@ -4063,13 +4063,23 @@ async function rmSledit(id, el, pid, zakazchiku) {
   if (RM_SLEDIM.has(id)) return;
   RM_SLEDIM.add(id);
   const napisat = t => { if (el) el.textContent = t; };
+  // 29.09.2026. Раньше здесь двенадцать минут не было ни слова, и молчание выглядело как
+  // «отправка мертва»: Юлия отправила пилот по Ильинке, а Мак в это время не мог выйти в
+  // сеть. Теперь после полуминуты честно говорим, что письмо в очереди и уйдёт само, —
+  // чтобы не нажимать второй раз и не гадать.
+  const nachalo = Date.now();
   for (let i = 0; i < 100; i++) {
     await new Promise(r => setTimeout(r, i < 40 ? 3000 : 10000));
     try {
       const stroka = (await fetchTab(REESTR_ID, "Отправка_Телеграм")).find(r => r["ID"] === id);
       if (!stroka) continue;
       const st = stroka["Статус"] || "";
-      if (st === "в очереди") continue;
+      if (st === "в очереди") {
+        const sek = Math.round((Date.now() - nachalo) / 1000);
+        if (sek > 30) napisat(`Письмо в очереди ${sek < 120 ? sek + " с" : Math.round(sek / 60) + " мин"}. `
+          + `Мак отправит его сам, как только будет связь — второй раз нажимать не нужно.`);
+        continue;
+      }
       RM_SLEDIM.delete(id);
       if (st === "отправлено") {
         if (pid && zakazchiku) rmOtpravkaZapomnit(pid, { id, sost: "otpravleno", t: Date.now(), kogda: (stroka["Когда отправлено"] || "").slice(0, 10) });
