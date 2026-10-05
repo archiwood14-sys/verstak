@@ -1742,7 +1742,10 @@ function sobratVnimanie(objName) {
    Озера в приложении не показываются: их разбирает конструктор (Мансур, 10.09.2026).
    ================================================================================ */
 // 14.09.2026: рабочее место есть у Медного Озера и Ильинки. Пароль Юлии один на оба.
-const RM_OBEKTY = { "Медное Озеро": "chertezhi/mednoe-v/", "Ильинка": "chertezhi/ilinka-v/" };
+// 05.10.2026: Плющиха — третий объект у Юлии. Папка названа по ключу объекта в сборщике
+// («plyushiha»), а не по латинице из других мест, — так её кладёт sozdat_rabochee_mesto_yulii.py.
+const RM_OBEKTY = { "Медное Озеро": "chertezhi/mednoe-v/", "Ильинка": "chertezhi/ilinka-v/",
+                    "Плющиха": "chertezhi/plyushiha-v/" };
 let RM_OBEKT = "Медное Озеро";
 let RM_PAPKA = RM_OBEKTY[RM_OBEKT];
 const RM_LS = "rm_yulii_klyuch_mednoe";
