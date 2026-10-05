@@ -621,6 +621,15 @@
   .rm-smotr-polotno canvas, .rm-smotr-polotno img { display:block; margin:0 auto 12px; background:#fff; max-width:none; }
   .rm-smotr-zagr { color:#cfc7ba; padding:40px 12px; }
   .rm-fajl.net { padding:10px; color:var(--muted); font-size: calc(13px * var(--shrift)); cursor:default; }
+  /* Технические параметры изделия: опись по разделам, а не простыня (05.10.2026) */
+  .izd-param { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px; margin-top:4px; }
+  .izd-param-blok { background:#fbf6ee; border-radius:12px; padding:11px 13px; }
+  .izd-param-imya { font-size: calc(12.5px * var(--shrift)); letter-spacing:.06em; text-transform:uppercase;
+                    color:#9a7a55; margin-bottom:6px; }
+  .izd-param-spisok { margin:0; padding-left:18px; }
+  .izd-param-spisok li { font-size: calc(14.5px * var(--shrift)); line-height:1.45; margin-bottom:4px;
+                         overflow-wrap:anywhere; }
+  @media (max-width: 560px) { .izd-param { grid-template-columns:1fr; } }
   .rm-voprosy { margin-top:11px; background:#fbf6ee; border-radius:11px; padding:10px 13px; font-size: calc(14.5px * var(--shrift)); }
   .rm-voprosy h4 { margin:0 0 5px; font-size: calc(14px * var(--shrift)); color:#8a5f1c; }
   .rm-voprosy-adresa { display:flex; flex-direction:column; gap:6px; max-height:230px; overflow:auto; margin-bottom:6px; }
@@ -2438,6 +2447,31 @@ function rmVoprosyHtml(p) {
     `<ol>${g.punkty.map(t => `<li>${escapeHtml(t)}</li>`).join("")}</ol>`).join("");
 }
 
+/* Технические параметры изделия — разбор чертежей, разложенный по разделам.
+   05.10.2026, Мансур: «технические параметры на весь экран, и что там написано вообще
+   непонятно… нужно все размеры, направление шпона, цвета, подсветка». Раньше сюда
+   выливался машинный дамп присылки одной простынёй. Теперь — опись по разделам:
+   что нашли в чертежах, то и показываем, пустые разделы не рисуем. Разбирает
+   1_dvizhok/reestr/razobrat_parametry.py, кладёт в колонку «Параметры (разбор)». */
+const RM_PARAM_IMENA = { razmery: "Размеры", materialy: "Материалы и отделка", shpon: "Шпон",
+  cvet: "Цвет", podsvetka: "Подсветка", furnitura: "Фурнитура", prochee: "Прочее" };
+
+function rmParametryIzdeliya(it) {
+  if (!it) return null;
+  let opis = null;
+  try { opis = JSON.parse(it["Параметры (разбор)"] || "null"); } catch (e) { opis = null; }
+  if (!opis) return null;
+  const chasti = Object.keys(RM_PARAM_IMENA).filter(k => (opis[k] || []).length);
+  if (!chasti.length) return null;
+  const skolko = chasti.reduce((n, k) => n + opis[k].length, 0);
+  const html = `<div class="izd-param">${chasti.map(k => `<div class="izd-param-blok">
+      <div class="izd-param-imya">${escapeHtml(RM_PARAM_IMENA[k])}</div>
+      <ul class="izd-param-spisok">${opis[k].map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
+    </div>`).join("")}
+    <p class="rm-tusklo">Собрано из чертежей и описаний присылок. Чего нет в чертеже — того нет и здесь.</p></div>`;
+  return { skolko, html };
+}
+
 function rmChtoNaChertezheHtml(p) {
   const razbory = p.fajly.filter(f => f.tip === "pdf" && f.analiz);
   if (!razbory.length) {
@@ -2588,7 +2622,7 @@ async function renderIzdelieMO(code, it, rec) {
   else if (posl) knopki = `<button class="btn primary" data-pismo="${escapeHtml(posl.id)}" data-kuda="olga">Передать корректировки конструктору</button>
     <button class="btn ghost" data-status="правки внесены" data-pachka="${escapeHtml(posl.id)}">Правки внесены — снять отметку</button>`;
 
-  let razdely = "";
+  let razdely = "", razdelyNiz = "";
   if (!RM.D) {
     razdely += `<div class="rm-vnutr">Чертежи и вопросы по ним видны после входа: паролем Юлии Евгеньевны или личным паролем мессенджера.</div>`;
   } else if (!posl) {
@@ -2596,35 +2630,53 @@ async function renderIzdelieMO(code, it, rec) {
   } else {
     const vnutr = (posl.zamechaniya || []).length ? `<div class="rm-vnutr">Для нас, не для заказчика: ${escapeHtml(posl.zamechaniya.join("; "))}` +
       ((posl.podskazki || []).length ? ` · по описанию похоже на <b>${escapeHtml(posl.podskazki.join(", "))}</b>` : "") + `.</div>` : "";
-    razdely += rmRazdel(`Чертежи — последняя версия, ${rmDen(posl.kogda)}`, posl.fajly.length,
+    // 05.10.2026, Мансур: «список документов и чертежей вообще как-то вразнобой, нужно
+    // последний пилот, и последний рабочий чертёж, визуализации, и тех. параметры».
+    // Поэтому сверху ровно эти четыре, каждый своим разделом и со своей датой, а разбор
+    // версий, вопросы и переписка — ниже.
+    razdely += rmRazdel(`Последний пилот · ${rmDen(posl.kogda)}`, posl.fajly.length,
       (vmeste.length ? `<div class="rm-tusklo">Один чертёж вместе с ${escapeHtml(vmeste.join(", "))}.</div>` : "") + vnutr + rmFajlyHtml(posl), true);
+    const rabochki = rmPachkiIzdeliya(kod, true).filter(p => p.status === "rabochka");
+    if (rabochki.length) {
+      const r0 = rabochki[0];
+      razdely += rmRazdel(`Последний рабочий чертёж · ${rmDen(r0.kogda)}`, r0.fajly.length,
+        `<div class="rm-tusklo">Для производства, заказчику не отправляется.</div>` + rmFajlyHtml(r0)
+        + (rabochki.length > 1 ? `<p class="rm-tusklo">Прежних рабочек: ${rabochki.length - 1}.</p>` : ""), false);
+    }
     if (pachki.length > 1) {
-      razdely += rmRazdel("Прежние версии", pachki.length - 1,
+      razdelyNiz += rmRazdel("Прежние версии", pachki.length - 1,
         pachki.slice(1).map(p => `<div class="rm-gruppa">${rmDen(p.kogda)}${p.staraya_versiya ? " · в архиве: есть версия свежее" : ""}</div>` + rmFajlyHtml(p)).join(""), false);
     }
     const vopr = rmChisloVoprosov(posl);
-    razdely += rmRazdel("Открытые вопросы по чертежу", vopr,
+    razdelyNiz += rmRazdel("Открытые вопросы по чертежу", vopr,
       vopr ? `<div class="rm-voprosy">${rmVoprosyHtml(posl)}</div>` : `<div class="rm-tusklo">Открытых вопросов нет.</div>`, vopr > 0);
-    const inye = rmPachkiIzdeliya(kod, true).filter(p => ["rabochka", "model"].includes(p.status));
+    const inye = rmPachkiIzdeliya(kod, true).filter(p => ["rabochka", "model"].includes(p.status))
+      .filter(p => !(rabochki.length && p.id === rabochki[0].id));   // последняя рабочка уже показана выше
     if (inye.length) {
-      razdely += rmRazdel("Рабочие чертежи и другие форматы — не для заказчика", inye.length,
+      razdelyNiz += rmRazdel("Прежние рабочие чертежи и другие форматы", inye.length,
         inye.map(p => `<div class="rm-gruppa">${rmDen(p.kogda)} · ${escapeHtml(p.naznachenie || "")}</div>` + rmFajlyHtml(p)).join(""), false);
     }
     const sOtvetami = pachki.filter(p => (p.otvety_zakazchika || []).length);
     if (sOtvetami.length) {
-      razdely += rmRazdel("Ответы заказчика", sOtvetami.reduce((n, p) => n + p.otvety_zakazchika.length, 0),
+      razdelyNiz += rmRazdel("Ответы заказчика", sOtvetami.reduce((n, p) => n + p.otvety_zakazchika.length, 0),
         sOtvetami.map(p => (sOtvetami.length > 1 ? `<div class="rm-gruppa">Чертёж от ${rmDen(p.kogda)}</div>` : "") + rmOtvetyHtml(p)).join(""), true);
       sOtvetami.forEach(p => p.otvety_zakazchika.forEach(z => rmOtvetyVidel(z.id)));
     }
-    razdely += rmRazdel("Что на чертеже", null, rmChtoNaChertezheHtml(posl), false);
+    razdelyNiz += rmRazdel("Что на чертеже", null, rmChtoNaChertezheHtml(posl), false);
   }
+  // Визуализации и технические параметры идут сразу за чертежами — Мансур просил именно
+  // такой порядок: последний пилот, последняя рабочка, визуализации, параметры, а разбор
+  // версий и переписка ниже. Поэтому разделы собираются в две стопки и склеиваются здесь.
+  const vizy = await rmVizualizacii(RM_OBEKT, kod);
+  if (vizy.length) razdely += rmRazdel("Визуализации", vizy.length, rmVizHtml(vizy), true);
+  const param = rmParametryIzdeliya(it);
+  if (param) razdely += rmRazdel("Технические параметры", param.skolko, param.html, false);
+  razdely += razdelyNiz;
   const pachka = rmPachkaSchet(kod);
   if (pachka.vsego || pachka.zhdem) {
     razdely = rmRazdel(`Пачка корректировок${pachka.nePeredano ? " · " + pachka.nePeredano + " не передано" : ""}`,
       pachka.vsego + pachka.zhdem, rmChatHtml(kod), pachka.nePeredano > 0 || pachka.zhdem > 0) + razdely;
   }
-  const vizy = await rmVizualizacii(RM_OBEKT, kod);
-  if (vizy.length) razdely += rmRazdel("Визуализации", vizy.length, rmVizHtml(vizy), true);
   razdely += rmRazdel("Из переписки: обязательства, вопросы, решения", zapisi.vsego,
     zapisi.vsego ? zapisi.html : `<div class="rm-tusklo">Записей по этому изделию нет.</div>`, false);
   if (faylyPerepiski.length) {
