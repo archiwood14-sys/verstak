@@ -600,6 +600,9 @@
     border-radius: 10px; padding: 7px 10px; }
   .rm-vnutr { background:#fbf1de; color:#7a5313; border-radius:10px; padding:9px 12px; font-size: calc(14px * var(--shrift)); margin-bottom:10px; }
   .rm-fajly { display:flex; gap:9px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; }
+  /* файл, который лежит на Диске конструктора, а не внутри приложения (06.10.2026) */
+  .rm-fajl-disk { border-left:3px solid #C18048; }
+  .rm-fajl-imya { display:block; font-size: calc(14.5px * var(--shrift)); }
   .rm-fajl { flex:0 0 auto; width:136px; border:1px solid var(--line); border-radius:11px; overflow:hidden;
              background:var(--surface-2); padding:0; text-align:left; cursor:pointer; font:inherit; color:inherit;
              display:flex; flex-direction:column; }
@@ -2456,6 +2459,27 @@ function rmVoprosyHtml(p) {
 const RM_PARAM_IMENA = { razmery: "Размеры", materialy: "Материалы и отделка", shpon: "Шпон",
   cvet: "Цвет", podsvetka: "Подсветка", furnitura: "Фурнитура", prochee: "Прочее" };
 
+/* Пилот и рабочий чертёж с Диска — папка «Изделия», где у конструктора лежит порядок:
+   по папке на изделие, внутри действующий пилот и рабочая документация. 06.10.2026,
+   Мансур: «я тебе уже давал ссылку на структуру папок… почему у тебя в приложении нет
+   конкретных чертежей?». Открываются на Диске: файлы тяжёлые, в приложение их не кладём,
+   зато это ровно тот же комплект, что видит производство. */
+function rmSDiska(kod) {
+  const vse = (RM.D && RM.D.s_diska) || null;
+  if (!vse) return null;
+  const z = vse[kod];
+  return z && (z.pilot || (z.rabochka || []).length) ? z : null;
+}
+
+function rmFajlyDiskaHtml(fajly, podpis) {
+  if (!fajly || !fajly.length) return "";
+  return `<div class="rm-fajly">${fajly.map(f => `<a class="rm-fajl rm-fajl-disk" href="${escapeHtml(f.disk)}"
+      target="_blank" rel="noopener">
+      <span class="rm-fajl-imya">${escapeHtml(f.imya)}</span>
+      <span class="rm-tusklo">${f.vid ? escapeHtml(f.vid) + " · " : ""}${f.kogda ? rmDen(f.kogda) : ""} · открыть на Диске</span>
+    </a>`).join("")}</div>${podpis ? `<p class="rm-tusklo">${escapeHtml(podpis)}</p>` : ""}`;
+}
+
 function rmParametryIzdeliya(it) {
   if (!it) return null;
   let opis = null;
@@ -2634,12 +2658,22 @@ async function renderIzdelieMO(code, it, rec) {
     // последний пилот, и последний рабочий чертёж, визуализации, и тех. параметры».
     // Поэтому сверху ровно эти четыре, каждый своим разделом и со своей датой, а разбор
     // версий, вопросы и переписка — ниже.
-    razdely += rmRazdel(`Последний пилот · ${rmDen(posl.kogda)}`, posl.fajly.length,
+    const disk = rmSDiska(kod);
+    if (disk && disk.pilot) {
+      razdely += rmRazdel(`Пилот — действующий, с Диска · ${rmDen(disk.pilot.kogda)}`, disk.pilot.fajly.length,
+        rmFajlyDiskaHtml(disk.pilot.fajly,
+          `Папка конструктора «${disk.pilot.papka || ""}»${disk.pilot.prisylka ? ", присылка «" + disk.pilot.prisylka + "»" : ""}.`), true);
+    }
+    if (disk && (disk.rabochka || []).length) {
+      razdely += rmRazdel(`Рабочий чертёж — действующий, с Диска · ${rmDen(disk.rabochka[0].kogda)}`, disk.rabochka.length,
+        rmFajlyDiskaHtml(disk.rabochka, "Для производства. Тот же комплект, что в пространстве цеха."), false);
+    }
+    razdely += rmRazdel(`Пилот из переписки · ${rmDen(posl.kogda)}`, posl.fajly.length,
       (vmeste.length ? `<div class="rm-tusklo">Один чертёж вместе с ${escapeHtml(vmeste.join(", "))}.</div>` : "") + vnutr + rmFajlyHtml(posl), true);
     const rabochki = rmPachkiIzdeliya(kod, true).filter(p => p.status === "rabochka");
     if (rabochki.length) {
       const r0 = rabochki[0];
-      razdely += rmRazdel(`Последний рабочий чертёж · ${rmDen(r0.kogda)}`, r0.fajly.length,
+      razdely += rmRazdel(`Рабочий чертёж из переписки · ${rmDen(r0.kogda)}`, r0.fajly.length,
         `<div class="rm-tusklo">Для производства, заказчику не отправляется.</div>` + rmFajlyHtml(r0)
         + (rabochki.length > 1 ? `<p class="rm-tusklo">Прежних рабочек: ${rabochki.length - 1}.</p>` : ""), false);
     }
