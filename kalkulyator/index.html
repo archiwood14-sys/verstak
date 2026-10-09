@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Архивуд · калькулятор мебели Раздоры</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baskervville&display=swap" rel="stylesheet">
+<style>
+  :root { --fon:#faf0e6; --karta:#fff; --tekst:#262420; --tusklo:#8a7a6a; --liniya:#e9dfd5;
+    --akcent:#c18048; --akcent-t:#9c6333; --ok:#4f9a6e; --vnim:#b98424; --krit:#c9503f; }
+  * { box-sizing: border-box; }
+  body { font-variant-numeric: lining-nums tabular-nums; }
+  html,body { margin:0; background:var(--fon); color:var(--tekst);
+    font:15px/1.5 Arial,"Helvetica Neue",sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3 { font-family:"Baskervville",serif; font-weight:400; margin:0; }
+  .obertka { max-width:1480px; margin:0 auto; padding:calc(12px + env(safe-area-inset-top)) 18px 90px; }
+  .verh { padding:8px 0 2px; }
+  .nadpis { font-family:"Baskervville",serif; font-size:13px; letter-spacing:4px;
+    text-transform:uppercase; color:var(--akcent); }
+  .verh h1 { font-size:34px; line-height:1.1; margin-top:4px; }
+  .poyasnenie { font-size:13.5px; color:var(--tusklo); margin:10px 0 18px; max-width:900px; }
+  .obzor { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:16px 0 18px; }
+  .cifra { background:var(--karta); border:1px solid var(--liniya); border-radius:16px; padding:14px 16px; }
+  .cifra b { display:block; font-family:Arial,sans-serif; font-weight:600; font-size:30px;
+    color:var(--akcent); line-height:1.1; }
+  .cifra span { font-size:13px; color:var(--tusklo); }
+  .cifra.glav b { color:var(--tekst); font-size:26px; }
+  .filtry { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+  .tonk { background:rgba(255,255,255,.75); border:1px solid rgba(193,128,72,.35); color:var(--akcent);
+    border-radius:999px; padding:7px 14px; font:12px Arial,sans-serif; letter-spacing:1.5px;
+    text-transform:uppercase; cursor:pointer; }
+  .tonk:hover,.tonk.aktiv { background:var(--akcent); color:#fff; }
+  .lenta { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:14px; }
+  @media (max-width:520px) { .lenta { grid-template-columns:1fr; } }
+  .izd { background:var(--karta); border:1px solid var(--liniya); border-radius:16px; padding:14px 16px;
+    display:flex; flex-direction:column; gap:10px; }
+  .izd-verh { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+  .izd .kod { font-size:12px; font-weight:700; color:var(--akcent); letter-spacing:.5px; }
+  .izd h3 { font-size:21px; line-height:1.2; margin:3px 0 6px; }
+  .etazh { font:700 12px Arial,sans-serif; color:var(--tusklo); white-space:nowrap;
+    border:1px solid var(--liniya); border-radius:999px; padding:3px 10px; }
+  .fishki { display:flex; flex-wrap:wrap; gap:6px; }
+  .znak { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11.5px; font-weight:700; }
+  .znak.vnim { background:#faf0e0; color:var(--vnim); }
+  .znak.ok { background:#e8f3ec; color:var(--ok); }
+  .znak.net { background:#fbe9e5; color:var(--krit); }
+  .dl { display:grid; grid-template-columns:max-content 1fr; gap:4px 12px; font-size:14px; margin:0; }
+  .dl dt { color:var(--tusklo); } .dl dd { margin:0; }
+  details.teh { border-top:1px solid var(--liniya); padding-top:8px; }
+  details.teh summary { cursor:pointer; font-family:"Baskervville",serif; font-size:12.5px;
+    letter-spacing:3px; text-transform:uppercase; color:var(--akcent); }
+  details.teh p { font-size:14px; margin:8px 0 0; }
+  .net-dannyh { font-size:13px; color:var(--vnim); background:#fffaf1; border:1px solid rgba(185,132,36,.35);
+    border-radius:12px; padding:8px 10px; margin:0; }
+  .schet { display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:8px;
+    border-top:1px solid var(--liniya); padding-top:10px; align-items:end; }
+  .schet label { display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--tusklo); }
+  .schet input { border:1px solid var(--liniya); border-radius:10px; padding:8px 10px;
+    font:15px Arial,sans-serif; min-height:40px; width:100%; background:#fffdf9; }
+  .schet input:focus { outline:2px solid rgba(193,128,72,.45); outline-offset:1px; }
+  .itog-izd { font-size:12px; color:var(--tusklo); align-self:end; padding-bottom:9px; }
+  .itog-izd b { display:block; font:600 19px Arial,sans-serif; color:var(--tekst); }
+  .prim { display:flex; flex-direction:column; gap:3px; font-size:12px; color:var(--tusklo); }
+  .prim textarea { border:1px solid var(--liniya); border-radius:10px; padding:8px 10px;
+    font:14px Arial,sans-serif; resize:vertical; background:#fffdf9; }
+  .razdel { margin-top:28px; }
+  .zag { font-family:"Baskervville",serif; font-size:13px; letter-spacing:3.5px; text-transform:uppercase;
+    color:var(--akcent); margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+  .zag::after { content:""; flex:1; height:1px; background:rgba(193,128,72,.3); }
+  .blok { background:var(--karta); border:1px solid var(--liniya); border-radius:16px; padding:14px 18px; }
+  .blok ul { margin:0; padding-left:18px; } .blok li { margin:6px 0; }
+  .komu { font-size:12px; color:var(--akcent); border:1px solid rgba(193,128,72,.35);
+    border-radius:999px; padding:1px 8px; margin-left:4px; white-space:nowrap; }
+  .niz { position:fixed; left:0; right:0; bottom:0; background:rgba(250,240,230,.94);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-top:1px solid var(--liniya);
+    padding:10px max(18px,env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:16px; align-items:center; flex-wrap:wrap; z-index:20; }
+  .niz .vsego { font:600 20px Arial,sans-serif; }
+  .niz .vsego span { font:13px Arial,sans-serif; color:var(--tusklo); margin-right:6px; }
+  .niz .rost { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+  .sohr { background:var(--akcent); color:#fff; border:none; border-radius:12px; padding:10px 18px;
+    font:700 14px Arial,sans-serif; cursor:pointer; min-height:42px; }
+  .sohr.vtor { background:#fff; color:var(--akcent); border:1px solid rgba(193,128,72,.45); }
+  .sost { font-size:12.5px; color:var(--tusklo); }
+  @media print { .niz,.filtry,.tonk { display:none; } .izd { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<div class="obertka">
+
+  <header class="verh">
+    <div class="nadpis">Архивуд · расчёт</div>
+    <h1>Мебель и панели. Раздоры</h1>
+  </header>
+
+  <p class="poyasnenie">
+    Источник — ТЗ «ШПОН ПОРТАЛЫ», этажи 0/1/2/3, вед. архитектор-дизайнер Степанова Нелли, и чертежи дизайнера, 22 файла.
+    Состав перенесён из ТЗ без изменений: где в исходнике нет количества или чертежа, здесь это помечено,
+    а не домыслено. Размеры и углы в карточках сняты с самих листов.
+    <br><br>
+    Цены в страницу не заложены. Всё, что вы введёте, остаётся только в вашем браузере и никуда не уходит —
+    страница лежит в открытом репозитории, поэтому наших цен в ней нет и быть не должно.
+  </p>
+
+  <div class="obzor">
+    <div class="cifra"><b>20</b><span>позиций</span></div>
+    <div class="cifra"><b>34</b><span>изделий</span></div>
+    <div class="cifra"><b>10</b><span>помещений</span></div>
+    <div class="cifra"><b>8</b><span>с разобранными чертежами</span></div>
+    <div class="cifra"><b>2</b><span>без количества</span></div>
+    <div class="cifra"><b>1</b><span>без чертежей</span></div>
+  </div>
+
+  <div class="filtry">
+    <button class="tonk f aktiv" data-f="">все этажи</button>
+    <button class="tonk f" data-f="0">0 этаж</button><button class="tonk f" data-f="1">1 этаж</button><button class="tonk f" data-f="2">2 этаж</button><button class="tonk f" data-f="3">3 этаж</button>
+    <button class="tonk" id="ochistit">очистить расчёт</button>
+  </div>
+
+  <div class="lenta" id="lenta">
+<article class="izd" data-etazh="1" data-n="1">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.02 · Прихожая · поз. 1</div>
+      <h3>Портал</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, мдф гнутый с металлизацией, подсветка; мрамор рифлёный — давальческий материал</dd>
+    <dt>Чертежи</dt><dd>1.02 портал.pdf — 1 лист</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Разрез 5-5: 2980 — высота, 320 вынесено отдельно выше (причина не установлена), 370 сверху; низ 240 | 2199 | 240. Разрез 4-4: 618 общая, 320 (280+40), 372 по горизонтали. Узел: 618 общая, 124·410·20·63, подпись h=3320. Сумма 2980+320=3300 против подписанных 3320 — разницу 20 надо объяснить.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="2">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.08 · Чайная · поз. 6</div>
+      <h3>Портал двери</h3>
+      <div class="fishki"><span class="znak net">кол-во не указано</span><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, мдф гнутый с металлизацией, подсветка; мрамор рифлёный — давальческий материал</dd>
+    <dt>Чертежи</dt><dd>1.08 портал двери.pdf — 1 лист</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Фасад: 370·290·240·2200·240·290·370, общая ширина 4000, вертикали 3305 и 2900, 425 сверху слева. Узел 5-5: 83·207·60·290·50·140·50; 223·350·408·270·185·20·45·308; низ 370·290·240·900, отметка 638. Углы гиба: 35°, 19°, 45°.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value=""
+      placeholder="уточнить"></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="3">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.09 · Холл · поз. 1</div>
+      <h3>Портал основной холл</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпон, мдф с металлизацией или металл, подсветка; панель рифлёная из натурального камня</dd>
+    <dt>Чертежи</dt><dd>1.09 узлы 140526.pdf — 6 л., 1.09.pdf — 7 л., архив — 29 л.</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Высота помещения 3320 на всех листах. Портал основной: сечение 240 = 20·140·20, вылет 400, угол гиба 40°, уклон 3°, узел 400×320. Портал лифтовой: проём 900, раскладка 102·26·240·900·240·26·102, вылет 368, R60, углы 40°, рифление шаг 20 глуб. 10. Панели у дивана: 420·100·688·1522·688·100·420, R60, углы 30°. Панели стеновые: 575 = 241·10·5·63·5·10·241, h=3320, R60, угол 20°. Зона напротив лифта: 4600 = 1142·2315·1142, ниша 190 = 15·160·15. Отделка стен пом. 109: зеркало 9 м², покраска 99 м². Примечание п.7: толщину листа металла и мдф принять из конструктивных соображений.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="2"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="4">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.09 · Холл · поз. 2</div>
+      <h3>Портал лифтовой (на все этажи)</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, металл или мдф с металлизацией, вставка натурального камня рифлёного, светодиодная лента в профиле</dd>
+    <dt>Чертежи</dt><dd>1.09 узлы 140526.pdf — 6 л.</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Высота помещения 3320 на всех листах. Портал основной: сечение 240 = 20·140·20, вылет 400, угол гиба 40°, уклон 3°, узел 400×320. Портал лифтовой: проём 900, раскладка 102·26·240·900·240·26·102, вылет 368, R60, углы 40°, рифление шаг 20 глуб. 10. Панели у дивана: 420·100·688·1522·688·100·420, R60, углы 30°. Панели стеновые: 575 = 241·10·5·63·5·10·241, h=3320, R60, угол 20°. Зона напротив лифта: 4600 = 1142·2315·1142, ниша 190 = 15·160·15. Отделка стен пом. 109: зеркало 9 м², покраска 99 м². Примечание п.7: толщину листа металла и мдф принять из конструктивных соображений.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="4"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="5">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.09 · Холл · поз. 3</div>
+      <h3>Композиция напротив лифта</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, зеркало, металлические вставки, светодиодная подсветка, натуральный камень с рифлением</dd>
+    <dt>Чертежи</dt><dd>1.09 узлы 140526.pdf — 6 л.</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Высота помещения 3320 на всех листах. Портал основной: сечение 240 = 20·140·20, вылет 400, угол гиба 40°, уклон 3°, узел 400×320. Портал лифтовой: проём 900, раскладка 102·26·240·900·240·26·102, вылет 368, R60, углы 40°, рифление шаг 20 глуб. 10. Панели у дивана: 420·100·688·1522·688·100·420, R60, углы 30°. Панели стеновые: 575 = 241·10·5·63·5·10·241, h=3320, R60, угол 20°. Зона напротив лифта: 4600 = 1142·2315·1142, ниша 190 = 15·160·15. Отделка стен пом. 109: зеркало 9 м², покраска 99 м². Примечание п.7: толщину листа металла и мдф принять из конструктивных соображений.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="6">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.09 · Холл · поз. 4</div>
+      <h3>Панель (зона с диваном)</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф эмаль матовый, вставки металлические, вставки рифлёные из натурального камня</dd>
+    <dt>Чертежи</dt><dd>1.09 узлы 140526.pdf — 6 л.</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Высота помещения 3320 на всех листах. Портал основной: сечение 240 = 20·140·20, вылет 400, угол гиба 40°, уклон 3°, узел 400×320. Портал лифтовой: проём 900, раскладка 102·26·240·900·240·26·102, вылет 368, R60, углы 40°, рифление шаг 20 глуб. 10. Панели у дивана: 420·100·688·1522·688·100·420, R60, углы 30°. Панели стеновые: 575 = 241·10·5·63·5·10·241, h=3320, R60, угол 20°. Зона напротив лифта: 4600 = 1142·2315·1142, ниша 190 = 15·160·15. Отделка стен пом. 109: зеркало 9 м², покраска 99 м². Примечание п.7: толщину листа металла и мдф принять из конструктивных соображений.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="6"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="7">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.09 · Холл · поз. 5</div>
+      <h3>Панель на угол (стеновые)</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф эмаль матовый, вставки металлические, уголок из металла крашеного под латунь</dd>
+    <dt>Чертежи</dt><dd>1.09 узлы 140526.pdf — 6 л.</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Высота помещения 3320 на всех листах. Портал основной: сечение 240 = 20·140·20, вылет 400, угол гиба 40°, уклон 3°, узел 400×320. Портал лифтовой: проём 900, раскладка 102·26·240·900·240·26·102, вылет 368, R60, углы 40°, рифление шаг 20 глуб. 10. Панели у дивана: 420·100·688·1522·688·100·420, R60, углы 30°. Панели стеновые: 575 = 241·10·5·63·5·10·241, h=3320, R60, угол 20°. Зона напротив лифта: 4600 = 1142·2315·1142, ниша 190 = 15·160·15. Отделка стен пом. 109: зеркало 9 м², покраска 99 м². Примечание п.7: толщину листа металла и мдф принять из конструктивных соображений.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="2"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="8">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.09 · Холл · поз. 6</div>
+      <h3>Панели рифлёные</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak ok">размеры сняты</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, мдф гнутый с металлизацией</dd>
+    <dt>Чертежи</dt><dd>1.09 узлы 140526.pdf — 6 л.</dd>
+  </dl>
+  <details class="teh"><summary>Размеры и технология с чертежей</summary><p>Высота помещения 3320 на всех листах. Портал основной: сечение 240 = 20·140·20, вылет 400, угол гиба 40°, уклон 3°, узел 400×320. Портал лифтовой: проём 900, раскладка 102·26·240·900·240·26·102, вылет 368, R60, углы 40°, рифление шаг 20 глуб. 10. Панели у дивана: 420·100·688·1522·688·100·420, R60, углы 30°. Панели стеновые: 575 = 241·10·5·63·5·10·241, h=3320, R60, угол 20°. Зона напротив лифта: 4600 = 1142·2315·1142, ниша 190 = 15·160·15. Отделка стен пом. 109: зеркало 9 м², покраска 99 м². Примечание п.7: толщину листа металла и мдф принять из конструктивных соображений.</p></details>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="9">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.11 · Лифтовой холл · поз. 1</div>
+      <h3>Панели стеновые (все пролёты)</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>панели шпонированные, панели рифлёные шпонированные, разделительные профили</dd>
+    <dt>Чертежи</dt><dd>1.11 лифтовой холл.pdf — 4 л., 1.11.pdf — 3 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="10">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.13 · Спортзал · поз. 1</div>
+      <h3>Стеллаж</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>Корпус и задняя стенка ЛДСП EGGER: верт. боковины т.16, гориз. полки т.25; фасады и видимые открытые полки МДФ</dd>
+    <dt>Чертежи</dt><dd>1.13.pdf — 4 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="1" data-n="11">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">1.19 · Санузел при спа · поз. —</div>
+      <h3>Полки + столешница</h3>
+      <div class="fishki"><span class="znak net">кол-во не указано</span><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">1 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>полки стекло в алюминиевой раме светлое золото; столешница кварц + металлический профиль в торце</dd>
+    <dt>Чертежи</dt><dd>1.19 (СУ).pdf — 3 л., 1.19 виз.pdf — 2 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value=""
+      placeholder="уточнить"></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="2" data-n="12">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">2.04 · Холл · поз. 1</div>
+      <h3>Композиция</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">2 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, металлические вставки светлое золото</dd>
+    <dt>Чертежи</dt><dd>2.04 узлы мебели.pdf — 5 л., архив — 58 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="2" data-n="13">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">2.04 · Холл · поз. 2</div>
+      <h3>Стеллаж</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">2 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>Корпус и задняя стенка МДФ эмаль матовая + МДФ шпон: верт. боковины, гориз. полки</dd>
+    <dt>Чертежи</dt><dd>2.04 узлы мебели.pdf — 5 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="2" data-n="14">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">2.04 · Холл · поз. 3</div>
+      <h3>Стеллаж</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">2 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>Корпус и задняя стенка МДФ эмаль матовая + МДФ шпон: верт. боковины, гориз. полки</dd>
+    <dt>Чертежи</dt><dd>2.04 узлы мебели.pdf — 5 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="2" data-n="15">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">2.04 · Холл · поз. 4</div>
+      <h3>Портал</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">2 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф гнутый шпонированный, мдф металлизация, вставки из рифлёного камня</dd>
+    <dt>Чертежи</dt><dd>2.04 узлы мебели.pdf — 5 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="2"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="2" data-n="16">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">2.04 · Холл · поз. 5</div>
+      <h3>Панель на угол</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">2 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф эмаль матовый, вставки металлические в светлом золоте</dd>
+    <dt>Чертежи</dt><dd>2.04 узлы мебели.pdf — 5 л.</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="2"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="2" data-n="17">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">2.04.1 · Коридор перед мастер-спальней · поз. 1</div>
+      <h3>Панели</h3>
+      <div class="fishki"><span class="znak ok">чертежи есть</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">2 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф эмаль матовый, вставки металлические в светлом золоте</dd>
+    <dt>Чертежи</dt><dd>2.04/архив</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="2"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="0" data-n="18">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">0.05 · Холл · поз. 1</div>
+      <h3>Панель гнутая (возле лифтового холла)</h3>
+      <div class="fishki"><span class="znak net">чертежей нет</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">0 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>Панели вокруг зеркала, МДФ эмаль + металлизация (металл)</dd>
+    <dt>Чертежи</dt><dd>ЧЕРТЕЖЕЙ НЕТ</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="3"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="3" data-n="19">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">3.06 · Холл · поз. 1</div>
+      <h3>Панели гнутые</h3>
+      <div class="fishki"><span class="znak vnim">чертёж под вопросом</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">3 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>Панели вокруг зеркала, МДФ эмаль + металлизация (металл)</dd>
+    <dt>Чертежи</dt><dd>306.7_Панели у лифта.pdf — 1 л. (требует подтверждения)</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="2"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article>
+<article class="izd" data-etazh="3" data-n="20">
+  <div class="izd-verh">
+    <div>
+      <div class="kod">3.06 · Холл · поз. 2</div>
+      <h3>Панель гнутая</h3>
+      <div class="fishki"><span class="znak vnim">чертёж под вопросом</span><span class="znak vnim">чертёж не разобран</span></div>
+    </div>
+    <div class="etazh">3 эт.</div>
+  </div>
+  <dl class="dl">
+    <dt>Материалы</dt><dd>мдф эмаль + металл</dd>
+    <dt>Чертежи</dt><dd>306.7_Панели у лифта.pdf — 1 л. (требует подтверждения)</dd>
+  </dl>
+  <p class="net-dannyh">Чертежи по этому изделию ещё не разобраны — размеров нет.</p>
+  <div class="schet">
+    <label>Кол-во<input type="number" min="0" step="1" class="kol" value="1"
+      placeholder=""></label>
+    <label>Материалы, ₽<input type="number" min="0" step="1" class="mat" placeholder="0"></label>
+    <label>Работы, ₽<input type="number" min="0" step="1" class="rab" placeholder="0"></label>
+    <label>Цена за изделие, ₽<input type="number" min="0" step="1" class="cena" placeholder="0"></label>
+    <div class="itog-izd">Сумма <b class="summa">—</b></div>
+  </div>
+  <label class="prim">Примечание<textarea rows="1" class="zametka" placeholder="что учесть при расчёте"></textarea></label>
+</article></div>
+
+  <section class="razdel">
+    <div class="zag">Открытые вопросы — без ответов считать нельзя</div>
+    <div class="blok"><ul><li><b>1.08 Чайная</b> — Не указано количество порталов дверей. <span class="komu">Юлии / дизайнеру</span></li><li><b>1.19 Санузел при спа</b> — Не указано количество. В таблице у позиции не проставлен номер — строка выпадает при автоматическом разборе. <span class="komu">Юлии</span></li><li><b>0.05 Холл</b> — Позиция есть в таблице (3 панели гнутые), чертежей в материалах нет. <span class="komu">дизайнеру</span></li><li><b>3.03 Панели композиции</b> — Чертёж есть (303.11_Панели композиции.pdf), в таблицах ТЗ позиции нет. <span class="komu">Юлии</span></li><li><b>3.06 Холл</b> — Чертёж 306.7_Панели у лифта.pdf лежит в папке 3.03 — нужно подтвердить, что он относится к 3.06. <span class="komu">дизайнеру</span></li><li><b>Ограждение лестницы</b> — Есть ТЗ и чертежи (7 листов), в таблицах ТЗ позиции нет. <span class="komu">Юлии</span></li><li><b>Толщины материалов</b> — Проектом не заданы — примечание п.7 на листах узлов 1.09: «принять из конструктивных соображений». Определяем мы, прямо влияет на цену. <span class="komu">решение наше</span></li><li><b>Размеры</b> — По п.5 примечаний ТЗ размеры проектные, замер по факту чистовой отделки. Цена до замера — предварительная. <span class="komu">учесть в КП</span></li></ul></div>
+  </section>
+
+  <section class="razdel">
+    <div class="zag">Примечания из ТЗ дизайнера</div>
+    <div class="blok"><ul><li>Порядок приоритетных этажей: 1, 2, 0, 3.</li><li>В ТЗ не учтены зеркала, ручки, мойки, раковины, сантехнические приборы.</li><li>Необходима реализация мебели и панелей согласно визуализациям с учётом всех деталей (цоколя, фрезеровка, профили стыковочные и т. д.).</li><li>Финальные чертежи будут согласованы Заказчиком и Дизайнером после проработки конструктива мебели с подрядчиком.</li><li>Произвести замеры по факту чистовой отделки. В ТЗ указаны проектные размеры.</li><li>Запуск в производство после согласования образцов.</li></ul></div>
+  </section>
+
+</div>
+
+<div class="niz">
+  <div class="vsego"><span>Итого по расчёту</span><b id="vsego">—</b></div>
+  <div class="sost" id="sost"></div>
+  <div class="rost">
+    <button class="sohr vtor" id="kopir">Скопировать JSON</button>
+    <button class="sohr" onclick="window.print()">Печать</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var KLUCH = 'razdory-mebel-raschet-v1';
+  var lenta = document.getElementById('lenta');
+  var karty = [].slice.call(lenta.querySelectorAll('.izd'));
+
+  function dengi(n) {
+    return n.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' \u20BD';
+  }
+  function chislo(el) { var v = parseFloat(el.value); return isFinite(v) ? v : 0; }
+
+  function schitat() {
+    var vsego = 0, zapolneno = 0;
+    karty.forEach(function (k) {
+      var kol = chislo(k.querySelector('.kol'));
+      var mat = chislo(k.querySelector('.mat'));
+      var rab = chislo(k.querySelector('.rab'));
+      var cenaPole = k.querySelector('.cena');
+      var cena = chislo(cenaPole);
+      if (!cena && (mat || rab)) { cena = mat + rab; cenaPole.placeholder = String(cena); }
+      var s = kol * cena;
+      k.querySelector('.summa').textContent = s ? dengi(s) : '\u2014';
+      if (s) { zapolneno++; vsego += s; }
+    });
+    document.getElementById('vsego').textContent = vsego ? dengi(vsego) : '\u2014';
+    document.getElementById('sost').textContent =
+      zapolneno ? ('посчитано ' + zapolneno + ' из ' + karty.length + ' позиций') : 'ни одна позиция ещё не посчитана';
+  }
+
+  function sohranit() {
+    var o = {};
+    karty.forEach(function (k) {
+      var n = k.dataset.n;
+      o[n] = {
+        kol: k.querySelector('.kol').value, mat: k.querySelector('.mat').value,
+        rab: k.querySelector('.rab').value, cena: k.querySelector('.cena').value,
+        zametka: k.querySelector('.zametka').value
+      };
+    });
+    try { localStorage.setItem(KLUCH, JSON.stringify(o)); } catch (err) {}
+  }
+
+  function vosstanovit() {
+    var o;
+    try { o = JSON.parse(localStorage.getItem(KLUCH) || '{}'); } catch (err) { o = {}; }
+    karty.forEach(function (k) {
+      var v = o[k.dataset.n]; if (!v) return;
+      ['kol', 'mat', 'rab', 'cena', 'zametka'].forEach(function (p) {
+        var el = k.querySelector('.' + (p === 'zametka' ? 'zametka' : p));
+        if (el && v[p] != null) el.value = v[p];
+      });
+    });
+  }
+
+  lenta.addEventListener('input', function () { schitat(); sohranit(); });
+
+  [].slice.call(document.querySelectorAll('.tonk.f')).forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tonk.f').forEach(function (x) { x.classList.remove('aktiv'); });
+      b.classList.add('aktiv');
+      var f = b.dataset.f;
+      karty.forEach(function (k) { k.style.display = (!f || k.dataset.etazh === f) ? '' : 'none'; });
+    });
+  });
+
+  document.getElementById('ochistit').addEventListener('click', function () {
+    if (!confirm('Очистить все введённые цифры?')) return;
+    karty.forEach(function (k) {
+      ['.kol', '.mat', '.rab', '.cena', '.zametka'].forEach(function (s) { k.querySelector(s).value = ''; });
+    });
+    try { localStorage.removeItem(KLUCH); } catch (err) {}
+    schitat();
+  });
+
+  document.getElementById('kopir').addEventListener('click', function () {
+    var out = karty.map(function (k) {
+      return {
+        pozicia: k.dataset.n,
+        pomeshchenie: k.querySelector('.kod').textContent,
+        izdelie: k.querySelector('h3').textContent,
+        kolichestvo: k.querySelector('.kol').value,
+        materialy_rub: k.querySelector('.mat').value,
+        raboty_rub: k.querySelector('.rab').value,
+        cena_za_izdelie_rub: k.querySelector('.cena').value,
+        summa: k.querySelector('.summa').textContent,
+        primechanie: k.querySelector('.zametka').value
+      };
+    });
+    var txt = JSON.stringify({proekt: 'Раздоры', razdel: 'Мебель и панели', pozicii: out}, null, 2);
+    function ok() { var b = document.getElementById('kopir'); var t = b.textContent;
+      b.textContent = 'Скопировано'; setTimeout(function () { b.textContent = t; }, 1600); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(ok, function () { window.prompt('Скопируйте вручную:', txt); });
+    } else { window.prompt('Скопируйте вручную:', txt); }
+  });
+
+  vosstanovit(); schitat();
+})();
+</script>
+</body>
+</html>
