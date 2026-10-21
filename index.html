@@ -399,6 +399,11 @@
   .entry .src { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: calc(11.5px * var(--shrift)); color: var(--muted); margin-top: 4px; }
   .entry .who-line { font-size: calc(12.5px * var(--shrift)); color: var(--ink); margin-top: 5px; background: var(--surface-2); border-radius: 8px; padding: 5px 9px; display: inline-block; }
   .entry .entry-date { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: calc(11px * var(--shrift)); color: var(--accent); font-weight: 700; margin-right: 8px; }
+  /* 21.10.2026: строка документа ведёт на Диск. Красим не синим, как браузер по умолчанию,
+     а своим охряным — приложение должно оставаться одним целым. */
+  a.dok-ssylka { display: flex; text-decoration: none; color: inherit; }
+  a.dok-ssylka:hover { background: var(--surface-2); }
+  a.dok-ssylka .dok-otkryt { color: var(--accent); font-weight: 700; }
 
   footer { text-align: center; color: var(--muted); font-size: calc(12px * var(--shrift)); padding-top: 34px; }
   .skeleton { color: var(--muted); padding: 70px 0; text-align: center; font-size: calc(14.5px * var(--shrift)); }
@@ -4313,6 +4318,13 @@ function renderDashboard() {
   // пользователь выбрал — только после этого что-то появилось»; кнопки разделов не должны
   // выглядеть как карточки изделий; объекты — по центру.
   STATE.attnCardHtml = STATE.attnList.map(attnCard);
+  // 21.10.2026: на экране объекта появились свои разделы — документы, вопросы, решения
+  // и расхождения. До этого документы лежали внутри «Финансов», а вопросы и решения
+  // были только общим списком по всем объектам сразу, и человек, ведущий один проект,
+  // вынужден был выбирать своё из чужого.
+  const objBlok = (tab) => (STATE.blocks[tab] || []).filter(r => r["Объект"] === STATE.activeObj);
+  const nerazreshennye = objBlok("Б16_Расхождения")
+    .filter(r => (r["Разрешено ли"] || "").toLowerCase().trim() !== "да");
   const rabochee = rmEsli(STATE.activeObj);
   STATE.dashVid = STATE.dashVid || {};
   const vid = STATE.dashVid[STATE.activeObj] || "";
@@ -4331,6 +4343,10 @@ function renderDashboard() {
       ${razdelKn("vnimanie", "Требует внимания", attnTotal, vid, attnTotal ? "vazhno" : "")}
       ${razdelKn("izdeliya", "Изделия", items.length, vid)}
       ${razdelKn("oblig", "Мои обязательства", (STATE.blocks["Б9_Обязательства"] || []).filter(r => r["Объект"] === STATE.activeObj && razbirat(r)).length, vid)}
+      ${razdelKn("dokb13", "Документы", objBlok("Б13_Документы_и_версии").length, vid)}
+      ${razdelKn("voprosy", "Открытые вопросы", objBlok("Б8_Открытые_вопросы").filter(razbirat).length, vid)}
+      ${razdelKn("resheniya", "Решения", objBlok("Б7_Решения").length, vid)}
+      ${razdelKn("rashozh", "Расхождения", nerazreshennye.length, vid, nerazreshennye.length ? "vazhno" : "")}
       ${razdelKn("fin", "Финансы и документы", "", vid)}
     </div>
     <div id="dashTelo">${telo}</div>`);
@@ -4340,6 +4356,15 @@ function renderDashboard() {
     const k = b.dataset.razdel;
     if (k === "oblig") return nav(() => renderObligations(STATE.activeObj));
     if (k === "fin") return nav(() => renderObjectFinance(STATE.activeObj));
+    if (k === "dokb13") return nav(() => renderObjectDocs(STATE.activeObj));
+    if (k === "voprosy") return nav(() => renderRecordList(
+      objBlok("Б8_Открытые_вопросы").filter(razbirat)
+        .sort((a, b) => (b["Критичность"] || "").localeCompare(a["Критичность"] || "")),
+      "Б8_Открытые_вопросы", STATE.activeObj + " — открытые вопросы"));
+    if (k === "resheniya") return nav(() => renderRecordList(
+      objBlok("Б7_Решения").slice().reverse(), "Б7_Решения", STATE.activeObj + " — решения"));
+    if (k === "rashozh") return nav(() => renderRecordList(
+      nerazreshennye, "Б16_Расхождения", STATE.activeObj + " — расхождения"));
     STATE.dashVid[STATE.activeObj] = STATE.dashVid[STATE.activeObj] === k ? "" : k;
     renderDashboard();
     if (STATE.dashVid[STATE.activeObj]) kSoderzhimomu("#dashTelo");
@@ -5301,6 +5326,70 @@ function renderRecordList(rows, blok, title, opisanie) {
 }
 
 /* ---------------- рендер: финансы и документы объекта ---------------- */
+/* ---------------- документы проекта из Б13 ----------------
+   21.10.2026, Мансур: «Юлия и Игорь жалуются, что им негде быстро взять данные,
+   документы и информацию». Раньше путь на Диск печатался обычным текстом — его нельзя
+   было нажать, и человек шёл искать папку руками. Теперь строка документа — ссылка,
+   а сверху поиск и деление на действующие и устаревшие редакции: в проектах по
+   несколько редакций одного документа, и спутать их дороже всего.                       */
+function dokSsylka(r) {
+  const ist = (r["Источник — файлы"] || "").trim();
+  return /^https?:\/\//.test(ist) ? ist : "";
+}
+
+function dokDeystvuet(r) {
+  return !(r["Действующая версия (да/нет)"] || "").toLowerCase().trim().startsWith("нет");
+}
+
+function dokStroka(r) {
+  const data = r["Дата этой версии"] || r["Дата события"] || "";
+  const ssylka = dokSsylka(r);
+  const ist = (r["Источник — файлы"] || "").trim();
+  const nazvanie = escapeHtml(r["Название документа"] || "без названия");
+  const telo = `
+      ${data ? `<span class="entry-date">${escapeHtml(data)}</span>` : ""}
+      <div class="txt">${nazvanie}</div>
+      ${r["Кто прислал эту версию"] ? `<div class="src">прислал: ${escapeHtml(r["Кто прислал эту версию"])}</div>` : ""}
+      ${r["Предмет (Б4)"] ? `<div class="src">относится к: ${escapeHtml(r["Предмет (Б4)"])}</div>` : ""}
+      ${!dokDeystvuet(r) ? `<div class="src">не действует: ${escapeHtml(r["Действующая версия (да/нет)"])}</div>` : ""}
+      ${!ssylka && ist ? `<div class="src">${escapeHtml(ist)}</div>` : ""}`;
+  // Ссылки открываем в новой вкладке: приложение — рабочее место, терять его на половине
+  // дела человеку нельзя.
+  return ssylka
+    ? `<a class="entry dok-ssylka" href="${escapeHtml(ssylka)}" target="_blank" rel="noopener">
+         <div class="body">${telo}<div class="src dok-otkryt">открыть на Диске</div></div></a>`
+    : `<div class="entry"><div class="body">${telo}</div></div>`;
+}
+
+function renderObjectDocs(objName) {
+  STATE.tekushchiy = { v: "dokb13", obj: objName };
+  const app = document.getElementById("app");
+  const vse = (STATE.blocks["Б13_Документы_и_версии"] || []).filter(r => r["Объект"] === objName);
+  const risovat = (zapros) => {
+    const q = (zapros || "").trim().toLowerCase();
+    const najdeno = q ? vse.filter(r => Object.values(r).join(" ").toLowerCase().includes(q)) : vse;
+    const deystv = najdeno.filter(dokDeystvuet);
+    const staroe = najdeno.filter(r => !dokDeystvuet(r));
+    const sekciya = (zag, spisok) => spisok.length
+      ? `<section class="blk"><div class="hd"><h2>${escapeHtml(zag)}</h2><span class="count">${spisok.length}</span></div>
+         ${spisok.map(dokStroka).join("")}</section>` : "";
+    document.getElementById("dokB13Telo").innerHTML =
+      (sekciya("Действующие", deystv) + sekciya("Заменены или не обновлены", staroe))
+      || `<div class="empty-hint">Ничего не нашлось.</div>`;
+  };
+  app.innerHTML = `
+    <div class="item-detail-wrap">
+    <div class="item-head"><h1>${escapeHtml(objName)} — документы проекта <span class="cnt">${vse.length}</span></h1></div>
+    <div class="item-desc">Нажмите на документ, чтобы открыть его на Google Диске</div>
+    <div class="search-wrap"><input id="dokB13Poisk" type="search" autocomplete="off"
+      placeholder="Найти: название, кто прислал, изделие"></div>
+    <div id="dokB13Telo"></div>
+    </div>`;
+  risovat("");
+  const pole = document.getElementById("dokB13Poisk");
+  if (pole) pole.addEventListener("input", () => risovat(pole.value));
+}
+
 function renderObjectFinance(objName) {
   STATE.tekushchiy = { v: "fin", obj: objName };
   const app = document.getElementById("app");
@@ -5331,16 +5420,8 @@ function renderObjectFinance(objName) {
     </div></div>`;
   }).join("") : `<div class="empty-hint">Записей по деньгам для этого объекта пока нет.</div>`;
 
-  const dokHtml = dokumenty.length ? dokumenty.map(r => {
-    const data = r["Дата события"] || r["Дата этой версии"] || "";
-    return `<div class="entry"><div class="body">
-      ${data ? `<span class="entry-date">${escapeHtml(data)}</span>` : ""}
-      <div class="txt">${escapeHtml(r["Название документа"] || "")}</div>
-      ${r["Предмет (Б4)"] ? `<div class="src">относится к: ${escapeHtml(r["Предмет (Б4)"])}</div>` : ""}
-      ${r["Источник — файлы"] ? `<div class="src">${escapeHtml(r["Источник — файлы"])}</div>` : ""}
-      ${r["Действующая версия (да/нет)"] ? `<div class="src">действующая версия: ${escapeHtml(r["Действующая версия (да/нет)"])}</div>` : ""}
-    </div></div>`;
-  }).join("") : `<div class="empty-hint">Договоры, коммерческие предложения и другие документы объекта сюда ещё не занесены.</div>`;
+  const dokHtml = dokumenty.length ? dokumenty.map(dokStroka).join("")
+    : `<div class="empty-hint">Договоры, коммерческие предложения и другие документы объекта сюда ещё не занесены.</div>`;
 
   app.innerHTML = `
     <div class="item-detail-wrap">
