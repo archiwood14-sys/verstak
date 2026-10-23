@@ -153,6 +153,7 @@
     var fill = $('[data-progress] .progress__fill', slider);
     var label = $('[data-label]', slider);
     var link = $('[data-link]', slider);
+    var counter = $('[data-count]', slider);
     var lead = tracks[0];
 
     if (fill) fill.style.width = (100 / n) + '%';
@@ -170,6 +171,7 @@
         hydrate(t.children[(i - 1 + n) % n]);
       });
       if (fill) fill.style.transform = 'translateX(' + (i * 100) + '%)';
+      if (counter) counter.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(n).padStart(2, '0');
       var active = lead.children[i];
       if (label && active.getAttribute('data-group')) label.textContent = active.getAttribute('data-group');
       if (link) {
@@ -209,6 +211,18 @@
       Array.prototype.forEach.call(lead.children, function (s, k) { if (s.getAttribute('data-id') === ret) start = k; });
     }
     go(start);
+  });
+
+  /* ---------- Горизонтальная лента со стрелками ---------- */
+  $$('[data-rail]').forEach(function (rail) {
+    var id = rail.id;
+    var step = function (dir) {
+      var item = rail.firstElementChild;
+      var w = item ? item.getBoundingClientRect().width + 28 : rail.clientWidth * 0.8;
+      rail.scrollBy({ left: dir * w, behavior: reduceMotion ? 'auto' : 'smooth' });
+    };
+    $$('[data-rail-prev="' + id + '"]').forEach(function (b) { b.addEventListener('click', function () { step(-1); }); });
+    $$('[data-rail-next="' + id + '"]').forEach(function (b) { b.addEventListener('click', function () { step(1); }); });
   });
 
   /* ---------- Просмотр фотографий проекта ---------- */
