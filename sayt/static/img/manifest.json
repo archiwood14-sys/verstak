@@ -1,0 +1,774 @@
+{
+ "glavnaya/hero": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "glavnaya/hero-mobile": {
+  "w": 1080,
+  "h": 1920,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "kontakty": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "menu": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "o-kompanii/hero": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/hero-mobile": {
+  "w": 1080,
+  "h": 1920,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "o-kompanii/o-nas": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "o-kompanii/o-nas-mobile": {
+  "w": 1080,
+  "h": 1920,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "o-kompanii/obeshchanie": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/printsip-1": {
+  "w": 2400,
+  "h": 1200,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/printsip-1-mobile": {
+  "w": 1080,
+  "h": 1350,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "o-kompanii/printsip-2": {
+  "w": 2400,
+  "h": 1200,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/printsip-2-mobile": {
+  "w": 1080,
+  "h": 1350,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "o-kompanii/printsip-3": {
+  "w": 2400,
+  "h": 1200,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/printsip-3-mobile": {
+  "w": 1080,
+  "h": 1350,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "o-kompanii/printsip-4": {
+  "w": 2400,
+  "h": 1200,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/printsip-4-mobile": {
+  "w": 1080,
+  "h": 1350,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "o-kompanii/printsip-5": {
+  "w": 2400,
+  "h": 1200,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "o-kompanii/printsip-5-mobile": {
+  "w": 1080,
+  "h": 1350,
+  "widths": [
+   800,
+   1080
+  ]
+ },
+ "otzyvy/1": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "otzyvy/2": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "otzyvy/3": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "otzyvy/4": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "otzyvy/5": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "otzyvy/6": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "otzyvy/7": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/capitas/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/capitas/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/capitas/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/capitas/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/capitas/oblozhka-h": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/capitas/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/diadema/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/diadema/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/diadema/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/diadema/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/diadema/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/dubai/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/dubai/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/dubai/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/dubai/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/dubai/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/familia/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/familia/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/familia/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/familia/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/familia/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/fontanka/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/fontanka/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/fontanka/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/fontanka/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/fontanka/oblozhka-h": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/fontanka/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/france/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/france/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/france/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/france/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/france/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/inner/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/inner/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/inner/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/inner/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/inner/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/komarovo/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/komarovo/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/komarovo/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/komarovo/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/komarovo/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/ogolatovo/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/ogolatovo/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/ogolatovo/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/ogolatovo/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/ogolatovo/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/ozerki/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/repino1/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/repino1/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/repino1/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/repino1/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/repino1/oblozhka-h": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/repino1/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/repino2/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/rymor/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/rymor/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/rymor/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/rymor/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/rymor/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ },
+ "proekty/zavidovo/galereya/01": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/zavidovo/galereya/02": {
+  "w": 1600,
+  "h": 2400,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/zavidovo/galereya/03": {
+  "w": 2400,
+  "h": 1600,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/zavidovo/galereya/04": {
+  "w": 1600,
+  "h": 2000,
+  "widths": [
+   800,
+   1600
+  ]
+ },
+ "proekty/zavidovo/oblozhka-h": {
+  "w": 2400,
+  "h": 1350,
+  "widths": [
+   800,
+   1600,
+   2400
+  ]
+ },
+ "proekty/zavidovo/oblozhka-v": {
+  "w": 1200,
+  "h": 1600,
+  "widths": [
+   800,
+   1200
+  ]
+ }
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120">
+  <title>Archiwood</title>
+  <!-- Заглушка логотипа: замените файл на настоящий логотип (SVG или PNG с прозрачным фоном) -->
+  <text x="300" y="82" text-anchor="middle" fill="#c18048" font-family="Cormorant, 'Cormorant Garamond', Georgia, 'Times New Roman', serif" font-size="78" letter-spacing="14">ARCHIWOOD</text>
+  <line x1="150" y1="104" x2="450" y2="104" stroke="#c18048" stroke-width="1.5"/>
+</svg>
