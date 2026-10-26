@@ -13,7 +13,10 @@
     color-scheme: light;
   }
   html, body { height: 100%; }
-  body { margin: 0; background: var(--bg, var(--cream)); color: var(--panel-ink); font: 14px/1.5 var(--f-body); overflow: hidden; transition: background-color .8s; }
+  body { margin: 0; background: var(--cream); color: var(--panel-ink); font: 14px/1.5 var(--f-body); overflow: hidden; transition: background-color .6s; }
+  body[data-bg="check"] { background-color: #ffffff; background-image: conic-gradient(#e6e1da 25%, #ffffff 0 50%, #e6e1da 0 75%, #ffffff 0); background-size: 28px 28px; }
+  body[data-bg="cream"] { background: var(--cream); }
+  body[data-bg="dark"] { background: #141210; }
   #scene { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
   #scene:active { cursor: grabbing; }
 
@@ -26,7 +29,8 @@
   .bar__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 20px; }
   .bar h1 { margin: 0; font: 500 24px/1.1 var(--f-display); color: var(--copper); }
   .bar__hint { color: var(--stone); font-size: 12px; letter-spacing: .04em; }
-  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tabs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .tabs--bg button { padding: 6px 12px; }
   .tabs button {
     padding: 9px 16px; border: 1px solid rgba(193, 128, 72, .5); border-radius: 40px; background: transparent; color: var(--copper);
     font: bold 11px/1 var(--f-body); letter-spacing: 1.4px; text-transform: uppercase; cursor: pointer; transition: background-color .3s, color .3s;
@@ -68,6 +72,12 @@
     <h1>Логотип Archiwood в 3D</h1>
     <span class="bar__hint">Потяните логотип мышью или пальцем</span>
   </div>
+  <div class="tabs tabs--bg" role="group" aria-label="Фон под логотипом">
+    <span class="bar__hint">Фон прозрачный. Подложка для проверки:</span>
+    <button type="button" data-bg="check">Шахматка</button>
+    <button type="button" data-bg="cream">Кремовый</button>
+    <button type="button" data-bg="dark">Темный</button>
+  </div>
   <div class="tabs" role="group" aria-label="Версии логотипа">
     <button type="button" data-v="med">1 · Медь</button>
     <button type="button" data-v="hrom">2 · Хром и стекло</button>
@@ -82,6 +92,8 @@
   <div class="ctl">
     <button type="button" id="breath" aria-pressed="true">Дыхание</button>
     <button type="button" id="spin" aria-pressed="false">Вращение</button>
+    <button type="button" id="shadowBtn" aria-pressed="true">Тень</button>
+    <button type="button" id="raysBtn" aria-pressed="false">Лучи</button>
   </div>
 </div>
 
@@ -95,17 +107,14 @@
 import * as THREE from 'three';
 import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const SVG = `__SVG__`;
 
 const canvas = document.getElementById('scene');
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true });
+  renderer.setClearColor(0x000000, 0);
 } catch (e) {
   document.documentElement.classList.add('no-webgl');
   throw e;
@@ -124,9 +133,9 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture
 const data = new SVGLoader().parse(SVG);
 const shapes = [];
 data.paths.forEach((p) => SVGLoader.createShapes(p).forEach((s) => shapes.push(s)));
-const DEPTH = 70;
+const DEPTH = 130;
 const geo = new THREE.ExtrudeGeometry(shapes, {
-  depth: DEPTH, bevelEnabled: true, bevelThickness: 10, bevelSize: 4, bevelSegments: 4, curveSegments: 10,
+  depth: DEPTH, bevelEnabled: true, bevelThickness: 18, bevelSize: 5, bevelSegments: 6, curveSegments: 10,
 });
 geo.computeBoundingBox();
 const bb = geo.boundingBox;
@@ -188,7 +197,7 @@ walnut.repeat.set(.0016, .0016); // UV в единицах SVG (ширина ~29
 walnut.rotation = Math.PI / 2;
 
 /* ---------- Лучи и тень ---------- */
-const rays = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+const rays = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }));
 rays.position.z = -2.2;
 scene.add(rays);
 
@@ -207,25 +216,19 @@ const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 4, 6)
 const rim = new THREE.DirectionalLight(0xffe2c4, 1.4); rim.position.set(-5, 2, -3); scene.add(rim);
 const fill = new THREE.AmbientLight(0xffffff, .25); scene.add(fill);
 
-/* ---------- Постобработка: свечение ---------- */
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), .5, .5, .82);
-composer.addPass(bloom);
-composer.addPass(new OutputPass());
 
 /* ---------- Версии ---------- */
 const V = {
   med: {
     name: 'Медь', bg: '#faf0e6', panel: 'rgba(250,240,230,.86)', ink: '#1a1a1a',
-    text: 'Полированная медь цвета вашего логотипа на кремовом фоне сайта. Под логотипом мягкая тень — он парит над страницей.',
+    text: 'Полированная медь цвета вашего логотипа. Мягкая тень под логотипом показывает, что он парит.',
     front: () => new THREE.MeshPhysicalMaterial({ color: 0xd08a52, metalness: 1, roughness: .22, clearcoat: .6, clearcoatRoughness: .2 }),
     side: () => new THREE.MeshStandardMaterial({ color: 0xa8652f, metalness: 1, roughness: .32 }),
     rays: null, bloom: 0, shadow: .55, exposure: 1.05, env: 1,
   },
   hrom: {
     name: 'Хром и стекло', bg: '#07090c', panel: 'rgba(20,22,26,.78)', ink: '#f2ece4',
-    text: 'По вашему референсу: зеркальный хром по граням, стеклянная лицевая сторона и лучи света за логотипом.',
+    text: 'По вашему референсу: зеркальный хром по граням и стеклянная лицевая сторона. Лучи включаются кнопкой «Лучи».',
     front: () => new THREE.MeshPhysicalMaterial({ color: 0x9fb6cc, metalness: .25, roughness: .06, transmission: .55, thickness: .6, ior: 1.5, clearcoat: 1, clearcoatRoughness: .04, iridescence: .3 }),
     side: () => new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .05 }),
     rays: '#cfe3ff', bloom: .4, shadow: 0, exposure: 1.15, env: 1.4,
@@ -239,20 +242,21 @@ const V = {
   },
   zoloto: {
     name: 'Золото в ночи', bg: '#0f0d0b', panel: 'rgba(24,20,16,.8)', ink: '#f6ecdc',
-    text: 'Яркое золото с сиянием на темном фоне. Подходит для заставки или видео в соцсетях.',
+    text: 'Яркое полированное золото. Хорошо смотрится на темном фоне — переключите подложку.',
     front: () => new THREE.MeshPhysicalMaterial({ color: 0xf0c060, metalness: 1, roughness: .16, clearcoat: .4 }),
     side: () => new THREE.MeshStandardMaterial({ color: 0xc9902e, metalness: 1, roughness: .22 }),
     rays: '#f3b35a', bloom: .45, shadow: 0, exposure: 1.05, env: 1.2,
   },
   farfor: {
     name: 'Кремовый рельеф', bg: '#faf0e6', panel: 'rgba(250,240,230,.86)', ink: '#1a1a1a',
-    text: 'Матовый кремовый рельеф на кремовом фоне: логотип читается только светом и тенью. Самая тихая и дорогая версия, в духе Hermès.',
+    text: 'Матовый кремовый рельеф: на кремовом фоне логотип читается только светом и тенью. Самая тихая версия, в духе Hermès.',
     front: () => new THREE.MeshPhysicalMaterial({ color: 0xead3bb, metalness: 0, roughness: .55, sheen: .3, sheenColor: 0xffffff }),
     side: () => new THREE.MeshStandardMaterial({ color: 0xc9a988, metalness: 0, roughness: .75 }),
     rays: null, bloom: 0, shadow: .45, exposure: .9, env: .55, light: 3,
   },
 };
 
+let showShadow = true, showRays = false;
 const about = document.getElementById('about');
 const tabs = [...document.querySelectorAll('[data-v]')];
 let current = null;
@@ -261,17 +265,14 @@ function apply(id) {
   current = v;
   mesh.material?.forEach?.((m) => m.dispose());
   mesh.material = [v.front(), v.side()];
-  document.body.style.setProperty('--bg', v.bg);
   document.documentElement.style.setProperty('--panel', v.panel);
   document.documentElement.style.setProperty('--panel-ink', v.ink);
-  scene.background = new THREE.Color(v.bg);
+  scene.background = null;
   scene.environmentIntensity = v.env;
   renderer.toneMappingExposure = v.exposure;
-  rays.visible = !!v.rays;
-  if (v.rays) { rays.material.map?.dispose(); rays.material.map = raysTex(v.rays); rays.material.needsUpdate = true; }
-  bloom.strength = v.bloom;
-  shadow.visible = v.shadow > 0;
-  shadow.material.opacity = v.shadow;
+  rays.visible = showRays;
+  rays.material.map?.dispose(); rays.material.map = raysTex(v.rays || '#e8b07a'); rays.material.needsUpdate = true;
+  shadow.visible = showShadow;
   key.intensity = v.light || 2.2;
   about.innerHTML = `<b>${v.name}</b>${v.text}`;
   tabs.forEach((t) => t.setAttribute('aria-pressed', t.dataset.v === id ? 'true' : 'false'));
@@ -287,6 +288,13 @@ const bBtn = document.getElementById('breath'), sBtn = document.getElementById('
 bBtn.setAttribute('aria-pressed', String(breathe));
 bBtn.onclick = () => { breathe = !breathe; bBtn.setAttribute('aria-pressed', String(breathe)); };
 sBtn.onclick = () => { spin = !spin; sBtn.setAttribute('aria-pressed', String(spin)); };
+const shBtn = document.getElementById('shadowBtn'), rBtn = document.getElementById('raysBtn');
+shBtn.onclick = () => { showShadow = !showShadow; shadow.visible = showShadow; shBtn.setAttribute('aria-pressed', String(showShadow)); };
+rBtn.onclick = () => { showRays = !showRays; rays.visible = showRays; rBtn.setAttribute('aria-pressed', String(showRays)); };
+const bgBtns = [...document.querySelectorAll('[data-bg]')];
+function setBg(id) { document.body.dataset.bg = id; bgBtns.forEach((x) => x.setAttribute('aria-pressed', x.dataset.bg === id ? 'true' : 'false')); }
+bgBtns.forEach((x) => x.addEventListener('click', () => setBg(x.dataset.bg)));
+setBg('check');
 
 // Наклон за мышью и вращение пальцем
 let tx = 0, ty = 0, drag = null, dragY = 0, dragX = 0;
@@ -299,7 +307,7 @@ addEventListener('pointerup', () => { drag = null; });
 
 function resize() {
   const w = innerWidth, h = innerHeight;
-  renderer.setSize(w, h, false); composer.setSize(w, h); bloom.resolution.set(w, h);
+  renderer.setSize(w, h, false);
   camera.aspect = w / h;
   // на узком экране отодвигаем камеру, чтобы логотип помещался по ширине
   camera.position.z = w / h < 1 ? 9 / (w / h) * .62 : 9;
@@ -322,11 +330,10 @@ function frame() {
   logo.position.y = .12 + float * .1;
   logo.scale.setScalar(1 + b * .022);
   shadow.scale.set(1 - float * .08, 1, 1);
-  shadow.material.opacity = (current.shadow || 0) * (1 - float * .25);
+  shadow.material.opacity = .45 * (1 - float * .25);
   if (rays.visible) { rays.rotation.z = t * .03; rays.material.opacity = .45 + b * .15; rays.scale.setScalar(1 + b * .05); }
   key.position.x = 3 + Math.sin(t * .4) * 1.5;
-  bloom.strength = current.bloom * (1 + b * .2);
-  if (current.bloom > 0) composer.render(); else renderer.render(scene, camera);
+  renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 frame();
