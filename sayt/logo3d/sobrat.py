@@ -1,9 +1,10 @@
-"""Собирает страницу 3D-логотипа: вставляет logo.svg в shablon.html → index.html."""
+"""Собирает страницу 3D-логотипа: вставляет данные барельефа (relief.py) в shablon.html → index.html."""
+import json
 from pathlib import Path
-from urllib.parse import quote
 here = Path(__file__).parent
-svg = (here / 'logo.svg').read_text()
+info = (here / 'relief.json').read_text()
+svgs = {n: (here / f'{n}.svg').read_text() for n in ('kolesnica', 'liniya', 'nadpis', 'gorod')}
 html = (here / 'shablon.html').read_text()
-html = html.replace('__SVG_URI__', quote(svg)).replace('__SVG__', svg.replace('`', ''))
+html = html.replace('__INFO__', info).replace('__SVGS__', json.dumps(svgs))
 (here / 'index.html').write_text(html)
 print('index.html', len(html) // 1024, 'KB')
