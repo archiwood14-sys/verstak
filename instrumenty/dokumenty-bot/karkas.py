@@ -45,18 +45,23 @@ def est(tekst, *slova):
     return any(re.search(r'(?<![а-яa-z0-9])' + re.escape(s), tekst) for s in slova)
 
 
-def zona(imya, put):
+def zona(imya, put, razrez=None):
     """Зона: сначала папка зоны («/ 2 ГС-ДЯ /»), потом имя файла, потом остальной путь.
     Слова «по форме АГ» зону не задают — это ссылка на образец."""
     def ubrat(t):
         return re.sub(r'по\s+форме\s+\S+', ' ', t or '', flags=re.I)
+    zony = [(v['id'], v['rx']) for v in razrez['znacheniya']] if razrez else ZONY
+
+    def rx_fl(rx):   # «(?i)» в начале шаблона → флаг без учёта регистра
+        return (rx[4:], re.I) if rx.startswith('(?i)') else (rx, 0)
     papki = [ubrat(x) for x in (put or '').split(' / ')]
     for c in reversed(papki):
-        for z, rx in ZONY:
-            if re.fullmatch(r'\s*\d*\s*' + rx + r'\s*', c):
+        for z, rx in zony:
+            r, fl = rx_fl(rx)
+            if re.fullmatch(r'\s*\d*\s*(?:' + r + r')\s*', c, fl):
                 return z
     for t in [ubrat(imya)] + list(reversed(papki)):
-        naydeno = sorted((m.start(), z) for z, rx in ZONY for m in [re.search(rx, t)] if m)
+        naydeno = sorted((m.start(), z) for z, rx in zony for m in [re.search(rx_fl(rx)[0], t, rx_fl(rx)[1])] if m)
         if len(naydeno) == 1 or (naydeno and len({z for _, z in naydeno}) == 1):
             return naydeno[0][1]
     return ''
@@ -162,10 +167,10 @@ def istochnik_tekst(istochnik, otkogo, put):
     return ''
 
 
-def razmetit(f):
+def razmetit(f, razrez=None):
     """f — словарь с полями imya, put (папки), rassh, istochnik, otkogo, arhiv. Возвращает разметку каркаса."""
     tip = opredelit_tip(f['imya'], f['put'], f['rassh'])
-    z = zona(f['imya'], f['put'])
+    z = zona(f['imya'], f['put'], razrez)
     out = {'tip': tip, 'zona': z, 'semya': klyuch_semi(tip, z, f['imya']),
            'nazvanie': chistoe_imya(f['imya']), 'otkuda': istochnik_tekst(f.get('istochnik'), f.get('otkogo'), f['put'])}
     if tip == 'Договоры':

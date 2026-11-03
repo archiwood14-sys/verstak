@@ -49,7 +49,7 @@ for f, put in obkhod(ROOT, []):
     rassh = imya.rsplit('.', 1)[-1].lower() if '.' in imya else ''
     z = {'imya': imya, 'put': ' / '.join(papki), 'rassh': rassh, 'istochnik': koren.get('istochnik', 'papka'),
          'otkogo': otkogo, 'arhiv': 1 if K.eto_arhiv(chasti, imya) else 0}
-    z.update(karkas.razmetit(z))
+    z.update(karkas.razmetit(z, K.PROEKTY.get(pid, K.PROEKTY['obshchee'])[1].get('razrez')))
     z.update({'p': pid, 'd': (data_p or f.get('modifiedTime', ''))[:16], 's': int(f.get('fileSize') or 0),
               'u': f.get('viewUrl', ''), 'tema': tema,
               'v': 1 if koren.get('vnutrennee') or K.est_slovo(K.nizhniy(' / '.join(papki) + ' ' + imya), K.N.get('vnutrennee_slova', [])) else 0})
@@ -60,7 +60,8 @@ for f, put in obkhod(ROOT, []):
 karkas.skleit_pokhozhie(faily)
 karkas.vybrat_aktualnye(faily)
 karkas.popravka_dogovorov(faily)
-proekty = [{'id': p['id'], 'imya': p['imya']} for p in K.N['proekty']]
+proekty = [{'id': p['id'], 'imya': p['imya'], 'razrez': p.get('razrez', {}).get('imya', ''),
+           'znacheniya': [v['id'] for v in p.get('razrez', {}).get('znacheniya', [])]} for p in K.N['proekty']]
 json.dump({'faily': faily, 'proekty': proekty, 'tipy': karkas.TIPY}, open(sys.argv[2], 'w'), ensure_ascii=False)
 akt = sum(f['aktualno'] for f in faily)
 print(f'{len(faily)} файлов → {akt} актуальных документов')

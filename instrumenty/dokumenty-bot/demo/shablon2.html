@@ -90,7 +90,7 @@
       <div class="big" id="big"></div>
       <ol class="steps">
         <li><b>Только актуальное.</b> У каждого документа одна карточка — крайняя версия. Старые — кнопкой «История версий» или словом «архив» в запросе.</li>
-        <li><b>Договоры по зонам.</b> Олимпийский → Договоры → АГ: договор и его приложения (Смета, ТЗ, Акт). Записки к договорам — отдельной кнопкой.</li>
+        <li><b>У каждого проекта своя структура (паспорт проекта).</b> Олимпийский — по зонам (АГ, ГС-ДЯ, ЗБ, НЯ); Раздоры. Двери и Мебель — по этажам; Другие объекты — по объекту. Договор — вместе с его приложениями, записки — отдельной кнопкой.</li>
         <li><b>Новые разделы:</b> сметы отдельно от договоров; ТЗ и визуализации — в «Исходных данных заказчика»; чертежи конструктора — в одном месте; фото — в одном месте; Telegram и почта — не раздел, а подпись «откуда».</li>
         <li><b>Человеческие названия:</b> без «50891__», «Зиновьев_И_М_», дат и подчёркиваний.</li>
         <li><b>Нет документа — составим:</b> «📝 Составить документ» → 3 вопроса → задание агенту на Mac → черновик в чат на проверку.</li>
@@ -112,7 +112,8 @@ const D = JSON.parse(document.getElementById('data').textContent);
 const F = D.faily.map((f, id) => ({ ...f, id }));
 const PR = Object.fromEntries(D.proekty.map(p => [p.id, p.imya]));
 const MENU_TIPY = D.tipy.filter(t => t !== 'Переписка');
-const ZONY = ['АГ', 'ГС-ДЯ', 'ЗБ', 'НЯ'];
+const RZ = Object.fromEntries(D.proekty.map(p => [p.id, { imya: p.razrez || '', zn: p.znacheniya || [] }]));
+const zLabel = (pid, z) => z ? (RZ[pid].imya === 'Зона' ? 'Зона ' + z : z) : '';
 const semi = {};
 F.forEach(f => (semi[f.semya] = semi[f.semya] || []).push(f));
 let akt = F.filter(f => f.aktualno);
@@ -166,18 +167,18 @@ function razdely(pid) {
   const sc = {};
   akt.filter(f => f.p === pid).forEach(f => sc[f.tip] = (sc[f.tip] || 0) + 1);
   say(`<b>${esc(PR[pid])}</b> — разделы (только актуальное):`);
-  knopki([...MENU_TIPY.filter(t => sc[t]).map(t => ({ t, n: sc[t], go: () => t === 'Договоры' ? dogovory(pid) : spisok(pid, t, 0) })),
+  knopki([...MENU_TIPY.filter(t => sc[t]).map(t => ({ t, n: sc[t], go: () => t === 'Договоры' ? dogovory(pid) : razrezIliSpisok(pid, t) })),
     { t: '← Проекты', go: menu }]);
 }
 function dogovory(pid) {
   say('Договоры', true);
   const d = akt.filter(f => f.p === pid && f.tip === 'Договоры');
-  const zony = ZONY.filter(z => d.some(f => f.zona === z));
+  const zony = RZ[pid].zn.filter(z => d.some(f => f.zona === z));
   if (!zony.length) return dogovorZony(pid, '');
-  say(`<b>${esc(PR[pid])} · Договоры</b> — выберите зону:`);
+  say(`<b>${esc(PR[pid])} · Договоры</b> — выберите: ${esc(RZ[pid].imya.toLowerCase())}`);
   const bez = d.filter(f => !f.zona).length;
-  knopki([...zony.map(z => ({ t: `Зона ${z}`, n: d.filter(f => f.zona === z).length + ' док.', go: () => dogovorZony(pid, z) })),
-    ...(bez ? [{ t: 'Без зоны (общие и от заказчика)', n: bez, go: () => dogovorZony(pid, '') }] : []),
+  knopki([...zony.map(z => ({ t: zLabel(pid, z), n: d.filter(f => f.zona === z).length + ' док.', go: () => dogovorZony(pid, z) })),
+    ...(bez ? [{ t: 'Общие (без разделения)', n: bez, go: () => dogovorZony(pid, '') }] : []),
     zapiskiKnopka(pid), { t: '← Разделы', go: () => razdely(pid) }]);
 }
 function zapiskiKnopka(pid, z) {
@@ -185,16 +186,16 @@ function zapiskiKnopka(pid, z) {
   return { t: `📎 Записки к договорам`, n, go: () => zapiski(pid, z) };
 }
 function dogovorZony(pid, z) {
-  say(z ? `Зона ${z}` : 'Без зоны', true);
+  say(z ? zLabel(pid, z) : 'Общие', true);
   const d = akt.filter(f => f.p === pid && f.tip === 'Договоры' && f.zona === z);
   const dog = novye(d.filter(f => (f.rol || 'Договор') === 'Договор'));
   const pril = d.filter(f => f.rol && f.rol !== 'Договор').sort((a, b) => (a.rol || '').localeCompare(b.rol || '', 'ru', { numeric: true }));
-  say(`<b>${esc(PR[pid])} · Договор${z ? ' ' + z : 'ы без зоны'}</b>\n<span class="hint">Крайние версии. Старые — в карточке документа, «История версий».</span>`);
+  say(`<b>${esc(PR[pid])} · Договор${z ? ' — ' + esc(zLabel(pid, z)) : 'ы (общие)'}</b>\n<span class="hint">Крайние версии. Старые — в карточке документа, «История версий».</span>`);
   const rows = [];
   dog.forEach(f => rows.push({ t: `📄 ${f.nazvanie}`, n: dm(f.d), go: () => fail(f) }));
   if (pril.length) pril.forEach(f => rows.push({ t: `↳ ${f.rol}`, n: dm(f.d), sub: true, go: () => fail(f) }));
   rows.push(zapiskiKnopka(pid, z));
-  rows.push({ t: '← Зоны', go: () => dogovory(pid) });
+  rows.push({ t: '← Назад', go: () => dogovory(pid) });
   knopki(rows);
 }
 function zapiski(pid, z) {
@@ -205,12 +206,23 @@ function zapiski(pid, z) {
   knopki([...sv.slice(0, 12).map(f => ({ t: f.nazvanie, n: (f.zona ? f.zona + ' · ' : '') + dm(f.d), go: () => fail(f) })),
     { t: '← Договоры', go: () => dogovory(pid) }]);
 }
-function spisok(pid, t, s) {
-  if (!s) say(esc(t), true);
-  const vse = novye(akt.filter(f => f.p === pid && f.tip === t));
+function razrezIliSpisok(pid, t) {
+  const vse = akt.filter(f => f.p === pid && f.tip === t);
+  const zn = RZ[pid].zn.filter(z => vse.some(f => f.zona === z));
+  if (vse.length <= 8 || !zn.length) return spisok(pid, t, 0);
+  say(esc(t), true);
+  say(`<b>${esc(PR[pid])} · ${esc(t)}</b> — ${vse.length}. Выберите: ${esc(RZ[pid].imya.toLowerCase())}`);
+  const bez = vse.filter(f => !f.zona).length;
+  knopki([...zn.map(z => ({ t: zLabel(pid, z), n: vse.filter(f => f.zona === z).length, go: () => spisok(pid, t, 0, z) })),
+    ...(bez ? [{ t: 'Общие', n: bez, go: () => spisok(pid, t, 0, '') }] : []),
+    { t: 'Все подряд', n: vse.length, go: () => spisok(pid, t, 0, null) }, { t: '← Разделы', go: () => razdely(pid) }]);
+}
+function spisok(pid, t, s, z = null) {
+  if (!s) say(z === null ? esc(t) : esc(z ? zLabel(pid, z) : 'Общие'), true);
+  const vse = novye(akt.filter(f => f.p === pid && f.tip === t && (z === null || f.zona === z)));
   say(`<b>${esc(PR[pid])} · ${esc(t)}</b> — ${vse.length}${s ? `, с ${s + 1}-го` : ''}:`);
   const nav = [];
-  if (s + 8 < vse.length) nav.push({ t: 'Ещё ↓', go: () => spisok(pid, t, s + 8) });
+  if (s + 8 < vse.length) nav.push({ t: 'Ещё ↓', go: () => spisok(pid, t, s + 8, z) });
   nav.push({ t: '← Разделы', go: () => razdely(pid) });
   knopki([...vse.slice(s, s + 8).map(f => ({ t: f.nazvanie, n: (f.zona ? f.zona + ' · ' : '') + dm(f.d), go: () => fail(f) })), nav]);
 }
@@ -221,7 +233,7 @@ function fail(f) {
   const k = sem.length - sem.indexOf(f);
   say(`<div class="doc"><i>${esc((f.formaty && f.formaty.length ? f.formaty : [f.rassh]).join('+'))}</i><div>
     <b>${esc(f.nazvanie)}</b>${f.rol && f.rol !== 'Договор' ? `\n<span class="hint">${esc(f.rol)}</span>` : ''}
-    <div class="hint">${esc(PR[f.p])} · ${esc(f.tip)}${f.zona ? ' · зона ' + esc(f.zona) : ''} · ${dmy(f.d)}${f.otkuda ? ' · ' + esc(f.otkuda) : ''}</div>
+    <div class="hint">${esc(PR[f.p])} · ${esc(f.tip)}${f.zona ? ' · ' + esc(zLabel(f.p, f.zona)) : ''} · ${dmy(f.d)}${f.otkuda ? ' · ' + esc(f.otkuda) : ''}</div>
     <div class="hint">${f.aktualno ? '<span class="ok">актуальная</span>' : 'старая'} версия · ${k} из ${sem.length} · ${mb(f.s)}</div>
     <div class="path">${esc(f.put)} / ${esc(f.imya)}</div>
     ${f.s > 49 * 1048576 ? '<div class="hint">Больше 49 МБ — бот пришлёт ссылку, Telegram не пропустит файл.</div>' : ''}
