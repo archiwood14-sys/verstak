@@ -13,9 +13,17 @@ karkas.TIPY; у проектов с «разрезом» (зоны, этажи, 
 sostavitel.py запускает агента на Mac → бот раз в 30 секунд забирает ответы
 (вопросы агента или готовый черновик) и присылает их тому, кто заказал.
 
+«Одно рабочее окно»: с каждым новым запросом прежние ответы бота и само сообщение пользователя
+удаляются — в чате только текущий экран и присланный файл (кроме черновиков: они живут до кнопки
+«Готово — закрыть»). Что показано, записано в okna.json рядом с базой — переживает перезапуск.
+Файлы уходят документами; file_id Telegram запоминается по sha1 файла (telegram_faily.json),
+повторно файл отправляется по file_id без загрузки.
+
 Ключ бота лежит в отдельном файле (nastroyki.json → klyuch_bota) и никогда
 не попадает в журнал: формат журнала вырезает его из любых строк.
 """
+import contextlib
+import hashlib
 import html
 import json
 import logging
@@ -73,6 +81,9 @@ TEKST_POMOSHCH = (
     '«📝 Составить документ» — опишите, что нужно, и агент подготовит черновик.\n\n'
     '<b>Голос</b>\n'
     'Можно надиктовать запрос голосовым сообщением — я распознаю и поищу.\n\n'
+    '<b>Одно окно</b>\n'
+    'Прежние ответы я убираю — в чате всегда только текущий экран и присланный файл. '
+    'Черновик от «Составить документ» остаётся, пока не нажмёте «Готово — закрыть».\n\n'
     'Команды: /start — меню, /svezhee — свежие, /sostavit — составить документ, /pomosh — подсказка.'
 )
 TEKST_PUSTO = ('Ничего не нашёл. Попробуйте другие слова: например, '
@@ -138,8 +149,9 @@ def obnovit_nastroyki():
 
 # ---------- Telegram ----------
 
-def api(metod, files=None, zhdat=30, **par):
-    """Вызов метода Telegram. Возвращает ответ целиком ({'ok': ..., 'result': ...})."""
+def api(metod, files=None, zhdat=30, tiho=False, **par):
+    """Вызов метода Telegram. Возвращает ответ целиком ({'ok': ..., 'result': ...}).
+    tiho — неудачу не писать в журнал как предупреждение (удаление старых сообщений и т.п.)."""
     url = f'{API}/bot{KLYUCH}/{metod}'
     if files:
         data = {k: json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else str(v)
@@ -151,7 +163,7 @@ def api(metod, files=None, zhdat=30, **par):
     if not otvet.get('ok'):
         opis = otvet.get('description', '')
         if 'message is not modified' not in opis:
-            log.warning('Telegram %s: %s %s', metod, otvet.get('error_code'), opis)
+            (log.info if tiho else log.warning)('Telegram %s: %s %s', metod, otvet.get('error_code'), opis)
     return otvet
 
 
@@ -162,21 +174,11 @@ def _razmetka(knopki=None, klaviatura=None):
 
 
 def otpravit(chat, tekst, knopki=None, klaviatura=None):
+    """Просто отправить сообщение (в окно не записывается: уведомления админу, чужим)."""
     if len(tekst) > 4000:
         tekst = tekst[:4000] + '…'
     return api('sendMessage', chat_id=chat, text=tekst, parse_mode='HTML',
                disable_web_page_preview=True, reply_markup=_razmetka(knopki, klaviatura))
-
-
-def izmenit(chat, mid, tekst, knopki=None):
-    """Заменить текст и кнопки сообщения (листание меню). Не вышло — прислать новым сообщением."""
-    if mid is None:
-        return otpravit(chat, tekst, knopki)
-    otvet = api('editMessageText', chat_id=chat, message_id=mid, text=tekst, parse_mode='HTML',
-                disable_web_page_preview=True, reply_markup=_razmetka(knopki) or {'inline_keyboard': []})
-    if not otvet.get('ok') and 'message is not modified' not in otvet.get('description', ''):
-        return otpravit(chat, tekst, knopki)
-    return otvet
 
 
 def otvetit_knopke(cq, tekst=None):
@@ -186,6 +188,169 @@ def otvetit_knopke(cq, tekst=None):
         log.exception('answerCallbackQuery не прошёл')
 
 
+# ---------- «одно рабочее окно» ----------
+# В чате с ботом всегда только текущий ответ. Что бот показал в чате, записано в okna.json
+# рядом с базой: {chat: [{"id": message_id, "vid": "ekran"|"dop"|"chernovik", "fail": true?, "gruppa": ...}]}.
+#   ekran     — экран меню/списка (его правят кнопками навигации);
+#   dop       — всё остальное: присланный файл, «Распознал…», сообщения об ошибках, вопросы агента;
+#   chernovik — черновик от составителя: живёт, пока не нажмут «Готово — закрыть».
+# Новый запрос (сообщение или кнопка, показавшая новый экран): всё прежнее, кроме черновиков, удаляется;
+# входящее сообщение пользователя — тоже. Файл записан на диск, поэтому и после перезапуска бот
+# удалит то, что показывал до него.
+
+OKNA = 'okna.json'
+FAJLY_TG = 'telegram_faily.json'   # {sha1 файла: file_id в Telegram} — повторно отправляем без загрузки
+
+
+def put_ryadom(imya):
+    """Служебный файл рядом с базой каталога."""
+    return os.path.join(os.path.dirname(os.path.expanduser(NAST['baza'])) or '.', imya)
+
+
+def chitat_slovar(put):
+    try:
+        with open(put, encoding='utf-8') as fh:
+            d = json.load(fh)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def pisat_slovar(put, d):
+    """Записать целиком: во временный файл и подменить — при сбое не останется половины."""
+    os.makedirs(os.path.dirname(put) or '.', exist_ok=True)
+    with open(put + '.novyj', 'w', encoding='utf-8') as fh:
+        json.dump(d, fh, ensure_ascii=False, indent=1, sort_keys=True)
+    os.replace(put + '.novyj', put)
+
+
+def okno(chat):
+    return [e for e in chitat_slovar(put_ryadom(OKNA)).get(str(chat), []) if isinstance(e, dict) and e.get('id')]
+
+
+def sohranit_okno(chat, zapisi):
+    put = put_ryadom(OKNA)
+    d = chitat_slovar(put)
+    vidannye, chistye = set(), []
+    for e in zapisi:                 # без повторов: одно сообщение — одна запись (последняя)
+        if e['id'] in vidannye:
+            chistye = [x for x in chistye if x['id'] != e['id']]
+        vidannye.add(e['id'])
+        chistye.append(e)
+    if chistye:
+        d[str(chat)] = chistye
+    else:
+        d.pop(str(chat), None)
+    pisat_slovar(put, d)
+
+
+def zapomnit(chat, mid, vid='dop', **dop):
+    if mid:
+        sohranit_okno(chat, okno(chat) + [dict(id=mid, vid=vid, **dop)])
+
+
+def _mid(otvet):
+    return (otvet.get('result') or {}).get('message_id') if otvet.get('ok') else None
+
+
+def ubrat(chat, e):
+    """Удалить сообщение. Не вышло (старше 48 ч, уже удалено) — хотя бы стереть текст и кнопки."""
+    try:
+        if api('deleteMessage', tiho=True, chat_id=chat, message_id=e['id']).get('ok'):
+            return
+        if e.get('fail'):
+            api('editMessageCaption', tiho=True, chat_id=chat, message_id=e['id'], caption='—',
+                reply_markup={'inline_keyboard': []})
+        else:
+            api('editMessageText', tiho=True, chat_id=chat, message_id=e['id'], text='—',
+                reply_markup={'inline_keyboard': []})
+    except (requests.RequestException, ValueError) as oshibka:
+        log.info('Не удалось убрать сообщение %s: %s', e.get('id'), oshibka)
+
+
+def posledni_ekran(chat):
+    return next((e['id'] for e in reversed(okno(chat)) if e['vid'] == 'ekran'), None)
+
+
+@contextlib.contextmanager
+def zapros(chat, vhodyashchee=None):
+    """Один запрос пользователя. Внутри окно содержит только черновики; всё, что запрос покажет,
+    записывается туда. В конце прежние сообщения, которых нет в новом окне, удаляются.
+    Кнопка, которая ничего нового не показала (устарела, всплывающая подсказка), окно не трогает."""
+    staroe = okno(chat)
+    sohranit_okno(chat, [e for e in staroe if e['vid'] == 'chernovik'])
+    try:
+        yield
+    finally:
+        novoe = okno(chat)
+        if vhodyashchee is None and not any(e['vid'] != 'chernovik' for e in novoe):
+            ostavshiesya = {e['id'] for e in novoe}
+            sohranit_okno(chat, [e for e in staroe if e['vid'] != 'chernovik' or e['id'] in ostavshiesya]
+                          + novoe)
+        else:
+            ostavit = {e['id'] for e in novoe}
+            for e in staroe:
+                if e['id'] not in ostavit:
+                    ubrat(chat, e)
+            if vhodyashchee:
+                ubrat(chat, {'id': vhodyashchee})
+
+
+def pokazat(chat, tekst, knopki=None, klaviatura=None, vid='dop', **dop):
+    """Отправить сообщение и записать его в окно."""
+    otvet = otpravit(chat, tekst, knopki, klaviatura)
+    zapomnit(chat, _mid(otvet), vid, **dop)
+    return otvet
+
+
+def ekran(chat, tekst, knopki=None, mid=None, klaviatura=None):
+    """Показать экран: править сообщение mid (навигация кнопками), а нет его — прислать новым."""
+    if mid:
+        otvet = api('editMessageText', chat_id=chat, message_id=mid, text=tekst[:4000], parse_mode='HTML',
+                    disable_web_page_preview=True, reply_markup=_razmetka(knopki) or {'inline_keyboard': []})
+        if otvet.get('ok') or 'message is not modified' in otvet.get('description', ''):
+            zapomnit(chat, mid, 'ekran')
+            return otvet
+        ubrat(chat, {'id': mid})
+    return pokazat(chat, tekst, knopki, klaviatura, vid='ekran')
+
+
+def otpravit_dokument(chat, put, imya, caption, knopki=None, vid='dop', **dop):
+    """Файл документом. Уже отправляли такой же (по sha1) — по file_id, без загрузки;
+    Telegram не принял file_id — загружаем заново. Возвращает ответ Telegram."""
+    h = hesh_faila(put)
+    put_kesha = put_ryadom(FAJLY_TG)
+    kesh = chitat_slovar(put_kesha)
+    razmetka = {'inline_keyboard': knopki} if knopki else None
+    otvet = None
+    if kesh.get(h):
+        otvet = api('sendDocument', tiho=True, chat_id=chat, document=kesh[h], caption=caption,
+                    parse_mode='HTML', reply_markup=razmetka)
+        if not otvet.get('ok'):
+            log.info('file_id не принят — загружаю %s заново', imya)
+            kesh.pop(h, None)
+            pisat_slovar(put_kesha, kesh)
+            otvet = None
+    if otvet is None:
+        api('sendChatAction', chat_id=chat, action='upload_document')
+        with open(put, 'rb') as fh:
+            otvet = api('sendDocument', files={'document': (imya, fh)}, zhdat=300, chat_id=chat,
+                        caption=caption, parse_mode='HTML', reply_markup=razmetka)
+        file_id = ((otvet.get('result') or {}).get('document') or {}).get('file_id') if otvet.get('ok') else None
+        if file_id:
+            kesh = chitat_slovar(put_kesha)
+            kesh[h] = file_id
+            pisat_slovar(put_kesha, kesh)
+    zapomnit(chat, _mid(otvet), vid, fail=True, **dop)
+    return otvet
+
+
+def hesh_faila(put):
+    h = hashlib.sha1()
+    with open(put, 'rb') as fh:
+        for kusok in iter(lambda: fh.read(1 << 20), b''):
+            h.update(kusok)
+    return h.hexdigest()
 
 
 # ---------- оформление ----------
@@ -573,6 +738,7 @@ def ekran_versiy(con, fid, dostup):
         metka = '✓ ' if v.get('aktualno') else ('🗄 ' if v.get('arhiv') else '')
         tekst = f"{metka}{data_polnaya(v.get('data')) or '—'} · {korotko(v.get('imya'), 30)}"
         knopki.append([{'text': tekst, 'callback_data': f"f:{v['id']}"}])
+    knopki.append(nazad_k_proektu(f['proekt']) if f.get('proekt') else [{'text': 'К проектам', 'callback_data': 'm'}])
     return '\n'.join(stroki), knopki
 
 
@@ -602,7 +768,7 @@ def pokazat_proekty(chat, dostup):
         tekst, knopki = ekran_proektov(con, dostup)
     finally:
         con.close()
-    otpravit(chat, tekst, knopki)
+    ekran(chat, tekst, knopki)
 
 
 def svezhee(chat, dostup):
@@ -612,9 +778,9 @@ def svezhee(chat, dostup):
     finally:
         con.close()
     if not faily:
-        otpravit(chat, 'Пока нет доступных документов.')
+        ekran(chat, 'Пока нет доступных документов.')
         return
-    otpravit(chat, *spisok_faylov('<b>Свежие документы</b>', faily))
+    ekran(chat, *spisok_faylov('<b>Свежие документы</b>', faily))
 
 
 def iskat(chat, uid, tekst, dostup):
@@ -625,20 +791,18 @@ def iskat(chat, uid, tekst, dostup):
         con.close()
     if not rez:
         _POSLEDNIJ_ZAPROS[uid] = tekst
-        otpravit(chat, TEKST_PUSTO, [[{'text': KNOPKA_SOSTAVIT, 'callback_data': 'sdq'}]])
+        ekran(chat, TEKST_PUSTO, [[{'text': KNOPKA_SOSTAVIT, 'callback_data': 'sdq'}]])
         return
     zag = f'Нашёл: {len(rez)}'
     if poisk.eto_zapros_arhiva(tekst):
         zag += ' (вместе со старыми версиями)'
     tekst_s, knopki = spisok_faylov(zag, rez, s_otryvkom=True)
     knopki.append([{'text': KNOPKA_SOSTAVIT, 'callback_data': 'sd'}])
-    otpravit(chat, tekst_s, knopki)
+    ekran(chat, tekst_s, knopki)
 
 
-def podpis(f, put, vse=None):
-    """Подпись к файлу: название, проект · раздел · зона, дата, откуда, версия K из N, форматы, путь на Mac."""
-    if len(put) > 500:
-        put = '…' + put[-500:]
+def podpis(f, vse=None):
+    """Подпись к файлу: название, проект · раздел · зона, дата, откуда, версия K из N, форматы."""
     stroki = [f'<b>{esc(obrezat(nazvanie(f), 200))}</b>', esc(gde(f))]
     detali = [x for x in (data_polnaya(f.get('data')), otkuda(f)) if x]
     if detali:
@@ -647,7 +811,6 @@ def podpis(f, put, vse=None):
     versiya = f'версия {k} из {n}' + ('' if f.get('aktualno', 1) else ' (не актуальная)')
     fm = formaty(f) or f.get('rasshirenie') or ''
     stroki.append(versiya + (f' · {esc(fm.lstrip("."))}' if fm else ''))
-    stroki.append(f'<code>{esc(put)}</code>')
     return '\n'.join(stroki)
 
 
@@ -666,7 +829,7 @@ def knopki_dokumenta(f, n_versiy):
 def otpravit_fail(chat, con, fid, dostup):
     f = poisk.fail(con, fid, dostup)  # права проверяются здесь же: чужой id → None
     if not f:
-        otpravit(chat, 'Файл не найден или к нему нет доступа.')
+        pokazat(chat, 'Файл не найден или к нему нет доступа.')
         return
     vse = poisk.versii(con, f['semya'], dostup) if f.get('semya') else [f]
     put = f['put']
@@ -674,38 +837,35 @@ def otpravit_fail(chat, con, fid, dostup):
         # основной файл пропал — может, жива копия с тем же содержимым
         put = next((k for k in poisk.kopii(con, fid) if os.path.isfile(k)), put)
     if not os.path.isfile(put):
-        otpravit(chat, f"<b>{esc(nazvanie(f))}</b>\nФайл не найден на диске — возможно, его переместили "
+        pokazat(chat, f"<b>{esc(nazvanie(f))}</b>\nФайл не найден на диске — возможно, его переместили "
                        f"или удалили. Где он был:\n<code>{esc(f['put'])}</code>", knopki_dokumenta(f, len(vse)))
         return
     razmer = os.path.getsize(put)
     if razmer > MAKS_RAZMER:
-        otpravit(chat, f"<b>{esc(nazvanie(f))}</b>\nФайл большой ({razmer_mb(razmer)}) — в Telegram "
+        pokazat(chat, f"<b>{esc(nazvanie(f))}</b>\nФайл большой ({razmer_mb(razmer)}) — в Telegram "
                        f"его не отправить. Он лежит на Mac:\n<code>{esc(put)}</code>", knopki_dokumenta(f, len(vse)))
         return
-    api('sendChatAction', chat_id=chat, action='upload_document')
-    with open(put, 'rb') as fh:
-        otvet = api('sendDocument', files={'document': (f['imya'], fh)}, zhdat=300,
-                    chat_id=chat, caption=podpis(f, put, vse), parse_mode='HTML',
-                    reply_markup={'inline_keyboard': knopki_dokumenta(f, len(vse))})
+    otvet = otpravit_dokument(chat, put, f['imya'], podpis(f, vse), knopki_dokumenta(f, len(vse)))
     if otvet.get('ok'):
         log.info('Отправлен файл %s → %s', fid, chat)
     else:
-        otpravit(chat, f"Не получилось отправить файл. Он лежит на Mac:\n<code>{esc(put)}</code>")
+        pokazat(chat, f"Не получилось отправить файл. Он лежит на Mac:\n<code>{esc(put)}</code>")
 
 
-def reshit_aktualnost(chat, con, fid, reshenie, dostup, p):
+def reshit_aktualnost(chat, con, fid, reshenie, dostup, p, mid=None):
     f = poisk.otmetit_vruchnuyu(con, NAST, fid, reshenie, dostup)
     if not f:
-        otpravit(chat, 'Файл не найден или к нему нет доступа.')
+        ekran(chat, 'Файл не найден или к нему нет доступа.', mid=mid)
         return
     log.info('%s: %s → %s (%s)', p.get('imya'), f['put'], reshenie, f.get('semya'))
+    nazad = nazad_k_proektu(f['proekt']) if f.get('proekt') else [{'text': 'К проектам', 'callback_data': 'm'}]
     if reshenie == 'aktualno':
-        otpravit(chat, f'✅ «{esc(nazvanie(f))}» — теперь актуальная версия. '
-                       'В меню и поиске показывается она, остальные — в истории.')
+        ekran(chat, f'✅ «{esc(nazvanie(f))}» — теперь актуальная версия. '
+                       'В меню и поиске показывается она, остальные — в истории.', [nazad], mid=mid)
     else:
-        otpravit(chat, f'🗄 «{esc(nazvanie(f))}» убран в историю: в меню и поиске его больше нет. '
+        ekran(chat, f'🗄 «{esc(nazvanie(f))}» убран в историю: в меню и поиске его больше нет. '
                        'Найти можно поиском со словом «архив» или через «История версий».',
-                 [[{'text': '✅ Вернуть', 'callback_data': f"a:{f['id']}"}]])
+                 [[{'text': '✅ Вернуть', 'callback_data': f"a:{f['id']}"}], nazad], mid=mid)
 
 
 # ---------- «Составить документ» ----------
@@ -725,13 +885,13 @@ def nachat_sostavlenie(chat, uid, chto=None, mid=None):
         _DIALOGI[uid] = {'shag': 'chto'}
         tekst = ('📝 <b>Составить документ</b>\nЧто за документ нужен? Напишите или надиктуйте одним '
                  'сообщением, например: «письмо Зверевой о переносе монтажа АГ на неделю».')
-        return izmenit(chat, mid, tekst, [otmena()]) if mid else otpravit(chat, tekst, [otmena()])
+        return ekran(chat, tekst, [otmena()], mid)
     _DIALOGI[uid] = {'shag': 'proekt', 'chto': chto[:1000]}
     knopki = [[{'text': p['imya'], 'callback_data': f"sp:{p['id']}"}] for p in dostupnye_proekty(
         _dostup_po_uid(uid))]
     knopki.append(otmena())
     tekst = f'📝 Составлю: «{esc(chto)}»\nПо какому проекту?'
-    return izmenit(chat, mid, tekst, knopki) if mid else otpravit(chat, tekst, knopki)
+    return ekran(chat, tekst, knopki, mid)
 
 
 def _dostup_po_uid(uid):
@@ -746,7 +906,7 @@ def shag_proekt(chat, uid, mid, pid):
     d.update(shag='dlya', proekt=pid)
     knopki = [[{'text': t, 'callback_data': f'sk:{k}'} for k, t in DLYA[:2]],
               [{'text': t, 'callback_data': f'sk:{k}'} for k, t in DLYA[2:]], otmena()]
-    izmenit(chat, mid, f"📝 «{esc(d['chto'])}» · {esc(imya_proekta({'proekt': pid}))}\nДля кого или куда?", knopki)
+    ekran(chat, f"📝 «{esc(d['chto'])}» · {esc(imya_proekta({'proekt': pid}))}\nДля кого или куда?", knopki, mid)
     return True
 
 
@@ -756,8 +916,8 @@ def shag_dlya(chat, uid, mid, kod):
         return False
     d.update(shag='srok', dlya=dict(DLYA)[kod])
     knopki = [[{'text': t, 'callback_data': f'ss:{k}'} for k, t in SROKI], otmena()]
-    izmenit(chat, mid, f"📝 «{esc(d['chto'])}» · {esc(imya_proekta({'proekt': d['proekt']}))} · "
-                       f"{esc(d['dlya'].lower())}\nК какому сроку?", knopki)
+    ekran(chat, f"📝 «{esc(d['chto'])}» · {esc(imya_proekta({'proekt': d['proekt']}))} · "
+                f"{esc(d['dlya'].lower())}\nК какому сроку?", knopki, mid)
     return True
 
 
@@ -808,7 +968,7 @@ def shag_srok(chat, uid, mid, kod, p, dostup):
     else:
         stroki.append('\nПохожих документов-основ не нашёл — агент поищет в каталоге сам.')
     stroki.append('\nОтправляю задание агенту — пришлю черновик сюда.')
-    izmenit(chat, mid, '\n'.join(stroki), [[knopka_faila(f, n)] for n, f in enumerate(osnovy, 1)] or None)
+    ekran(chat, '\n'.join(stroki), [[knopka_faila(f, n)] for n, f in enumerate(osnovy, 1)] or None, mid)
     return True
 
 
@@ -820,11 +980,11 @@ def otvet_na_voprosy(chat, uid, zid, tekst):
         z['status'] = 'novaya'
     z = sostavitel.najti_zayavku(put_ocheredi(), zid)
     if not z or str((z.get('kto') or {}).get('telegram_id')) != str(uid):
-        otpravit(chat, 'Заявка не найдена.')
+        ekran(chat, 'Заявка не найдена.')
         return
     sostavitel.izmenit(put_ocheredi(), zid, dopisat)
     log.info('Ответ на вопросы по заявке %s', zid)
-    otpravit(chat, 'Передал ответ агенту — пришлю черновик сюда.')
+    ekran(chat, 'Передал ответ агенту — пришлю черновик сюда.')
 
 
 # ---------- ответы составителя ----------
@@ -884,13 +1044,13 @@ def dostavit_otvet(o):
         voprosy = '\n'.join(f'{n}. {esc(v)}' for n, v in enumerate(o.get('voprosy') or [], 1))
         if uid:
             _DIALOGI[uid] = {'shag': 'otvet', 'zayavka': o['id']}
-        otpravit(chat, f'❓ По заявке «{chto}» агенту не хватает данных:\n{voprosy}\n\n'
+        pokazat(chat, f'❓ По заявке «{chto}» агенту не хватает данных:\n{voprosy}\n\n'
                        'Ответьте одним сообщением (текстом или голосом) — передам ответ, и агент продолжит.',
                  [[{'text': 'Ответить', 'callback_data': f"so:{o['id']}"}]])
     elif status == 'gotovo':
         otpravit_chernovik(chat, o, chto)
     elif status == 'oshibka':
-        otpravit(chat, f"Не получилось составить черновик по заявке «{chto}»: {esc(o.get('oshibka') or 'ошибка')}. "
+        pokazat(chat, f"Не получилось составить черновик по заявке «{chto}»: {esc(o.get('oshibka') or 'ошибка')}. "
                        'Попробуйте ещё раз или напишите Мансуру.')
 
 
@@ -899,25 +1059,38 @@ def otpravit_chernovik(chat, o, chto):
     chernoviki = os.path.expanduser(sostavitel.nastroyki_sostavitelya(NAST)['chernoviki'])
     istochniki = ', '.join(os.path.basename(str(x).rstrip('/')) for x in o.get('istochniki') or []) or 'не указаны'
     if not (put and os.path.isfile(put) and sostavitel.v_papke(put, chernoviki)):
-        otpravit(chat, f'Черновик по заявке «{chto}» готов, но файл не нашёлся в папке черновиков:\n'
+        pokazat(chat, f'Черновик по заявке «{chto}» готов, но файл не нашёлся в папке черновиков:\n'
                        f'<code>{esc(put)}</code>')
         return
     if os.path.getsize(put) > MAKS_RAZMER:
-        otpravit(chat, f'Черновик по заявке «{chto}» большой — лежит на Mac:\n<code>{esc(put)}</code>')
+        pokazat(chat, f'Черновик по заявке «{chto}» большой — лежит на Mac:\n<code>{esc(put)}</code>')
         return
     podp = korotko(TEKST_CHERNOVIK + istochniki, 900)
-    with open(put, 'rb') as fh:
-        otvet = api('sendDocument', files={'document': (os.path.basename(put), fh)}, zhdat=300,
-                    chat_id=chat, caption=esc(podp), parse_mode='HTML')
-    if not otvet.get('ok'):
-        otpravit(chat, f'Черновик готов, но не отправился. Он лежит на Mac:\n<code>{esc(put)}</code>')
-        return
-    log.info('Черновик %s → %s', put, chat)
+    gruppa = str(o.get('id') or '')[:40]
+    zakryt = [[{'text': '✅ Готово — закрыть', 'callback_data': f'cz:{gruppa}'}]]
     dop = [f'<b>Что изменено:</b> {esc(o["chto_izmeneno"])}' if o.get('chto_izmeneno') else '',
            f'<b>Проверки:</b> {esc(o["proverki"])}' if o.get('proverki') else '']
     dop = '\n'.join(x for x in dop if x)
+    # черновик не удаляется новыми запросами, пока не нажмут «Готово — закрыть» (кнопка под последним)
+    otvet = otpravit_dokument(chat, put, os.path.basename(put), esc(podp), None if dop else zakryt,
+                              vid='chernovik', gruppa=gruppa)
+    if not otvet.get('ok'):
+        pokazat(chat, f'Черновик готов, но не отправился. Он лежит на Mac:\n<code>{esc(put)}</code>')
+        return
+    log.info('Черновик %s → %s', put, chat)
     if dop:
-        otpravit(chat, dop)
+        pokazat(chat, dop, zakryt, vid='chernovik', gruppa=gruppa)
+
+
+def zakryt_chernovik(chat, gruppa, mid):
+    """«Готово — закрыть»: убрать черновик и пояснение к нему из окна и из чата."""
+    zapisi = okno(chat)
+    ubrat_ih = [e for e in zapisi if e['vid'] == 'chernovik' and (e.get('gruppa') == gruppa or e['id'] == mid)]
+    if mid and mid not in {e['id'] for e in ubrat_ih}:
+        ubrat_ih.append({'id': mid})
+    sohranit_okno(chat, [e for e in zapisi if e not in ubrat_ih])
+    for e in ubrat_ih:
+        ubrat(chat, e)
 
 
 # ---------- голос ----------
@@ -942,17 +1115,17 @@ def raspoznat(put):
 def golos(chat, msg, p, dostup):
     v = msg.get('voice') or msg.get('audio')
     if (v.get('duration') or 0) > MAKS_GOLOS_SEK:
-        otpravit(chat, 'Слишком длинное сообщение. Скажите запрос коротко — до трёх минут.')
+        ekran(chat, 'Слишком длинное сообщение. Скажите запрос коротко — до трёх минут.')
         return
     try:
         model_golosa()
     except ImportError:
-        otpravit(chat, 'Голосовой поиск пока недоступен. Напишите, пожалуйста, словами.')
+        ekran(chat, 'Голосовой поиск пока недоступен. Напишите, пожалуйста, словами.')
         return
     api('sendChatAction', chat_id=chat, action='typing')
     info = api('getFile', file_id=v['file_id'])
     if not info.get('ok') or not info['result'].get('file_path'):
-        otpravit(chat, 'Не получилось скачать голосовое. Попробуйте ещё раз или напишите словами.')
+        ekran(chat, 'Не получилось скачать голосовое. Попробуйте ещё раз или напишите словами.')
         return
     put_tg = info['result']['file_path']
     r = requests.get(f'{API}/file/bot{KLYUCH}/{put_tg}', timeout=120)
@@ -965,10 +1138,10 @@ def golos(chat, msg, p, dostup):
     finally:
         os.unlink(t.name)
     if not tekst:
-        otpravit(chat, 'Не разобрал слов. Попробуйте ещё раз или напишите словами.')
+        ekran(chat, 'Не разобрал слов. Попробуйте ещё раз или напишите словами.')
         return
     log.info('Голос распознан: %s', tekst)
-    otpravit(chat, f'Распознал: «{esc(tekst)}»')
+    pokazat(chat, f'Распознал: «{esc(tekst)}»')
     obychnyj_tekst(chat, (msg.get('from') or {}).get('id'), p, tekst, dostup)
 
 
@@ -997,6 +1170,11 @@ def soobshchenie(msg):
     if not p:
         chuzhoj(chat, kto)
         return
+    with zapros(chat, msg.get('message_id')):   # прежние ответы и само сообщение уберутся
+        _soobshchenie(chat, msg, kto, p)
+
+
+def _soobshchenie(chat, msg, kto, p):
     uid = kto.get('id')
     dostup = dostup_polzovatelya(p)
     tekst = (msg.get('text') or '').strip()
@@ -1005,7 +1183,7 @@ def soobshchenie(msg):
         golos(chat, msg, p, dostup)
         return
     if not tekst:
-        otpravit(chat, 'Я понимаю текст и голосовые. Напишите, что найти, или нажмите «Проекты».')
+        ekran(chat, 'Я понимаю текст и голосовые. Напишите, что найти, или нажмите «Проекты».')
         return
     if tekst.startswith('/') or tekst in KNOPKI_KLAVIATURY:
         _DIALOGI.pop(uid, None)   # команда или кнопка клавиатуры прерывает диалог
@@ -1013,25 +1191,25 @@ def soobshchenie(msg):
         komanda = tekst.split()[0].split('@')[0].lower()
         if komanda == '/start':
             imya = p.get('imya', '').split(' (')[0]
-            otpravit(chat, f'Здравствуйте, {esc(imya)}! Это «АРХИВУД Документы».\n'
-                           'Напишите, что найти, или выберите проект. Подсказка — /pomosh.',
-                     klaviatura=KLAVIATURA)
+            pokazat(chat, f'Здравствуйте, {esc(imya)}! Это «АРХИВУД Документы».\n'
+                          'Напишите, что найти, или выберите проект. Подсказка — /pomosh.',
+                    klaviatura=KLAVIATURA)
             pokazat_proekty(chat, dostup)
         elif komanda in ('/pomosh', '/help'):
-            otpravit(chat, TEKST_POMOSHCH, klaviatura=KLAVIATURA)
+            ekran(chat, TEKST_POMOSHCH, klaviatura=KLAVIATURA)
         elif komanda == '/svezhee':
             svezhee(chat, dostup)
         elif komanda == '/sostavit':
             nachat_sostavlenie(chat, uid)
         else:
-            otpravit(chat, 'Не знаю такой команды. Есть /start, /svezhee, /sostavit и /pomosh.')
+            ekran(chat, 'Не знаю такой команды. Есть /start, /svezhee, /sostavit и /pomosh.')
         return
     if tekst == 'Проекты':
         pokazat_proekty(chat, dostup)
     elif tekst == 'Свежее':
         svezhee(chat, dostup)
     elif tekst == 'Помощь':
-        otpravit(chat, TEKST_POMOSHCH)
+        ekran(chat, TEKST_POMOSHCH)
     elif tekst == KNOPKA_SOSTAVIT:
         nachat_sostavlenie(chat, uid)
     else:
@@ -1043,7 +1221,7 @@ def knopka_sostavleniya(cq, chat, mid, uid, p, dostup, chasti):
     k = chasti[0]
     if k == 'sd':
         otvetit_knopke(cq)
-        nachat_sostavlenie(chat, uid)
+        nachat_sostavlenie(chat, uid, mid=mid)
         return True
     if k == 'sdq':
         otvetit_knopke(cq)
@@ -1052,12 +1230,11 @@ def knopka_sostavleniya(cq, chat, mid, uid, p, dostup, chasti):
     if k == 'sx':
         _DIALOGI.pop(uid, None)
         otvetit_knopke(cq, 'Отменено')
-        izmenit(chat, mid, 'Хорошо, не составляю.')
+        ekran(chat, 'Хорошо, не составляю. Напишите, что найти, или нажмите «Проекты».', mid=mid)
         return True
     if k == 'so' and len(chasti) == 2:
-        otvetit_knopke(cq)
+        otvetit_knopke(cq, 'Напишите ответ одним сообщением (или голосом).')
         _DIALOGI[uid] = {'shag': 'otvet', 'zayavka': chasti[1]}
-        otpravit(chat, 'Напишите ответ одним сообщением (или голосом).')
         return True
     if len(chasti) == 2 and k in ('sp', 'sk', 'ss'):
         if k == 'sp':
@@ -1085,9 +1262,20 @@ def knopka(cq):
         otvetit_knopke(cq, 'Нет доступа')
         chuzhoj(chat, kto)
         return
+    chasti = (cq.get('data') or '').split(':')
+    if chasti[0] == 'cz' and len(chasti) == 2:   # «Готово — закрыть» под черновиком
+        otvetit_knopke(cq, 'Закрыто')
+        zakryt_chernovik(chat, chasti[1], mid)
+        return
+    # экран, который правим: нажатое текстовое сообщение; под файлом (документом) — экран окна
+    mid_ekrana = mid if 'document' not in msg else posledni_ekran(chat)
+    with zapros(chat):
+        _knopka(cq, chat, mid_ekrana, kto, p, chasti)
+
+
+def _knopka(cq, chat, mid, kto, p, chasti):
     uid = kto.get('id')
     dostup = dostup_polzovatelya(p)
-    chasti = (cq.get('data') or '').split(':')
     if knopka_sostavleniya(cq, chat, mid, uid, p, dostup, chasti):
         return
     k, n = chasti[0], len(chasti)
@@ -1106,16 +1294,15 @@ def knopka(cq):
         elif k == 'zp' and n == 3:
             tekst, knopki = ekran_zapisok(con, chasti[1], chasti[2], dostup)
         elif k == 'v' and n == 2 and chislo(chasti[1]):
-            otvetit_knopke(cq)
-            otpravit(chat, *ekran_versiy(con, int(chasti[1]), dostup))   # новым сообщением: под файлом не править
-            return
+            tekst, knopki = ekran_versiy(con, int(chasti[1]), dostup)
         elif k == 'f' and n == 2 and chislo(chasti[1]):
             otvetit_knopke(cq, 'Отправляю…')
+            zapomnit(chat, mid, 'ekran')   # экран остаётся, прежний файл под ним заменится новым
             otpravit_fail(chat, con, int(chasti[1]), dostup)
             return
         elif k in ('a', 'h') and n == 2 and chislo(chasti[1]):
             otvetit_knopke(cq)
-            reshit_aktualnost(chat, con, int(chasti[1]), 'aktualno' if k == 'a' else 'istoriya', dostup, p)
+            reshit_aktualnost(chat, con, int(chasti[1]), 'aktualno' if k == 'a' else 'istoriya', dostup, p, mid)
             return
         else:
             otvetit_knopke(cq, TEKST_USTARELA)
@@ -1123,7 +1310,7 @@ def knopka(cq):
     finally:
         con.close()
     otvetit_knopke(cq)
-    izmenit(chat, mid, tekst, knopki)
+    ekran(chat, tekst, knopki, mid)
 
 
 def _chat_obnovleniya(upd):
@@ -1152,7 +1339,7 @@ def obrabotat(upd):
                 otvetit_knopke(upd['callback_query'])
             chat = _chat_obnovleniya(upd)
             if chat:
-                otpravit(chat, tekst)
+                pokazat(chat, tekst)
         except Exception:
             log.exception('Не удалось сообщить об ошибке')
 

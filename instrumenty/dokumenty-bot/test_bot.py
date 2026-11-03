@@ -34,6 +34,9 @@ class FalshivyjTelegram:
     """Вместо requests.post: запоминает вызовы и отвечает «ok»."""
     def __init__(self):
         self.vyzovy = []
+        self.nomer = 1000           # message_id новых сообщений: 1001, 1002, …
+        self.ne_udalyat = set()     # эти сообщения deleteMessage не удаляет («старше 48 часов»)
+        self.plohie_file_id = set()  # эти file_id Telegram «не принимает»
 
     def post(self, url, json=None, data=None, files=None, timeout=None):
         metod = url.rsplit('/', 1)[1]
@@ -41,10 +44,27 @@ class FalshivyjTelegram:
         if files:
             par['_fail'] = files['document'][0]
         self.vyzovy.append((metod, par))
-        result = {'message_id': 1}
-        if metod == 'getFile':
+        result = {}
+        if metod in ('sendMessage', 'sendDocument'):
+            if metod == 'sendDocument' and not files and par.get('document') in self.plohie_file_id:
+                return mock.Mock(json=lambda: {'ok': False, 'error_code': 400,
+                                               'description': 'Bad Request: wrong file identifier'})
+            self.nomer += 1
+            result = {'message_id': self.nomer}
+            if metod == 'sendDocument':
+                result['document'] = {'file_id': f'FID-{self.nomer}' if files else par['document']}
+        elif metod == 'editMessageText':
+            result = {'message_id': par['message_id']}
+        elif metod == 'deleteMessage' and par['message_id'] in self.ne_udalyat:
+            return mock.Mock(json=lambda: {'ok': False, 'error_code': 400,
+                                           'description': "Bad Request: message can't be deleted"})
+        elif metod == 'getFile':
             result = {'file_path': 'voice/file_1.oga'}
         return mock.Mock(json=lambda: {'ok': True, 'result': result})
+
+    def udaleno(self, chat=None):
+        return [p['message_id'] for m, p in self.vyzovy
+                if m == 'deleteMessage' and (chat is None or p['chat_id'] == chat)]
 
     def get(self, url, timeout=None):
         self.vyzovy.append(('skachat', {}))
@@ -195,10 +215,12 @@ class OsnovaTesta(unittest.TestCase):
             'message_id': 10, 'chat': {'id': kto}, 'text': tekst,
             'from': {'id': kto, 'first_name': imya, 'username': username}}})
 
-    def nazhat(self, kto, data):
+    def nazhat(self, kto, data, mid=77, dokument=False):
+        msg = {'message_id': mid, 'chat': {'id': kto}}
+        if dokument:
+            msg['document'] = {'file_id': 'x'}
         bot.obrabotat({'update_id': 2, 'callback_query': {
-            'id': 'cq1', 'data': data, 'from': {'id': kto, 'first_name': 'Тест'},
-            'message': {'message_id': 77, 'chat': {'id': kto}}}})
+            'id': 'cq1', 'data': data, 'from': {'id': kto, 'first_name': 'Тест'}, 'message': msg}})
 
     def f(self, *klyuchi):
         return [f'f:{self.id[k]}' for k in klyuchi]
@@ -321,12 +343,13 @@ class TestBot(OsnovaTesta):
 
     def test_istoriya_versiy(self):
         self.nazhat(MANSUR, f"v:{self.id['dog_ag']}")
-        self.assertEqual(self.tg.metody(), ['answerCallbackQuery', 'sendMessage'])   # новым сообщением
+        self.assertEqual(self.tg.metody(), ['answerCallbackQuery', 'editMessageText'])   # тот же экран
         self.assertIn('История версий: Договор АГ ред3', self.tg.soobshcheniya()[-1])
         self.assertEqual(para(self.tg.poslednie_knopki()), [
             ('✓ 20.10.2026 · Договор АГ ред3.docx', self.f('dog_ag')[0]),
             ('01.10.2026 · Договор АГ ред2.docx', self.f('dog_ag_v2')[0]),
-            ('01.09.2026 · Договор АГ.docx', self.f('dog_ag_v1')[0])])
+            ('01.09.2026 · Договор АГ.docx', self.f('dog_ag_v1')[0]),
+            ('Назад', 'p:olimp')])
         # старая версия приходит с пометкой и кнопкой «Сделать актуальной»
         self.tg.vyzovy.clear()
         self.nazhat(MANSUR, self.f('dog_ag_v1')[0])
@@ -474,7 +497,7 @@ class TestBot(OsnovaTesta):
         self.assertIn('Раздоры. Мебель · Чертежи конструктора', podpis)
         self.assertIn('28.10.2026 · из Telegram: Нелли', podpis)
         self.assertIn('версия 1 из 1', podpis)
-        self.assertIn('<code>' + self.tmp.name, podpis)
+        self.assertNotIn(self.tmp.name, podpis)   # путь на Mac в подписи не показываем
         self.assertEqual(para(self.tg.knopki_dokumenta()), [('🗄 Убрать в историю', f"h:{self.id['prihozhaya']}")])
 
     def test_podpis_dogovora(self):
@@ -799,6 +822,175 @@ class TestSostavit(OsnovaTesta):
                 bot.proverit_otvety()
         self.tg.vyzovy.clear()
         self.assertEqual(bot.proverit_otvety(), 1)   # доставлен со второго раза
+
+
+class TestOkno(OsnovaTesta):
+    """«Одно рабочее окно»: в чате только текущий ответ; файлы — из кэша file_id."""
+
+    def okno(self, kto=MANSUR):
+        return [(e['id'], e['vid']) for e in bot.okno(kto)]
+
+    def test_novyj_zapros_udalyaet_proshlye(self):
+        self.napisat(MANSUR, '/start')                 # 1001 — приветствие, 1002 — проекты
+        self.assertEqual(self.okno(), [(1001, 'dop'), (1002, 'ekran')])
+        self.tg.vyzovy.clear()
+        self.napisat(MANSUR, 'договор АГ')
+        self.assertEqual(sorted(self.tg.udaleno(MANSUR)), [10, 1001, 1002])
+        # сначала новый ответ, потом уборка — чат не мигает пустым
+        self.assertEqual(self.tg.metody()[0], 'sendMessage')
+        self.assertEqual(self.okno(), [(1003, 'ekran')])
+
+    def test_vhodyashchee_soobshchenie_udalyaetsya(self):
+        self.napisat(MANSUR, 'Проекты')
+        self.assertEqual(self.tg.udaleno(MANSUR), [10])
+        fw, _ = TestBot.podmenit_golos(self, 'чертёж прихожей')
+        self.tg.vyzovy.clear()
+        with mock.patch.dict(sys.modules, {'faster_whisper': fw}):
+            TestBot.golosovoe(self)                     # голосовое тоже убирается
+        self.assertEqual(sorted(self.tg.udaleno(MANSUR)), [11, 1001])
+        self.assertEqual(self.okno(), [(1002, 'dop'), (1003, 'ekran')])   # «Распознал…» и результаты
+
+    def test_navigaciya_pravit_ekran_a_fail_ubiraet(self):
+        self.napisat(MANSUR, 'Проекты')                 # экран 1001
+        self.tg.vyzovy.clear()
+        self.nazhat(MANSUR, 'p:olimp', mid=1001)
+        self.assertEqual(self.tg.metody(), ['answerCallbackQuery', 'editMessageText'])
+        self.nazhat(MANSUR, 'z:olimp:0', mid=1001)
+        self.tg.vyzovy.clear()
+        self.nazhat(MANSUR, self.f('dog_ag')[0], mid=1001)    # файл 1002 под экраном
+        self.assertEqual(self.tg.udaleno(), [])
+        self.assertEqual(self.okno(), [(1001, 'ekran'), (1002, 'dop')])
+        self.nazhat(MANSUR, self.f('pril1_ag')[0], mid=1001)  # другой файл — прежний убирается
+        self.assertEqual(self.tg.udaleno(), [1002])
+        self.assertEqual(self.okno(), [(1001, 'ekran'), (1003, 'dop')])
+        self.tg.vyzovy.clear()
+        self.nazhat(MANSUR, 't:olimp:0', mid=1001)            # «Назад» — файл убран, экран тот же
+        self.assertEqual(self.tg.udaleno(), [1003])
+        self.assertIn(('editMessageText', 1001), [(m, p.get('message_id')) for m, p in self.tg.vyzovy])
+        self.assertEqual(self.okno(), [(1001, 'ekran')])
+
+    def test_knopka_pod_failom_pravit_ekran_okna(self):
+        self.napisat(MANSUR, 'договор АГ')              # экран 1001
+        self.nazhat(MANSUR, self.f('dog_ag')[0], mid=1001)     # файл 1002
+        self.tg.vyzovy.clear()
+        self.nazhat(MANSUR, f"v:{self.id['dog_ag']}", mid=1002, dokument=True)   # «История версий» под файлом
+        pravki = [p['message_id'] for m, p in self.tg.vyzovy if m == 'editMessageText']
+        self.assertEqual(pravki, [1001])                 # документ не правится — правится экран
+        self.assertEqual(self.tg.udaleno(), [1002])
+        self.assertEqual(self.okno(), [(1001, 'ekran')])
+
+    def test_ustarevshaya_knopka_okno_ne_trogaet(self):
+        self.napisat(MANSUR, 'Проекты')
+        self.tg.vyzovy.clear()
+        self.nazhat(MANSUR, 'x:chto-to', mid=1001)
+        self.assertEqual(self.tg.udaleno(), [])
+        self.assertEqual(self.okno(), [(1001, 'ekran')])
+
+    def test_okno_posle_perezapuska(self):
+        """Окно лежит в okna.json рядом с базой: после перезапуска бот убирает прежние сообщения.
+        Не удаляется (старше 48 ч) — стирает текст, у файла — подпись."""
+        put = os.path.join(self.tmp.name, 'okna.json')
+        with open(put, 'w', encoding='utf-8') as fh:
+            json.dump({str(MANSUR): [{'id': 500, 'vid': 'ekran'}, {'id': 501, 'vid': 'dop', 'fail': True},
+                                     {'id': 502, 'vid': 'dop'}]}, fh)
+        self.tg.ne_udalyat = {501, 502}
+        nast = bot.NAST
+        importlib.reload(bot)                            # «перезапуск»: в памяти бота ничего нет
+        bot.KLYUCH, bot.NAST = KLYUCH, nast
+        self.napisat(MANSUR, 'Свежее')
+        self.assertEqual(sorted(self.tg.udaleno(MANSUR)), [10, 500, 501, 502])
+        self.assertIn(('editMessageCaption', 501), [(m, p.get('message_id')) for m, p in self.tg.vyzovy])
+        stert = [p for m, p in self.tg.vyzovy if m == 'editMessageText' and p['message_id'] == 502]
+        self.assertEqual(stert[0]['reply_markup'], {'inline_keyboard': []})
+        self.assertEqual(chitat_json(put), {str(MANSUR): [{'id': 1001, 'vid': 'ekran'}]})
+        self.assertFalse(os.path.exists(put + '.novyj'))   # запись атомарная, временный файл подменён
+
+    def test_kesh_file_id(self):
+        self.nazhat(MANSUR, self.f('prihozhaya')[0])
+        dok = self.tg.dokumenty()
+        self.assertEqual(dok[0]['_fail'], 'Чертёж прихожей.pdf')     # первый раз — загрузка
+        kesh = chitat_json(os.path.join(self.tmp.name, 'telegram_faily.json'))
+        self.assertEqual(kesh, {bot.hesh_faila(self.put['prihozhaya']): 'FID-1001'})
+        self.tg.vyzovy.clear()
+        self.nazhat(YULIYA, self.f('prihozhaya')[0])                 # второй раз (и другому) — по file_id
+        dok = self.tg.dokumenty()
+        self.assertEqual(len(dok), 1)
+        self.assertNotIn('_fail', dok[0])
+        self.assertEqual(dok[0]['document'], 'FID-1001')
+        self.assertIn('версия 1 из 1', dok[0]['caption'])
+        self.assertNotIn('sendChatAction', self.tg.metody())
+        # файл на диске изменился — другой хэш, загружаем заново
+        with open(self.put['prihozhaya'], 'wb') as fh:
+            fh.write(b'new')
+        self.tg.vyzovy.clear()
+        self.nazhat(YULIYA, self.f('prihozhaya')[0])
+        self.assertEqual(self.tg.dokumenty()[0]['_fail'], 'Чертёж прихожей.pdf')
+
+    def test_kesh_file_id_otkat_pri_oshibke(self):
+        put_kesha = os.path.join(self.tmp.name, 'telegram_faily.json')
+        h = bot.hesh_faila(self.put['prihozhaya'])
+        with open(put_kesha, 'w', encoding='utf-8') as fh:
+            json.dump({h: 'STARYJ'}, fh)
+        self.tg.plohie_file_id = {'STARYJ'}
+        self.nazhat(MANSUR, self.f('prihozhaya')[0])
+        dok = self.tg.dokumenty()
+        self.assertEqual([d.get('document') for d in dok], ['STARYJ', None])   # сначала file_id, потом загрузка
+        self.assertEqual(dok[1]['_fail'], 'Чертёж прихожей.pdf')
+        self.assertEqual(chitat_json(put_kesha), {h: 'FID-1001'})
+        self.assertEqual(self.okno(), [(77, 'ekran'), (1001, 'dop')])
+        self.assertNotIn('Не получилось', ' '.join(self.tg.soobshcheniya()))
+
+    def test_uvedomlenie_adminu_ne_v_okne(self):
+        self.napisat(MANSUR, 'Проекты')                  # экран 1001
+        with self.assertLogs('dokumenty', 'WARNING'):
+            self.napisat(CHUZHOJ, 'привет')               # 1002 — чужому, 1003 — уведомление админу
+        self.assertEqual(self.okno(), [(1001, 'ekran')])
+        self.tg.vyzovy.clear()
+        self.napisat(MANSUR, 'Свежее')
+        self.assertNotIn(1003, self.tg.udaleno())
+
+
+class TestChernovikVOkne(OsnovaTesta):
+    """Черновик в окне: не удаляется новыми запросами, пока не нажмут «Готово — закрыть»."""
+    zayavki, sostavit, otvet_sostavitelya = TestSostavit.zayavki, TestSostavit.sostavit, TestSostavit.otvet_sostavitelya
+
+    def chernovik(self, s_poyasneniem=True):
+        with self.assertLogs('dokumenty', 'INFO'):
+            z = self.sostavit()
+        put = os.path.join(self.chernoviki, 'Олимпийский', 'Письмо.docx')
+        os.makedirs(os.path.dirname(put), exist_ok=True)
+        with open(put, 'wb') as fh:
+            fh.write(b'PK')
+        o = {'id': z['id'], 'status': 'gotovo', 'fail': put}
+        if s_poyasneniem:
+            o['proverki'] = 'Сверить дату'
+        self.otvet_sostavitelya(o)
+        self.tg.vyzovy.clear()
+        with self.assertLogs('dokumenty', 'INFO'):
+            bot.proverit_otvety()
+        return z
+
+    def test_knopka_zakryt_i_chernovik_ne_udalyaetsya(self):
+        z = self.chernovik()
+        dok_id, poyasn_id = self.tg.nomer - 1, self.tg.nomer
+        self.assertEqual(para(self.tg.poslednie_knopki()), [('✅ Готово — закрыть', f"cz:{z['id']}")])
+        okno = {e['id']: e['vid'] for e in bot.okno(MANSUR)}
+        self.assertEqual((okno[dok_id], okno[poyasn_id]), ('chernovik', 'chernovik'))
+        # новые запросы и навигация черновик не трогают
+        self.napisat(MANSUR, 'Проекты')
+        self.nazhat(MANSUR, 'p:olimp', mid=self.tg.nomer)
+        self.napisat(MANSUR, 'договор АГ')
+        self.assertFalse({dok_id, poyasn_id} & set(self.tg.udaleno()))
+        # «Готово — закрыть» убирает и файл, и пояснение
+        self.tg.vyzovy.clear()
+        self.nazhat(MANSUR, f"cz:{z['id']}", mid=poyasn_id)
+        self.assertEqual(sorted(self.tg.udaleno()), [dok_id, poyasn_id])
+        self.assertEqual([e['vid'] for e in bot.okno(MANSUR)], ['ekran'])   # экран поиска остался
+
+    def test_knopka_zakryt_pod_failom_bez_poyasneniya(self):
+        z = self.chernovik(s_poyasneniem=False)
+        self.assertEqual(para(self.tg.knopki_dokumenta()), [('✅ Готово — закрыть', f"cz:{z['id']}")])
+        self.assertLessEqual(len(f"cz:{z['id']}".encode()), 64)
 
 
 class TestSostavitel(unittest.TestCase):
