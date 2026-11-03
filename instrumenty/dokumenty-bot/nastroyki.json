@@ -318,14 +318,6 @@
    "telegram_id": null,
    "proekty": "*",
    "bez_vnutrennego": false
-  },
-  {
-   "imya": "Ольга (конструктор)",
-   "telegram_id": null,
-   "proekty": [
-    "raz_mebel"
-   ],
-   "bez_vnutrennego": true
   }
  ],
  "arhiv": {
