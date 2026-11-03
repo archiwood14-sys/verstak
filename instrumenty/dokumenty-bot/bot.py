@@ -77,8 +77,10 @@ def nastroit_zhurnal():
     fmt = _BezKlyucha('%(asctime)s %(levelname)s %(message)s', '%Y-%m-%d %H:%M:%S')
     koren = logging.getLogger()  # на корень — чтобы и сообщения requests/urllib3 шли через формат без ключа
     koren.setLevel(logging.INFO)
-    for h in (RotatingFileHandler(put, maxBytes=2 * 1024 * 1024, backupCount=3, encoding='utf-8'),
-              logging.StreamHandler(sys.stderr)):
+    obrabotchiki = [RotatingFileHandler(put, maxBytes=2 * 1024 * 1024, backupCount=3, encoding='utf-8')]
+    if sys.stderr.isatty():  # запуск руками — журнал и на экран; под launchd — только в файл
+        obrabotchiki.append(logging.StreamHandler(sys.stderr))
+    for h in obrabotchiki:
         h.setFormatter(fmt)
         koren.addHandler(h)
     logging.getLogger('urllib3').setLevel(logging.WARNING)

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Каталог документов: раз в час обновляет katalog.db (только новое и изменённое).
+  Установка:
+    cp ru.archiwood.dokumenty.katalog.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ru.archiwood.dokumenty.katalog.plist
+  Запустить сейчас:  launchctl kickstart gui/$(id -u)/ru.archiwood.dokumenty.katalog
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>ru.archiwood.dokumenty.katalog</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/bin/python3</string>
+		<string>/Users/ulia/archiwood_proekty/dokumenty/katalog.py</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/ulia/archiwood_proekty/dokumenty</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+		<key>PYTHONUNBUFFERED</key>
+		<string>1</string>
+		<key>LANG</key>
+		<string>ru_RU.UTF-8</string>
+	</dict>
+	<key>StartInterval</key>
+	<integer>3600</integer>
+	<key>RunAtLoad</key>
+	<true/>
+	<!-- фоновая работа: не мешать остальному на Mac -->
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>LowPriorityIO</key>
+	<true/>
+	<key>Nice</key>
+	<integer>10</integer>
+	<key>StandardOutPath</key>
+	<string>/Users/ulia/archiwood_proekty/dokumenty/katalog.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/ulia/archiwood_proekty/dokumenty/katalog.err.log</string>
+</dict>
+</plist>
