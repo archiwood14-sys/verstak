@@ -381,6 +381,7 @@ def obnovit(zanovo=False):
         print(f'Готово за {time.time() - t0:.0f} с: всего {vsego}, новых {novye}, изменённых {izmenennye}, '
               f'удалено {len(ushli)}, дублей склеено {dubli}, актуальных документов {akt}'
               + (f', переименовано по каркасу {pererazmecheno}' if pererazmecheno else '') + '.')
+        con.close()
     finally:
         os.remove(zamok)
 

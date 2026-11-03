@@ -92,8 +92,8 @@ def najti(con, tekst, dostup, limit=7, proekt=None):
               ORDER BY ves + (julianday('now') - julianday(f.data)) / 120.0
               LIMIT ?'''
     rows = con.execute(sql, [q] + par + [limit]).fetchall()
-    if not rows and ' ' in q:
-        rows = con.execute(sql, [q.replace('" "', '" OR "')] + par + [limit]).fetchall()
+    if not rows and ' ' in q:   # ни одного документа со всеми словами — любое из слов
+        rows = con.execute(sql, [q.replace('* "', '* OR "')] + par + [limit]).fetchall()
     return [dict(r) for r in rows]
 
 

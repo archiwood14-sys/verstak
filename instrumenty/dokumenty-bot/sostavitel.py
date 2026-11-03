@@ -116,6 +116,8 @@ def _zapisat(put, zayavki):
 
 
 def prochitat(put):
+    if not os.path.isfile(put):   # очереди ещё нет — и замок не нужен (папку не создаём)
+        return []
     with zamok(put):
         return _chitat(put)
 
