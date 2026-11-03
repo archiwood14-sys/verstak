@@ -57,7 +57,9 @@ for f, put in obkhod(ROOT, []):
     z['semya'] = pid + '|' + z['semya']
     faily.append(z)
 
+karkas.skleit_pokhozhie(faily)
 karkas.vybrat_aktualnye(faily)
+karkas.popravka_dogovorov(faily)
 proekty = [{'id': p['id'], 'imya': p['imya']} for p in K.N['proekty']]
 json.dump({'faily': faily, 'proekty': proekty, 'tipy': karkas.TIPY}, open(sys.argv[2], 'w'), ensure_ascii=False)
 akt = sum(f['aktualno'] for f in faily)

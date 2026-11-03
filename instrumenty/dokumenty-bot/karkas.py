@@ -192,3 +192,70 @@ def vybrat_aktualnye(faily):
         # тот же день — другие форматы того же документа
         glavnyy['formaty'] = sorted({f['rassh'] for f in zhivye if f['data'][:10] == glavnyy['data'][:10]})
     return semi
+
+
+def popravka_dogovorov(faily, proekt_pole='p'):
+    """Договоры: крайний пакет — тот, что лежит в папке проекта. Всё по той же зоне,
+    что пришло раньше из почты и Telegram, — история (а не отдельные «актуальные» приложения).
+    Вызывать после vybrat_aktualnye()."""
+    paket = {}
+    for f in faily:
+        if (f.get('tip') == 'Договоры' and f.get('istochnik') == 'papka' and f.get('rol') == 'Договор' and not f.get('arhiv')
+                and not est(nizh(f.get('put', '')), 'данные заказчика', 'как получено')):
+            k = (f[proekt_pole], f.get('zona', ''))
+            paket[k] = max(paket.get(k, ''), f['data'])
+    # пакет проекта целиком (самый свежий по любой зоне) — для черновиков без зоны
+    po_proektu = {}
+    for (pr, z), d in paket.items():
+        po_proektu[pr] = max(po_proektu.get(pr, ''), d)
+    for f in faily:
+        k = (f[proekt_pole], f.get('zona', ''))
+        if not f.get('zona') and f[proekt_pole] in po_proektu and f.get('semya', '').endswith('|'):
+            k = (f[proekt_pole], '*')
+            paket[k] = po_proektu[f[proekt_pole]]
+        prislano = f.get('istochnik') != 'papka' or est(nizh(f.get('put', '')), 'данные заказчика', 'как получено')
+        if (f.get('tip') == 'Договоры' and prislano and k in paket
+                and f['data'][:10] < paket[k][:10] and f.get('aktualno')):
+            f['aktualno'] = 0
+            f['zamenen_paketom'] = paket[k][:10]
+
+
+# слова, которые есть почти в каждом названии проекта и ничего не различают
+OBSHCHIE = {'раздоры', 'раздор', 'мебель', 'панели', 'олимпийский', 'олимпийск', 'двери', 'двер', 'архивуд', 'archiwood',
+            'лигнум', 'проект', 'для', 'по', 'на', 'и', 'в', 'с', 'к', 'от', 'pdf', 'docx', 'xlsx', 'doc'}
+
+
+def _slova(nazvanie):
+    n = re.sub(r'[^а-яa-z0-9 ]', ' ', nizh(nazvanie))
+    return {w[:6] for w in n.split() if len(w) > 2 and not w.isdigit() and w not in OBSHCHIE}
+
+
+def skleit_pokhozhie(faily, proekt_pole='p', porog=0.5):
+    """Версии одного документа часто называются чуть по-разному («цены», «с ценами»,
+    «цены без коэффициента»). Внутри проекта, раздела и зоны склеиваем семьи
+    с похожими названиями (доля общих слов ≥ porog). Договоры не трогаем — у них свои правила.
+    Вызывать до vybrat_aktualnye()."""
+    gruppy = {}
+    for f in faily:
+        if f.get('tip') in ('Договоры', 'Фото', 'Переписка'):
+            continue
+        gruppy.setdefault((f[proekt_pole], f['tip'], f.get('zona', '')), []).append(f)
+    for spisok in gruppy.values():
+        semi = {}
+        for f in spisok:
+            semi.setdefault(f['semya'], _slova(f['nazvanie']))
+        klyuchi = list(semi)
+        roditel = {k: k for k in klyuchi}
+
+        def koren(k):
+            while roditel[k] != k:
+                roditel[k] = roditel[roditel[k]]
+                k = roditel[k]
+            return k
+        for i, a in enumerate(klyuchi):
+            for b in klyuchi[i + 1:]:
+                sa, sb = semi[a], semi[b]
+                if sa and sb and len(sa & sb) / len(sa | sb) >= porog:
+                    roditel[koren(b)] = koren(a)
+        for f in spisok:
+            f['semya'] = koren(f['semya'])
