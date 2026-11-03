@@ -2,6 +2,8 @@
 достаёт текст из документов и записывает всё в SQLite для поиска и бота.
 
 Файлы никуда не переносятся — каталог только читает и запоминает, где что лежит.
+Каждый файл размечается по каркасу (karkas.py): раздел, зона, роль в договоре,
+семья версий; после обхода в каждой семье отмечается актуальная (крайняя) версия.
 
     python3 katalog.py            # обновить каталог (только новое и изменённое)
     python3 katalog.py --zanovo   # пересобрать с нуля
@@ -22,6 +24,7 @@ from datetime import datetime
 from html import unescape
 from pathlib import Path
 
+import karkas
 import poisk
 
 N = poisk.nastroyki()
@@ -36,14 +39,29 @@ CREATE TABLE IF NOT EXISTS faily (
   proekt TEXT, proekt_imya TEXT, poryadok_proekta INTEGER,
   razdel TEXT, poryadok_razdela INTEGER,
   istochnik TEXT, otkogo TEXT, vnutrennee INTEGER DEFAULT 0,
-  hash TEXT, dubl_of INTEGER
+  hash TEXT, dubl_of INTEGER,
+  tip TEXT, zona TEXT, rol TEXT, semya TEXT, nazvanie TEXT, otkuda TEXT,
+  arhiv INTEGER DEFAULT 0, aktualno INTEGER DEFAULT 1, versiy INTEGER DEFAULT 1, formaty TEXT
 );
-CREATE INDEX IF NOT EXISTS i_proekt ON faily(proekt, razdel, data);
 CREATE INDEX IF NOT EXISTS i_hash ON faily(hash);
 CREATE VIRTUAL TABLE IF NOT EXISTS tekst USING fts5(
   imya, mesto, soderzhanie, tokenize = "unicode61 remove_diacritics 2"
 );
 '''
+# столбцы каркаса: в старой базе их нет — добавляем (ALTER TABLE ADD COLUMN)
+NOVYE_STOLBCY = [('tip', 'TEXT'), ('zona', 'TEXT'), ('rol', 'TEXT'), ('semya', 'TEXT'), ('nazvanie', 'TEXT'),
+                 ('otkuda', 'TEXT'), ('arhiv', 'INTEGER DEFAULT 0'), ('aktualno', 'INTEGER DEFAULT 1'),
+                 ('versiy', 'INTEGER DEFAULT 1'), ('formaty', 'TEXT')]
+
+
+def migraciya(con):
+    """Старая база (до каркаса): добавить недостающие столбцы и индексы, данные не трогаем."""
+    est_uzhe = {r[1] for r in con.execute('PRAGMA table_info(faily)')}
+    for imya, tip in NOVYE_STOLBCY:
+        if imya not in est_uzhe:
+            con.execute(f'ALTER TABLE faily ADD COLUMN {imya} {tip}')
+    con.execute('CREATE INDEX IF NOT EXISTS i_tip ON faily(proekt, tip, aktualno, data)')
+    con.execute('CREATE INDEX IF NOT EXISTS i_semya ON faily(semya)')
 
 
 def raskryt(p):
@@ -218,6 +236,26 @@ def propustit(imya):
             or rassh in N.get('propuskat_rasshireniya', []))
 
 
+def razmetka(koren, chasti, imya, rassh, otkogo, pid):
+    """Разметка каркаса для одного файла. Путь для karkas — папки от корня Диска:
+    имя папки-корня («1 ОЛИМПИЙСКИЙ», «Почта», «Telegram») и папки внутри него.
+    Семья версий — в пределах проекта: «olimp|Договоры|АГ|договор|».
+    zona — значение «разреза» проекта (nastroyki.json → proekty[].razrez: зона, этаж, объект…)."""
+    papki = [os.path.basename(raskryt(koren['put']).rstrip('/'))] + list(chasti)
+    arhiv = 1 if eto_arhiv(chasti, imya) else 0
+    z = {'imya': imya, 'put': ' / '.join(papki), 'rassh': rassh, 'istochnik': koren.get('istochnik', 'papka'),
+         'otkogo': otkogo, 'arhiv': arhiv}
+    razrez = PROEKTY.get(pid, PROEKTY['obshchee'])[1].get('razrez')
+    r = karkas.razmetit(z, razrez=razrez)
+    return {'tip': r['tip'], 'zona': r.get('zona') or '', 'rol': r.get('rol') or '',
+            'semya': f"{pid}|{r['semya']}", 'nazvanie': r['nazvanie'], 'otkuda': r.get('otkuda') or '',
+            'arhiv': arhiv, 'papki': z['put'], 'istochnik': z['istochnik']}
+
+
+def poryadok_tipa(tip):
+    return karkas.TIPY.index(tip) if tip in karkas.TIPY else len(karkas.TIPY)
+
+
 # ---------------- Обход ----------------
 
 def obkhod():
@@ -259,9 +297,12 @@ def obnovit(zanovo=False):
         if zanovo:
             con.executescript('DROP TABLE IF EXISTS faily; DROP TABLE IF EXISTS tekst;')
         con.executescript(SHEMA)
-        bylo = {r[0]: (r[1], r[2], r[3]) for r in con.execute('SELECT put, razmer, izmenen, id FROM faily')}
+        migraciya(con)
+        bylo = {r[0]: (r[1], r[2], r[3], r[4], r[5], r[6]) for r in con.execute(
+            'SELECT put, razmer, izmenen, id, proekt, otkogo, nazvanie FROM faily')}
         ids = {r[0]: r[1] for r in con.execute('SELECT put, id FROM faily')}
-        vidennye, novye, izmenennye = set(), 0, 0
+        vidennye, novye, izmenennye, pererazmecheno = set(), 0, 0, 0
+        razmetki = {}   # id → разметка каркаса (для склейки семей и выбора актуальных после обхода)
         t0 = time.time()
         for put, koren, chasti in obkhod():
             try:
@@ -269,16 +310,29 @@ def obnovit(zanovo=False):
             except OSError:
                 continue
             vidennye.add(put)
-            if put in bylo and bylo[put][0] == st.st_size and abs(bylo[put][1] - st.st_mtime) < 1:
-                continue
             imya = os.path.basename(put)
             rassh = imya.rsplit('.', 1)[-1].lower() if '.' in imya else ''
+            if put in bylo and bylo[put][0] == st.st_size and abs(bylo[put][1] - st.st_mtime) < 1:
+                # файл не менялся — текст не перечитываем, но разметку каркаса обновляем всегда:
+                # правила karkas.py могли поменяться, а старая база могла быть без каркаса
+                _, _, fid, pid, otkogo, staroe = bylo[put]
+                rz = razmetka(koren, chasti, imya, rassh, otkogo or '', pid)
+                razmetki[fid] = rz
+                con.execute('UPDATE faily SET tip=?, zona=?, rol=?, semya=?, nazvanie=?, otkuda=?, arhiv=?, '
+                            'razdel=?, poryadok_razdela=? WHERE id=?',
+                            (rz['tip'], rz['zona'], rz['rol'], rz['semya'], rz['nazvanie'], rz['otkuda'],
+                             rz['arhiv'], rz['tip'], poryadok_tipa(rz['tip']), fid))
+                if staroe != rz['nazvanie']:
+                    con.execute('UPDATE tekst SET imya=? WHERE rowid=?', (rz['nazvanie'] + ' ' + imya.replace('_', ' '), fid))
+                    pererazmecheno += 1
+                continue
             tekst = izvlech_tekst(put, rassh)[:MAX_TEKST]
             data_p, otkogo, tema = razbor_pisma(chasti)
             data = data_p or datetime.fromtimestamp(st.st_mtime).isoformat(timespec='seconds')
             pid = opredelit_proekt(koren, chasti, imya, tekst)
             p_por, p = PROEKTY.get(pid, PROEKTY['obshchee'])
-            r_por, r_imya = opredelit_razdel(koren, chasti, imya)
+            rz = razmetka(koren, chasti, imya, rassh, otkogo, pid)
+            r_por, r_imya = poryadok_tipa(rz['tip']), rz['tip']   # razdel = tip каркаса
             vnutr = 1 if koren.get('vnutrennee') or est_slovo(nizhniy(' / '.join(chasti) + ' ' + imya),
                                                               N.get('vnutrennee_slova', ['внутренн'])) else 0
             try:
@@ -287,23 +341,28 @@ def obnovit(zanovo=False):
                 h = None
             mesto = ' / '.join([p['imya'], r_imya] + chasti + ([tema] if tema else []))
             zap = (imya, rassh, st.st_size, st.st_mtime, data, pid, p['imya'], p_por, r_imya, r_por,
-                   koren.get('istochnik', 'papka'), otkogo, vnutr, h)
+                   koren.get('istochnik', 'papka'), otkogo, vnutr, h,
+                   rz['tip'], rz['zona'], rz['rol'], rz['semya'], rz['nazvanie'], rz['otkuda'], rz['arhiv'])
             if put in ids:
                 con.execute('''UPDATE faily SET imya=?, rasshirenie=?, razmer=?, izmenen=?, data=?, proekt=?,
                     proekt_imya=?, poryadok_proekta=?, razdel=?, poryadok_razdela=?, istochnik=?, otkogo=?,
-                    vnutrennee=?, hash=? WHERE put=?''', zap + (put,))
+                    vnutrennee=?, hash=?, tip=?, zona=?, rol=?, semya=?, nazvanie=?, otkuda=?, arhiv=?
+                    WHERE put=?''', zap + (put,))
                 fid = ids[put]
                 con.execute('DELETE FROM tekst WHERE rowid=?', (fid,))
                 izmenennye += 1
             else:
                 cur = con.execute('''INSERT INTO faily (imya, rasshirenie, razmer, izmenen, data, proekt, proekt_imya,
-                    poryadok_proekta, razdel, poryadok_razdela, istochnik, otkogo, vnutrennee, hash, put)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', zap + (put,))
+                    poryadok_proekta, razdel, poryadok_razdela, istochnik, otkogo, vnutrennee, hash,
+                    tip, zona, rol, semya, nazvanie, otkuda, arhiv, put)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', zap + (put,))
                 fid = cur.lastrowid
                 ids[put] = fid
                 novye += 1
+            razmetki[fid] = rz
+            # в поиске по имени — и чистое название, и исходное имя файла
             con.execute('INSERT INTO tekst(rowid, imya, mesto, soderzhanie) VALUES (?,?,?,?)',
-                        (fid, imya.replace('_', ' '), mesto, tekst))
+                        (fid, rz['nazvanie'] + ' ' + imya.replace('_', ' '), mesto, tekst))
             if (novye + izmenennye) % 200 == 0:
                 con.commit()
                 print(f'  … {novye + izmenennye} файлов, {time.time() - t0:.0f} с')
@@ -314,11 +373,14 @@ def obnovit(zanovo=False):
             con.execute('DELETE FROM tekst WHERE rowid=?', (fid,))
             con.execute('DELETE FROM faily WHERE id=?', (fid,))
         sklejka_dublej(con)
+        otmetit_aktualnye(con, razmetki, poisk.prochitat_resheniya(N))
         con.commit()
         vsego = con.execute('SELECT COUNT(*) FROM faily').fetchone()[0]
         dubli = con.execute('SELECT COUNT(*) FROM faily WHERE dubl_of IS NOT NULL').fetchone()[0]
+        akt = con.execute('SELECT COUNT(*) FROM faily WHERE aktualno = 1').fetchone()[0]
         print(f'Готово за {time.time() - t0:.0f} с: всего {vsego}, новых {novye}, изменённых {izmenennye}, '
-              f'удалено {len(ushli)}, дублей склеено {dubli}.')
+              f'удалено {len(ushli)}, дублей склеено {dubli}, актуальных документов {akt}'
+              + (f', переименовано по каркасу {pererazmecheno}' if pererazmecheno else '') + '.')
     finally:
         os.remove(zamok)
 
@@ -332,21 +394,46 @@ def sklejka_dublej(con):
                          'GROUP BY hash, proekt, vnutrennee HAVING COUNT(*) > 1').fetchall()
     for h, pr, vn in gruppy:
         rows = con.execute('''SELECT id FROM faily WHERE hash = ? AND proekt = ? AND vnutrennee = ? ORDER BY
-            CASE istochnik WHEN 'papka' THEN 0 ELSE 1 END, CASE razdel WHEN 'Архив' THEN 1 ELSE 0 END, data''',
+            CASE istochnik WHEN 'papka' THEN 0 ELSE 1 END, COALESCE(arhiv, 0), data''',
                            (h, pr, vn)).fetchall()
         glavnyy = rows[0][0]
         con.executemany('UPDATE faily SET dubl_of = ? WHERE id = ?', [(glavnyy, r[0]) for r in rows[1:]])
+
+
+def otmetit_aktualnye(con, razmetki=None, resheniya=None):
+    """В каждой семье версий — одна актуальная, как в demo/dannye_karkas.py:
+    karkas.skleit_pokhozhie → karkas.vybrat_aktualnye → karkas.popravka_dogovorov,
+    потом поверх автоматики — ручные решения из aktualnost.json (кнопки бота).
+    Дубли (тот же файл в другом месте) в выборе не участвуют: они скрыты, актуальной быть не могут."""
+    razmetki = razmetki or {}
+    faily = []
+    for r in con.execute('SELECT id, put, semya, data, arhiv, rasshirenie, proekt, tip, zona, rol, nazvanie, istochnik '
+                         'FROM faily WHERE dubl_of IS NULL'):
+        rz = razmetki.get(r[0], {})
+        faily.append({'id': r[0], 'put_faila': r[1], 'semya': r[2] or f'id{r[0]}', 'data': r[3] or '',
+                      'arhiv': r[4] or 0, 'rassh': r[5] or '', 'proekt': r[6], 'tip': r[7], 'zona': r[8] or '',
+                      'rol': r[9] or '', 'nazvanie': r[10] or '', 'istochnik': r[11] or 'papka',
+                      # karkas смотрит в «put» папки от корня Диска (для «данные заказчика», «как получено»)
+                      'put': rz.get('papki') or r[1]})
+    karkas.skleit_pokhozhie(faily, proekt_pole='proekt')
+    karkas.vybrat_aktualnye(faily)
+    karkas.popravka_dogovorov(faily, proekt_pole='proekt')
+    poisk.primenit_resheniya(faily, resheniya or {}, pole_puti='put_faila')
+    con.execute('UPDATE faily SET aktualno = 0, versiy = 1, formaty = NULL WHERE dubl_of IS NOT NULL')
+    con.executemany('UPDATE faily SET semya = ?, aktualno = ?, versiy = ?, formaty = ? WHERE id = ?',
+                    [(f['semya'], f['aktualno'], f['versiy'], '+'.join(f['formaty']) if f.get('formaty') else None,
+                      f['id']) for f in faily])
 
 
 # ---------------- Отчёт и проверка поиска ----------------
 
 def otchet():
     con = poisk.baza()
-    print('Проект / раздел — файлов (без дублей)')
-    for r in con.execute('''SELECT proekt_imya, razdel, COUNT(*) n FROM faily WHERE dubl_of IS NULL
-                            GROUP BY proekt, razdel ORDER BY poryadok_proekta, poryadok_razdela'''):
-        print(f'  {r[0]:<20} {r[1]:<24} {r[2]:>6}')
-    bez = con.execute("SELECT COUNT(*) FROM faily WHERE dubl_of IS NULL AND razdel='Прочее'").fetchone()[0]
+    print('Проект / раздел каркаса — актуальных документов (всего файлов без дублей)')
+    for r in con.execute('''SELECT proekt_imya, tip, SUM(aktualno = 1) a, COUNT(*) n FROM faily WHERE dubl_of IS NULL
+                            GROUP BY proekt, tip ORDER BY MIN(poryadok_proekta), MIN(poryadok_razdela)'''):
+        print(f'  {r[0]:<20} {r[1] or "?":<28} {r[2]:>6} ({r[3]})')
+    bez = con.execute("SELECT COUNT(*) FROM faily WHERE aktualno = 1 AND tip='Прочее'").fetchone()[0]
     pust = con.execute("SELECT COUNT(*) FROM faily f JOIN tekst t ON t.rowid=f.id WHERE f.rasshirenie IN "
                        "('pdf','docx','doc','xlsx') AND length(t.soderzhanie) < 20").fetchone()[0]
     print(f'В «Прочее»: {bez}. Документов без текста (сканы?): {pust}.')
@@ -355,7 +442,9 @@ def otchet():
 def proverka_poiska(slova):
     con = poisk.baza()
     for r in poisk.najti(con, ' '.join(slova), {'proekty': '*'}):
-        print(f"  {r['data'][:10]}  {r['proekt_imya']} · {r['razdel']}  {r['imya']}\n      {r['otryvok'][:160]}")
+        print(f"  {r['data'][:10]}  {r['proekt_imya']} · {r['tip']}{' · ' + r['zona'] if r.get('zona') else ''}  "
+              f"{r['nazvanie']}  [{r['put']}]{'' if r.get('aktualno') else '  (старая версия)'}\n"
+              f"      {(r['otryvok'] or '')[:160]}")
 
 
 if __name__ == '__main__':
