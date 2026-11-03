@@ -2,3 +2,7 @@ __pycache__/
 *.db
 *.zamok
 .klyuch_bota
+zayavki*.jsonl
+*.poz
+*.novyj
+aktualnost.json

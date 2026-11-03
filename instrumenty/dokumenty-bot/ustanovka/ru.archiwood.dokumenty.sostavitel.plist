@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Составитель черновиков: раз в минуту берёт новые заявки бота (zayavki.jsonl)
+  и для каждой запускает Claude Code (claude -p … в ~/archiwood_proekty).
+  Если прошлый запуск ещё работает — новый сразу выходит (замок sostavitel.zamok).
+  Установка:
+    cp ru.archiwood.dokumenty.sostavitel.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ru.archiwood.dokumenty.sostavitel.plist
+  Запустить сейчас:  launchctl kickstart gui/$(id -u)/ru.archiwood.dokumenty.sostavitel
+  Очередь: запустить sostavitel.py с ключом «spisok» (два дефиса перед ним)
+  В PATH должна быть команда claude (обычно ~/.local/bin или /opt/homebrew/bin):
+  проверьте `which claude` и при необходимости поправьте PATH ниже.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>ru.archiwood.dokumenty.sostavitel</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/homebrew/bin/python3</string>
+		<string>/Users/ulia/archiwood_proekty/dokumenty/sostavitel.py</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>/Users/ulia/archiwood_proekty/dokumenty</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/Users/ulia/.local/bin:/Users/ulia/.claude/local:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+		<key>HOME</key>
+		<string>/Users/ulia</string>
+		<key>PYTHONUNBUFFERED</key>
+		<string>1</string>
+		<key>LANG</key>
+		<string>ru_RU.UTF-8</string>
+	</dict>
+	<key>StartInterval</key>
+	<integer>60</integer>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>StandardOutPath</key>
+	<string>/Users/ulia/archiwood_proekty/dokumenty/sostavitel.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>/Users/ulia/archiwood_proekty/dokumenty/sostavitel.err.log</string>
+</dict>
+</plist>

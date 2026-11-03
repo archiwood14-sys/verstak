@@ -4,6 +4,27 @@
  "klyuch_bota": "~/archiwood_proekty/dokumenty/.klyuch_bota",
  "zhurnal": "~/archiwood_proekty/dokumenty/zhurnal.log",
  "model_golosa": "medium",
+ "aktualnost": "~/archiwood_proekty/dokumenty/aktualnost.json",
+ "ochered_zayavok": "~/archiwood_proekty/dokumenty/zayavki.jsonl",
+ "sostavitel": {
+  "_opisanie": "Составитель черновиков (sostavitel.py): komanda + промпт + flagi, запуск в папке papka. allowedTools — только чтение, запись черновика и поиск по каталогу: отправлять наружу агенту нечем.",
+  "komanda": [
+   "claude",
+   "-p"
+  ],
+  "flagi": [
+   "--output-format",
+   "json",
+   "--permission-mode",
+   "acceptEdits",
+   "--allowedTools",
+   "Read,Write,Edit,Glob,Grep,Bash(python3:*)"
+  ],
+  "papka": "~/archiwood_proekty",
+  "chernoviki": "~/archiwood_proekty/dokumenty/Черновики",
+  "katalog": "~/archiwood_proekty/dokumenty/katalog.py",
+  "tajmaut_sek": 1800
+ },
  "korni": [
   {
    "put": "~/archiwood_proekty/Проекты на Google Диске/1 ОЛИМПИЙСКИЙ",
