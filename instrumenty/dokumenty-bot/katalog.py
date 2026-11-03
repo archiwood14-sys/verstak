@@ -157,31 +157,55 @@ def opredelit_proekt(koren, chasti, imya, tekst):
     if koren.get('proekt'):
         return koren['proekt']
     # почта и Telegram: по словам в названии чата/письма, потом в тексте
-    stroka = nizhniy(' '.join(chasti) + ' ' + imya)
+    iskhodnaya = ' '.join(chasti) + ' ' + imya
+    stroka = nizhniy(iskhodnaya)
     luchshiy, ochki = 'obshchee', 0
     nachalo = nizhniy(tekst[:20000])
-    for pid, (_, p) in PROEKTY.items():
-        o = sum(3 for s in p['slova'] if s in stroka) + sum(1 for s in p['slova'] if s in nachalo)
+    for pid, (_, p) in PROEKTY.items():   # порядок в настройках решает ничью
+        o = sum(5 for k in p.get('kody', []) if re.search(k, iskhodnaya))
+        o += sum(3 for s in p['slova'] if s in stroka) + sum(1 for s in p['slova'] if s in nachalo)
         if o > ochki:
             luchshiy, ochki = pid, o
     return luchshiy
 
 
+def eto_arhiv(chasti, imya):
+    a = N.get('arhiv', {})
+    # папка «9 АРХИВ (не для работы)» или «Архив», но не «Двери Архивуд»
+    if any(re.match(r'^(\d+\s+)?архив(?![а-яa-z])', nizhniy(c)) for c in chasti):
+        return True
+    if est_slovo(nizhniy(imya), a.get('slova_v_imeni', [])):
+        return True
+    return bool(a.get('papki_s_podcherkivaniem')) and any(c.startswith('_') for c in chasti)
+
+
 def opredelit_razdel(koren, chasti, imya):
-    papki = nizhniy(' / '.join(chasti))
+    # имя верхней папки тоже учитываем: «3 … КОНСТРУКТОРУ», «4 … ВНУТРЕННЕЕ»
+    papki = nizhniy(' / '.join([os.path.basename(raskryt(koren['put']))] + chasti))
     im = nizhniy(imya)
     ist = koren.get('istochnik', 'papka')
+    rassh = im.rsplit('.', 1)[-1] if '.' in im else ''
+    if eto_arhiv(chasti, imya):
+        return len(RAZDELY), 'Архив'          # в поиске скрыт, пока не спросят «архив»
     # 1) тип документа по имени файла — договор остаётся договором, где бы ни лежал
     for i, r in RAZDELY:
         if r.get('istochnik'):
             continue
         if est_slovo(im, r.get('slova_v_imeni', [])):
             return i, r['imya']
-    # 2) почта и Telegram — свои разделы
+    # 2) фото и видео — по расширению
+    for i, r in RAZDELY:
+        if rassh and rassh in r.get('rasshireniya', []):
+            return i, r['imya']
+    # 3) почта и Telegram — свои разделы
     for i, r in RAZDELY:
         if r.get('istochnik') == ist:
             return i, r['imya']
-    # 3) по папке, в которой лежит
+    # 4) по папке, в которой лежит; во внутренней папке — «Внутреннее»
+    if koren.get('vnutrennee'):
+        for i, r in RAZDELY:
+            if r['imya'] == 'Внутреннее':
+                return i, r['imya']
     for i, r in RAZDELY:
         if est_slovo(papki, r.get('papki', [])):
             return i, r['imya']
@@ -189,7 +213,9 @@ def opredelit_razdel(koren, chasti, imya):
 
 
 def propustit(imya):
-    return imya.startswith('.') or any(p in imya for p in N.get('propuskat', []))
+    rassh = imya.rsplit('.', 1)[-1].lower() if '.' in imya else ''
+    return (imya.startswith('.') or any(p in imya for p in N.get('propuskat', []))
+            or rassh in N.get('propuskat_rasshireniya', []))
 
 
 # ---------------- Обход ----------------
@@ -208,7 +234,8 @@ def obkhod():
             chasti = [] if otn == '.' else otn.split(os.sep)
             if not chasti:
                 dirs[:] = [d for d in dirs if d not in krome]
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
+            lishnie = {nizhniy(x) for x in N.get('propuskat_papki', [])}
+            dirs[:] = [d for d in dirs if not d.startswith('.') and nizhniy(d) not in lishnie]
             for f in files:
                 if propustit(f):
                     continue
@@ -252,7 +279,8 @@ def obnovit(zanovo=False):
             pid = opredelit_proekt(koren, chasti, imya, tekst)
             p_por, p = PROEKTY.get(pid, PROEKTY['obshchee'])
             r_por, r_imya = opredelit_razdel(koren, chasti, imya)
-            vnutr = 1 if koren.get('vnutrennee') or any('внутренн' in nizhniy(c) for c in chasti) else 0
+            vnutr = 1 if koren.get('vnutrennee') or est_slovo(nizhniy(' / '.join(chasti) + ' ' + imya),
+                                                              N.get('vnutrennee_slova', ['внутренн'])) else 0
             try:
                 h = hesh(put, st.st_size)
             except OSError:
@@ -299,11 +327,13 @@ def sklejka_dublej(con):
     """Один и тот же файл в нескольких местах показываем один раз.
     Главная копия — та, что в папке проекта (не почта/Telegram), потом самая ранняя."""
     con.execute('UPDATE faily SET dubl_of = NULL')
-    gruppy = con.execute('SELECT hash FROM faily WHERE hash IS NOT NULL AND razmer > 0 '
-                         'GROUP BY hash HAVING COUNT(*) > 1').fetchall()
-    for (h,) in gruppy:
-        rows = con.execute('''SELECT id FROM faily WHERE hash = ? ORDER BY
-            CASE istochnik WHEN 'papka' THEN 0 ELSE 1 END, vnutrennee, data''', (h,)).fetchall()
+    # склеиваем только в пределах проекта и уровня доступа, чтобы никто не потерял свой файл
+    gruppy = con.execute('SELECT hash, proekt, vnutrennee FROM faily WHERE hash IS NOT NULL AND razmer > 0 '
+                         'GROUP BY hash, proekt, vnutrennee HAVING COUNT(*) > 1').fetchall()
+    for h, pr, vn in gruppy:
+        rows = con.execute('''SELECT id FROM faily WHERE hash = ? AND proekt = ? AND vnutrennee = ? ORDER BY
+            CASE istochnik WHEN 'papka' THEN 0 ELSE 1 END, CASE razdel WHEN 'Архив' THEN 1 ELSE 0 END, data''',
+                           (h, pr, vn)).fetchall()
         glavnyy = rows[0][0]
         con.executemany('UPDATE faily SET dubl_of = ? WHERE id = ?', [(glavnyy, r[0]) for r in rows[1:]])
 

@@ -58,6 +58,8 @@ def najti(con, tekst, dostup, limit=7):
     if not q:
         return []
     us, par = _uslovie_dostupa(dostup)
+    if 'архив' not in tekst.lower():   # старые и заменённые версии — только по просьбе
+        us += " AND f.razdel != 'Архив'"
     sql = f'''SELECT f.*, bm25(tekst, 8.0, 3.0, 1.0) AS ves,
                      snippet(tekst, 2, '«', '»', '…', 12) AS otryvok
               FROM tekst JOIN faily f ON f.id = tekst.rowid

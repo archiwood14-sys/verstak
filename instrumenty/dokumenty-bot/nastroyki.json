@@ -1,48 +1,371 @@
 {
-  "_opisanie": "Настройки каталога и бота «АРХИВУД Документы». Пути с ~ — от домашней папки на Mac.",
-  "baza": "~/archiwood_proekty/dokumenty/katalog.db",
-  "klyuch_bota": "~/archiwood_proekty/dokumenty/.klyuch_bota",
-  "zhurnal": "~/archiwood_proekty/dokumenty/zhurnal.log",
-  "model_golosa": "medium",
-
-  "korni": [
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/1 ОЛИМПИЙСКИЙ", "proekt": "olimp"},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/2 РАЗДОРЫ", "proekt": "raz_dveri"},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/3 РАЗДОРЫ. МЕБЕЛЬ", "proekt": "raz_mebel"},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/4 РАЗДОРЫ. МЕБЕЛЬ — ВНУТРЕННЕЕ (с ценами, конструктору не открывать)", "proekt": "raz_mebel", "vnutrennee": true},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/5 РАЗДОРЫ. МЕБЕЛЬ — ПИЛОТЫ НА СОГЛАСОВАНИЕ", "proekt": "raz_mebel"},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/0 ОБЩЕЕ/Почта", "istochnik": "pochta"},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/0 ОБЩЕЕ/Telegram", "istochnik": "telegram"},
-    {"put": "~/archiwood_proekty/Проекты на Google Диске/0 ОБЩЕЕ", "proekt": "obshchee", "krome": ["Почта", "Telegram"]}
+ "_opisanie": "Настройки каталога и бота «АРХИВУД Документы». Пути с ~ — от домашней папки на Mac.",
+ "baza": "~/archiwood_proekty/dokumenty/katalog.db",
+ "klyuch_bota": "~/archiwood_proekty/dokumenty/.klyuch_bota",
+ "zhurnal": "~/archiwood_proekty/dokumenty/zhurnal.log",
+ "model_golosa": "medium",
+ "korni": [
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/1 ОЛИМПИЙСКИЙ",
+   "proekt": "olimp"
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/2 РАЗДОРЫ",
+   "proekt": "raz_dveri"
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/3 РАЗДОРЫ. МЕБЕЛЬ — КОНСТРУКТОРУ",
+   "proekt": "raz_mebel"
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/4 РАЗДОРЫ. МЕБЕЛЬ — ВНУТРЕННЕЕ (с ценами, конструктору не открывать)",
+   "proekt": "raz_mebel",
+   "vnutrennee": true
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/5 РАЗДОРЫ. МЕБЕЛЬ — ПИЛОТЫ НА СОГЛАСОВАНИЕ",
+   "proekt": "raz_mebel"
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/0 ОБЩЕЕ/Почта",
+   "istochnik": "pochta"
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/0 ОБЩЕЕ/Telegram",
+   "istochnik": "telegram"
+  },
+  {
+   "put": "~/archiwood_proekty/Проекты на Google Диске/0 ОБЩЕЕ",
+   "proekt": "obshchee",
+   "krome": [
+    "Почта",
+    "Telegram"
+   ]
+  }
+ ],
+ "proekty": [
+  {
+   "id": "olimp",
+   "imya": "Олимпийский",
+   "kody": [
+    "\\bАГ\\b",
+    "\\bГС[ -]?ДЯ\\b",
+    "\\bЗБ\\b",
+    "\\bНЯ\\b"
+   ],
+   "slova": [
+    "олимпийск",
+    "5 988 911",
+    "накладк",
+    "мультишпон",
+    "шпон",
+    "зон акционер",
+    "+46.800",
+    "здравниц",
+    "krona koblenz",
+    "скрытого крепления",
+    "киевская площадь",
+    "мария - помощница",
+    "помощница натальи",
+    "офисы 46"
+   ]
+  },
+  {
+   "id": "raz_mebel",
+   "imya": "Раздоры. Мебель",
+   "kody": [
+    "\\bИР-\\d"
+   ],
+   "slova": [
+    "раздоры. мебель",
+    "раздоры мебель",
+    "мебель раздор",
+    "книга проекта",
+    "конструктор ольга",
+    "нелли",
+    "нэлли",
+    "стеллаж",
+    "панели"
+   ]
+  },
+  {
+   "id": "raz_dveri",
+   "imya": "Раздоры. Двери",
+   "kody": [
+    "\\bд-\\d+\\.\\d+",
+    "05-10-2026 Р-З"
+   ],
+   "slova": [
+    "раздор",
+    "18 500 000",
+    "626 010",
+    "скрытого монтажа",
+    "маркировк",
+    "коробк",
+    "парадные",
+    "двери архивуд",
+    "раздоры двери",
+    "р - ф"
+   ]
+  },
+  {
+   "id": "drugie",
+   "imya": "Другие объекты",
+   "kody": [
+    "\\bИП\\d",
+    "\\bTGPLU",
+    "\\bИО\\d",
+    "\\bИ\\.О\\.?\\d",
+    "\\bИИ\\d",
+    "\\bTGILI",
+    "\\bИМ\\d",
+    "\\bTGMED",
+    "\\bZAH"
+   ],
+   "slova": [
+    "плющих",
+    "озерк",
+    "ильинк",
+    "медное озеро",
+    "захарьевск",
+    "завидово",
+    "репинск",
+    "чайковск"
+   ]
+  },
+  {
+   "id": "obshchee",
+   "imya": "Общее",
+   "kody": [],
+   "slova": []
+  }
+ ],
+ "razdely": [
+  {
+   "imya": "Договоры и сметы",
+   "papki": [
+    "договор",
+    "смет",
+    "спецификац"
+   ],
+   "slova_v_imeni": [
+    "договор",
+    "смета",
+    "смете",
+    "спецификац",
+    "протокол разноглас",
+    "допсоглаш",
+    "доп. соглаш",
+    "дополнительное соглаш",
+    "коммерческое предложение",
+    "кп "
+   ]
+  },
+  {
+   "imya": "ТЗ",
+   "papki": [
+    "тз",
+    "техническое задание"
+   ],
+   "slova_v_imeni": [
+    "тз",
+    "техническое задание",
+    "заявка"
+   ]
+  },
+  {
+   "imya": "Чертежи и схемы",
+   "papki": [
+    "чертеж",
+    "схем",
+    "dwg",
+    "конструктору"
+   ],
+   "slova_v_imeni": [
+    "чертеж",
+    "схема",
+    "узел",
+    "узлы",
+    "раскладк",
+    "развертк",
+    "dwg",
+    "маркировк",
+    "план "
+   ]
+  },
+  {
+   "imya": "Счета и бухгалтерия",
+   "papki": [
+    "бухгалтер",
+    "счета"
+   ],
+   "slova_v_imeni": [
+    "счет на оплату",
+    "счет №",
+    "счет_",
+    "упд",
+    "акт сверки",
+    "фнс",
+    "платежн",
+    "накладная"
+   ]
+  },
+  {
+   "imya": "Встречи и расшифровки",
+   "papki": [
+    "встреч",
+    "аудио",
+    "расшифров"
+   ],
+   "slova_v_imeni": [
+    "расшифровк",
+    "встреча",
+    "итоги встречи",
+    "запись"
+   ]
+  },
+  {
+   "imya": "Журнал",
+   "papki": [
+    "журнал"
+   ],
+   "slova_v_imeni": [
+    "журнал"
+   ]
+  },
+  {
+   "imya": "От заказчика",
+   "papki": [
+    "данные заказчика",
+    "от заказчика"
+   ],
+   "slova_v_imeni": []
+  },
+  {
+   "imya": "Наше заказчику",
+   "papki": [
+    "заказчику и участникам"
+   ],
+   "slova_v_imeni": []
+  },
+  {
+   "imya": "Внутреннее",
+   "papki": [
+    "внутренн"
+   ],
+   "slova_v_imeni": [
+    "себестоим",
+    "расчет цены",
+    "внутренний",
+    "с ценами",
+    "для мансура",
+    "для юлии"
+   ]
+  },
+  {
+   "imya": "Фото и видео",
+   "rasshireniya": [
+    "jpg",
+    "jpeg",
+    "png",
+    "heic",
+    "webp",
+    "mov",
+    "mp4",
+    "m4v"
+   ]
+  },
+  {
+   "imya": "Почта",
+   "istochnik": "pochta"
+  },
+  {
+   "imya": "Telegram",
+   "istochnik": "telegram"
+  },
+  {
+   "imya": "Прочее",
+   "papki": [],
+   "slova_v_imeni": []
+  }
+ ],
+ "propuskat": [
+  ".DS_Store",
+  "Icon\r",
+  ".tmp",
+  "~$",
+  ".lnk",
+  ".icloud",
+  ".gdoc",
+  ".gsheet"
+ ],
+ "polzovateli": [
+  {
+   "imya": "Мансур",
+   "telegram_id": null,
+   "proekty": "*",
+   "bez_vnutrennego": false,
+   "admin": true
+  },
+  {
+   "imya": "Юлия Евгеньевна",
+   "telegram_id": null,
+   "proekty": "*",
+   "bez_vnutrennego": false
+  },
+  {
+   "imya": "Игорь Михайлович",
+   "telegram_id": null,
+   "proekty": "*",
+   "bez_vnutrennego": false
+  },
+  {
+   "imya": "Ольга (конструктор)",
+   "telegram_id": null,
+   "proekty": [
+    "raz_mebel"
+   ],
+   "bez_vnutrennego": true
+  }
+ ],
+ "arhiv": {
+  "papki": [
+   "9 архив",
+   "архив"
   ],
-
-  "proekty": [
-    {"id": "olimp", "imya": "Олимпийский", "slova": ["олимпийск", "олимп", "здравниц"]},
-    {"id": "raz_dveri", "imya": "Раздоры. Двери", "slova": ["двери архивуд", "раздоры двер", "скрытого монтажа", "коробк", "киевская площадь", "туманов", "зверев"]},
-    {"id": "raz_mebel", "imya": "Раздоры. Мебель", "slova": ["раздоры мебел", "мебель раздор", "нелли", "портал"]},
-    {"id": "obshchee", "imya": "Общее", "slova": []}
-  ],
-
-  "razdely": [
-    {"imya": "Договоры и сметы", "papki": ["договор", "смет", "спецификац", "коммерческ"], "slova_v_imeni": ["договор", "смета", "спецификац", "протокол разноглас", "кп ", "счет", "счёт", "акт"]},
-    {"imya": "Чертежи и схемы", "papki": ["чертеж", "чертёж", "схем", "dwg"], "slova_v_imeni": ["чертеж", "чертёж", "схема", "узл", "раскладк", "развертк", "dwg", "маркировк"]},
-    {"imya": "От заказчика", "papki": ["данные заказчика", "от заказчика"], "slova_v_imeni": []},
-    {"imya": "Наше заказчику", "papki": ["заказчику и участникам", "заказчику"], "slova_v_imeni": []},
-    {"imya": "Внутреннее", "papki": ["внутренн", "коммерческие"], "slova_v_imeni": ["себестоим", "расчет цены", "расчёт цены"]},
-    {"imya": "Встречи и расшифровки", "papki": ["встреч", "аудио", "расшифров"], "slova_v_imeni": ["расшифровк", "встреча", "итоги встречи"]},
-    {"imya": "Журнал", "papki": ["журнал"], "slova_v_imeni": ["журнал"]},
-    {"imya": "Почта", "istochnik": "pochta"},
-    {"imya": "Telegram", "istochnik": "telegram"},
-    {"imya": "Архив", "papki": ["архив"], "slova_v_imeni": []},
-    {"imya": "Прочее", "papki": [], "slova_v_imeni": []}
-  ],
-
-  "propuskat": [".DS_Store", "Icon\r", ".tmp", "~$", ".lnk", ".icloud", ".gdoc", ".gsheet"],
-
-  "polzovateli": [
-    {"imya": "Мансур", "telegram_id": null, "proekty": "*", "bez_vnutrennego": false, "admin": true},
-    {"imya": "Юлия Евгеньевна", "telegram_id": null, "proekty": "*", "bez_vnutrennego": false},
-    {"imya": "Игорь Михайлович", "telegram_id": null, "proekty": "*", "bez_vnutrennego": false},
-    {"imya": "Ольга (конструктор)", "telegram_id": null, "proekty": ["raz_mebel"], "bez_vnutrennego": true}
+  "papki_s_podcherkivaniem": true,
+  "slova_v_imeni": [
+   "заменен",
+   "устарел",
+   "отменено",
+   "не отправлять"
   ]
+ },
+ "vnutrennee_slova": [
+  "внутренн",
+  "с ценами",
+  "для мансура",
+  "для юлии"
+ ],
+ "propuskat_rasshireniya": [
+  "py",
+  "pyc",
+  "js",
+  "json",
+  "html",
+  "htm",
+  "css",
+  "map",
+  "plist",
+  "sh",
+  "log"
+ ],
+ "propuskat_papki": [
+  "Инструменты сборки",
+  "_calc",
+  "_web",
+  "final cut pro",
+  "__pycache__",
+  "node_modules"
+ ]
 }
